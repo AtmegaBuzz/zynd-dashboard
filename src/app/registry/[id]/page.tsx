@@ -48,7 +48,7 @@ import { GridTripod } from "@/components/ui/GridTripod";
 import { formatAddress } from "@/lib/utils";
 
 const ICON_COLORS = [
-  "#BF40FF", "#3B82F6", "#F59E0B", "#EC4899", "#8B5CF6",
+  "#8B5CF6", "#3B82F6", "#F59E0B", "#EC4899", "#8B5CF6",
   "#06B6D4", "#F97316", "#10B981", "#6366F1", "#EF4444",
 ];
 
@@ -361,7 +361,7 @@ export default function AgentDetailPage(): React.ReactElement {
                                   {capabilities?.map((cap, idx) => (
                                     <span
                                       key={`${cap}-${idx}`}
-                                      className="inline-flex items-center rounded-lg border border-[#BF40FF]/20 bg-[#BF40FF]/[0.07] px-3 py-1.5 text-[12px] font-medium text-[#BF40FF]"
+                                      className="inline-flex items-center rounded-lg border border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.07] px-3 py-1.5 text-[12px] font-medium text-[#8B5CF6]"
                                     >
                                       {cap}
                                     </span>
@@ -472,7 +472,7 @@ export default function AgentDetailPage(): React.ReactElement {
                                 Max Payment (USDC)
                               </label>
                               <div className="relative">
-                                <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-sm text-[#BF40FF]/40">$</div>
+                                <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-sm text-[#8B5CF6]/40">$</div>
                                 <input
                                   id="amount"
                                   type="number"
@@ -503,7 +503,7 @@ export default function AgentDetailPage(): React.ReactElement {
                             <button
                               onClick={handleSubmitPrompt}
                               disabled={!prompt.trim() || isSubmitting || !isConnected}
-                              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] py-3.5 text-sm font-bold text-black transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 sm:w-auto sm:px-8"
+                              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 sm:w-auto sm:px-8"
                             >
                               {isSubmitting ? (
                                 <><Loader2 className="h-4 w-4 animate-spin" /> Executing...</>

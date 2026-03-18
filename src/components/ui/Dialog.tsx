@@ -44,7 +44,7 @@ export function Dialog({
     <dialog
       ref={dialogRef}
       className={cn(
-        "max-w-lg w-full rounded-lg border border-white/10 bg-[#0a0a0a] p-0 text-[#f6f6f6] shadow-2xl backdrop:bg-black/70",
+        "max-w-lg w-full rounded-lg border border-white/10 bg-[#0a0a0a] p-0 text-[#E0E7FF] shadow-2xl backdrop:bg-black/70",
         className
       )}
       onClick={(e) => {
@@ -55,7 +55,7 @@ export function Dialog({
         <h2 className="text-lg font-medium">{title}</h2>
         <button
           onClick={onClose}
-          className="cursor-pointer text-[#f6f6f6]/50 transition-colors hover:text-[#BF40FF]"
+          className="cursor-pointer text-[#E0E7FF]/50 transition-colors hover:text-[#8B5CF6]"
           aria-label="Close dialog"
         >
           &#x2715;

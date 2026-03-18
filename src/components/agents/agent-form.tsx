@@ -94,7 +94,7 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
 
   return (
     <div className="mx-auto max-w-full sm:max-w-2xl">
-      <h2 className="mb-6 text-lg sm:text-2xl font-bold text-[#f6f6f6]">
+      <h2 className="mb-6 text-lg sm:text-2xl font-bold text-[#E0E7FF]">
         {isEditing ? "Edit Agent" : "Create Agent"}
       </h2>
 
@@ -122,7 +122,7 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
         />
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-[#f6f6f6]/70">Capabilities</label>
+          <label className="text-sm text-[#E0E7FF]/70">Capabilities</label>
           <div className="flex gap-2">
             <Input
               placeholder="e.g. text-generation"
@@ -134,7 +134,7 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
             <button
               type="button"
               onClick={addCapability}
-              className="flex cursor-pointer items-center gap-1.5 rounded border border-[#BF40FF]/30 bg-[#BF40FF]/10 px-3 py-2 text-sm text-[#BF40FF] transition-colors hover:bg-[#BF40FF]/20"
+              className="flex cursor-pointer items-center gap-1.5 rounded border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-3 py-2 text-sm text-[#8B5CF6] transition-colors hover:bg-[#8B5CF6]/20"
             >
               <Plus className="h-4 w-4" />
               Add
@@ -145,13 +145,13 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
               {capabilities.map((cap) => (
                 <span
                   key={cap}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#BF40FF]/30 bg-[#BF40FF]/10 px-2.5 py-1 text-xs text-[#BF40FF]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-2.5 py-1 text-xs text-[#8B5CF6]"
                 >
                   {cap}
                   <button
                     type="button"
                     onClick={() => removeCapability(cap)}
-                    className="cursor-pointer text-[#BF40FF]/60 transition-colors hover:text-[#BF40FF]"
+                    className="cursor-pointer text-[#8B5CF6]/60 transition-colors hover:text-[#8B5CF6]"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -165,14 +165,14 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
           <button
             type="button"
             onClick={() => router.back()}
-            className="cursor-pointer rounded border border-white/10 bg-white/5 px-6 py-2.5 min-h-[44px] text-sm text-[#f6f6f6] transition-colors hover:bg-white/10"
+            className="cursor-pointer rounded border border-white/10 bg-white/5 px-6 py-2.5 min-h-[44px] text-sm text-[#E0E7FF] transition-colors hover:bg-white/10"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="cursor-pointer rounded bg-[#BF40FF] px-6 py-2.5 min-h-[44px] text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="cursor-pointer rounded bg-[#8B5CF6] px-6 py-2.5 min-h-[44px] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submitting
               ? "Saving..."

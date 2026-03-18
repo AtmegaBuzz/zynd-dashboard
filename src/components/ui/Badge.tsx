@@ -12,7 +12,7 @@ const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   active: "bg-[#00FF66]/15 text-[#00FF66] border-[#00FF66]/30",
   inactive: "bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/30",
   deprecated: "bg-red-500/15 text-red-400 border-red-500/30",
-  default: "bg-white/5 text-[#f6f6f6]/60 border-white/10",
+  default: "bg-white/5 text-[#E0E7FF]/60 border-white/10",
 };
 
 export function Badge({

@@ -30,7 +30,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             "min-h-[100px] rounded border bg-[#0a0a0a] px-3 py-2 text-sm text-[#f6f6f6] outline-none transition-colors placeholder:text-white/20",
             error
               ? "border-red-500/60 focus:border-red-500"
-              : "border-white/10 focus:border-[#BF40FF]/60",
+              : "border-white/10 focus:border-[#8B5CF6]/60",
             className
           )}
           {...props}

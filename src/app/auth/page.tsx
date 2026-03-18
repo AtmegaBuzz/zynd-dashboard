@@ -332,7 +332,7 @@ export default function AuthPage() {
                             <button
                               type="submit"
                               disabled={isSubmitting || !isConnected}
-                              className="flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-black transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
+                              className="flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
                             >
                               {step === "registering" && (
                                 <><Loader2 className="h-4 w-4 animate-spin" /> Registering on-chain...</>

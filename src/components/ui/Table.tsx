@@ -20,14 +20,14 @@ export function Table({
             {headers.map((header) => (
               <th
                 key={header}
-                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#f6f6f6]/40"
+                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#E0E7FF]/40"
               >
                 {header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="[&>tr]:border-b [&>tr]:border-white/5 [&>tr:last-child]:border-0 [&_td]:px-4 [&_td]:py-3 [&_td]:text-[#f6f6f6]">
+        <tbody className="[&>tr]:border-b [&>tr]:border-white/5 [&>tr:last-child]:border-0 [&_td]:px-4 [&_td]:py-3 [&_td]:text-[#E0E7FF]">
           {children}
         </tbody>
       </table>

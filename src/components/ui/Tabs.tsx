@@ -37,13 +37,13 @@ export function Tabs({
               className={cn(
                 "relative cursor-pointer whitespace-nowrap px-4 py-2.5 min-h-[44px] text-sm transition-colors",
                 isActive
-                  ? "text-[#BF40FF]"
-                  : "text-[#f6f6f6]/50 hover:text-[#f6f6f6]/80"
+                  ? "text-[#8B5CF6]"
+                  : "text-[#E0E7FF]/50 hover:text-[#E0E7FF]/80"
               )}
             >
               {tab.label}
               {isActive && (
-                <span className="absolute inset-x-0 -bottom-px h-px bg-[#BF40FF]" />
+                <span className="absolute inset-x-0 -bottom-px h-px bg-[#8B5CF6]" />
               )}
             </button>
           );

@@ -73,7 +73,7 @@ const CATEGORIES = [
 ] as const;
 
 const ICON_COLORS = [
-  "#BF40FF", "#3B82F6", "#F59E0B", "#EC4899", "#8B5CF6",
+  "#8B5CF6", "#3B82F6", "#F59E0B", "#EC4899", "#8B5CF6",
   "#06B6D4", "#F97316", "#10B981", "#6366F1", "#EF4444",
 ];
 
@@ -234,7 +234,7 @@ function AgentCard({
                 {displayCapabilities.map((capability, idx) => (
                   <span
                     key={`${capability}-${idx}`}
-                    className="inline-flex items-center rounded border border-[#BF40FF]/25 bg-[#BF40FF]/10 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-[#BF40FF]"
+                    className="inline-flex items-center rounded border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-[#8B5CF6]"
                   >
                     {capability}
                   </span>
@@ -251,7 +251,7 @@ function AgentCard({
                 )}
               </div>
 
-              <div className="flex items-center border-t border-white/[0.08] pt-3 text-xs font-medium text-white/60 transition-colors group-hover:text-[#BF40FF]">
+              <div className="flex items-center border-t border-white/[0.08] pt-3 text-xs font-medium text-white/60 transition-colors group-hover:text-[#8B5CF6]">
                 View Agent Details
                 <ChevronRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </div>
@@ -561,7 +561,7 @@ export default function RegistryPage(): React.ReactElement {
                           onClick={() => setCategoryFilter(cat.value)}
                           className={`shrink-0 px-4 py-2 text-sm font-medium transition-colors ${
                             categoryFilter === cat.value
-                              ? "bg-[var(--color-accent)] text-black"
+                              ? "bg-[var(--color-accent)] text-white"
                               : "border border-white/10 text-white/70 hover:border-white/20 hover:text-white"
                           }`}
                         >
@@ -580,12 +580,12 @@ export default function RegistryPage(): React.ReactElement {
                       {hasActiveFilters && (
                         <div className="ml-2 flex flex-wrap gap-2">
                           {debouncedSearch && (
-                            <Badge className="border-[#BF40FF]/20 bg-[#BF40FF]/10 text-[#BF40FF]">
+                            <Badge className="border-[#8B5CF6]/20 bg-[#8B5CF6]/10 text-[#8B5CF6]">
                               Name: &quot;{debouncedSearch}&quot;
                             </Badge>
                           )}
                           {statusFilter !== "ALL" && (
-                            <Badge className="border-[#BF40FF]/20 bg-[#BF40FF]/10 text-[#BF40FF]">
+                            <Badge className="border-[#8B5CF6]/20 bg-[#8B5CF6]/10 text-[#8B5CF6]">
                               Status: {statusFilter}
                             </Badge>
                           )}
