@@ -86,25 +86,23 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-[#E0E7FF]">
-            Agents
-          </h2>
-          <p className="mt-1 text-[#E0E7FF]/50">Manage your Zynd agents</p>
-        </div>
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">
+          Agents
+        </h2>
+        <p className="mt-1 text-sm text-white/40">Manage your registered agents</p>
       </div>
 
-      <div className="rounded-lg border border-white/10 bg-[#ffffff0d]">
-        <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center">
-          <h3 className="text-lg font-medium text-[#E0E7FF]">
+      <div className="rounded border border-white/10 bg-white/[0.02]">
+        <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-5 py-3 sm:flex-row sm:items-center">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
             Agent Registry
           </h3>
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#E0E7FF]/30" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/30" />
             <Input
               placeholder="Search agents..."
-              className="pl-8"
+              className="pl-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -112,23 +110,23 @@ export default function AgentsPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3 p-4 sm:p-6">
+          <div className="space-y-3 p-5">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
         ) : error ? (
-          <div className="p-4 sm:p-6 text-center">
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-8 text-red-400">
+          <div className="p-5 text-center">
+            <div className="border border-red-500/20 bg-red-500/[0.06] px-4 py-8 text-red-400">
               {error}
             </div>
           </div>
         ) : filteredAgents.length === 0 ? (
-          <div className="p-4 sm:p-8 text-center">
-            <p className="text-lg font-medium text-[#E0E7FF]/60">
+          <div className="p-5 sm:p-10 text-center">
+            <p className="text-base font-medium text-white/50">
               {searchTerm ? "No matching agents found" : "No agents found"}
             </p>
-            <p className="mt-1 text-sm text-[#E0E7FF]/30">
+            <p className="mt-1 text-sm text-white/30">
               {searchTerm
                 ? "Try a different search term."
                 : "Register agents using the Python SDK or N8N nodes."}
@@ -136,7 +134,7 @@ export default function AgentsPage() {
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="mt-4 cursor-pointer rounded border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]"
+                className="mt-4 cursor-pointer border border-white/10 px-4 py-2 text-sm text-white/50 transition-colors hover:text-white"
               >
                 Clear Search
               </button>
@@ -151,13 +149,13 @@ export default function AgentsPage() {
                   className="transition-colors hover:bg-white/[0.02]"
                 >
                   <td>
-                    <div className="font-medium text-[#E0E7FF]">{agent.name}</div>
-                    <div className="mt-0.5 text-xs text-[#E0E7FF]/30">
-                      ID: {agent.id}
+                    <div className="font-medium text-white">{agent.name}</div>
+                    <div className="mt-0.5 text-xs text-white/25">
+                      {agent.id}
                     </div>
                   </td>
                   <td>
-                    <code className="rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-[#E0E7FF]/60">
+                    <code className="border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-xs text-white/50">
                       {agent.didIdentifier.substring(0, 18)}...
                     </code>
                   </td>
@@ -170,13 +168,13 @@ export default function AgentsPage() {
                   <td>
                     <div className="flex justify-end gap-2">
                       <Link href={`/dashboard/agents/${agent.id}`}>
-                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-[#8B5CF6]/20 bg-transparent px-3 py-1.5 text-xs text-[#8B5CF6] transition-colors hover:bg-[#8B5CF6]/10">
+                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 border border-[var(--color-accent)]/20 bg-transparent px-3 py-1.5 text-xs text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent)]/[0.06]">
                           <Eye className="h-3.5 w-3.5" />
                           View
                         </button>
                       </Link>
                       <Link href={`/dashboard/agents/${agent.id}/edit`}>
-                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-white/10 bg-transparent px-3 py-1.5 text-xs text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]">
+                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 border border-white/10 bg-transparent px-3 py-1.5 text-xs text-white/50 transition-colors hover:text-white">
                           <Pencil className="h-3.5 w-3.5" />
                           Edit
                         </button>

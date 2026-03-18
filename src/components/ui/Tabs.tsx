@@ -25,7 +25,7 @@ export function Tabs({
 }: TabsProps): React.ReactNode {
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="flex gap-1 overflow-x-auto border-b border-white/10" role="tablist">
+      <div className="flex gap-0 overflow-x-auto border-b border-white/[0.08]" role="tablist">
         {tabs.map((tab) => {
           const isActive = tab.value === activeTab;
           return (
@@ -37,13 +37,13 @@ export function Tabs({
               className={cn(
                 "relative cursor-pointer whitespace-nowrap px-4 py-2.5 min-h-[44px] text-sm transition-colors",
                 isActive
-                  ? "text-[#8B5CF6]"
-                  : "text-[#E0E7FF]/50 hover:text-[#E0E7FF]/80"
+                  ? "text-[var(--color-accent)]"
+                  : "text-white/40 hover:text-white/70"
               )}
             >
               {tab.label}
               {isActive && (
-                <span className="absolute inset-x-0 -bottom-px h-px bg-[#8B5CF6]" />
+                <span className="absolute inset-x-0 -bottom-px h-px bg-[var(--color-accent)]" />
               )}
             </button>
           );

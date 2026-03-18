@@ -7,7 +7,7 @@ import gsap from "gsap";
 import { useAuth } from "@/hooks/useAuth";
 import { formatAddress } from "@/lib/utils";
 
-const NAV_LINKS = [
+const NAV_LINKS_BASE = [
   { label: "Registry", href: "/registry" },
   { label: "Docs", href: "https://zynd.gitbook.io/product-docs/" },
   { label: "Litepaper", href: "/docs/litepaper.pdf" },
@@ -41,6 +41,10 @@ export function Navbar(): React.ReactElement {
     }
   }, [authenticated, registryToken, router]);
 
+  const NAV_LINKS = authenticated && registryToken
+    ? [{ label: "Dashboard", href: "/dashboard" }, ...NAV_LINKS_BASE]
+    : NAV_LINKS_BASE;
+
   const buttonLabel = !ready
     ? "GET STARTED"
     : authenticated && registryToken
@@ -54,7 +58,10 @@ export function Navbar(): React.ReactElement {
 
     if (!burger || !menuContent || !menuLinks) return;
 
-    const desktopWidth = window.innerWidth < 1440 ? "50%" : "38rem";
+    const hasExtraLinks = NAV_LINKS.length > 4;
+    const desktopWidth = window.innerWidth < 1440
+      ? hasExtraLinks ? "62%" : "50%"
+      : hasExtraLinks ? "48rem" : "38rem";
 
     gsap.set(burger, { width: "12.5%" });
     gsap.set(menuContent, { y: 0, display: "flex", flexDirection: "row" });
@@ -78,7 +85,7 @@ export function Navbar(): React.ReactElement {
       burger.removeEventListener("mouseleave", onLeave);
       tl.kill();
     };
-  }, []);
+  }, [NAV_LINKS.length]);
 
   useEffect(() => {
     const slideMenu = slideMenuRef.current;

@@ -176,9 +176,10 @@ a {
 
 .nav-logo-text {
   color: #fff;
+  font-family: "Chakra Petch", sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -247,7 +248,7 @@ a {
   width: 12.5%;
   height: 100%;
   min-height: 4rem;
-  padding: 1.25rem 2.75rem;
+  padding: 1.25rem 0.5rem;
   transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   display: flex;
   position: relative;
@@ -273,10 +274,10 @@ a {
 }
 
 .menu-links-wrap {
-  gap: 3rem;
-  justify-content: space-between;
+  gap: 0;
+  justify-content: space-evenly;
   align-items: center;
-  width: 35rem;
+  width: 100%;
   display: none;
 }
 

@@ -7,7 +7,6 @@ import {
   Plus,
   Loader2,
   CheckCircle2,
-  Settings as SettingsIcon,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -172,10 +171,10 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {notification && (
         <div
-          className={`fixed right-4 sm:right-6 left-4 sm:left-auto top-20 z-50 rounded-lg border px-4 py-3 text-sm shadow-lg ${
+          className={`fixed right-4 sm:right-6 left-4 sm:left-auto top-16 z-50 border px-4 py-3 text-sm shadow-lg ${
             notification.type === "success"
-              ? "border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-[#8B5CF6]"
-              : "border-red-500/30 bg-red-500/10 text-red-400"
+              ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+              : "border-red-500/20 bg-red-500/[0.06] text-red-400"
           }`}
         >
           {notification.message}
@@ -183,73 +182,57 @@ export default function SettingsPage() {
       )}
 
       <div>
-        <div className="mb-2 flex items-center gap-3">
-          <div className="rounded-lg bg-[#8B5CF6]/10 p-2">
-            <SettingsIcon className="h-6 w-6 text-[#8B5CF6]" />
-          </div>
-          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-[#E0E7FF]">
-            Settings
-          </h2>
-        </div>
-        <p className="mt-1 text-[#E0E7FF]/50">
-          Manage your account settings and API keys
+        <h2 className="text-xl sm:text-2xl font-bold text-white">
+          Settings
+        </h2>
+        <p className="mt-1 text-sm text-white/40">
+          Account settings and API keys
         </p>
       </div>
 
-      {/* Account Info */}
-      <div className="rounded-lg border border-white/10 bg-[#ffffff0d]">
-        <div className="border-b border-white/10 px-4 sm:px-6 py-4">
-          <h3 className="text-lg font-medium text-[#E0E7FF]">
-            Account Information
+      <div className="rounded border border-white/10 bg-white/[0.02]">
+        <div className="border-b border-white/10 px-5 py-4">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
+            Account
           </h3>
-          <p className="mt-0.5 text-sm text-[#E0E7FF]/40">
-            Your account details
-          </p>
         </div>
-        <div className="divide-y divide-white/5 px-4 sm:px-6">
+        <div className="divide-y divide-white/[0.05] px-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-4">
-            <span className="text-sm font-medium text-[#E0E7FF]/50">
+            <span className="text-sm text-white/40">
               Wallet Address
             </span>
-            <code className="rounded border border-white/10 bg-white/5 px-3 py-1 font-mono text-sm text-[#E0E7FF] truncate">
+            <code className="border border-white/10 bg-white/5 px-3 py-1 font-mono text-sm text-white truncate">
               {user?.walletAddress
                 ? `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}`
                 : "Not connected"}
             </code>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-4">
-            <span className="text-sm font-medium text-[#E0E7FF]/50 shrink-0">
+            <span className="text-sm text-white/40 shrink-0">
               DID Identifier
             </span>
-            <code className="max-w-full sm:max-w-xs truncate rounded border border-white/10 bg-white/5 px-3 py-1 font-mono text-sm text-[#E0E7FF]">
+            <code className="max-w-full sm:max-w-xs truncate border border-white/10 bg-white/5 px-3 py-1 font-mono text-sm text-white">
               {user?.didIdentifier || "N/A"}
             </code>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 py-4">
-            <span className="text-sm font-medium text-[#E0E7FF]/50">
-              Account Status
+            <span className="text-sm text-white/40">
+              Status
             </span>
             <Badge variant="active">Active</Badge>
           </div>
         </div>
       </div>
 
-      {/* API Keys */}
-      <div className="rounded-lg border border-white/10 bg-[#ffffff0d]">
-        <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-4 sm:px-6 py-4 sm:flex-row sm:items-center">
-          <div>
-            <h3 className="flex items-center gap-2 text-lg font-medium text-[#E0E7FF]">
-              <Key className="h-5 w-5 text-[#8B5CF6]" />
-              API Keys
-            </h3>
-            <p className="mt-0.5 text-sm text-[#E0E7FF]/40">
-              Manage your API keys for programmatic access
-            </p>
-          </div>
+      <div className="rounded border border-white/10 bg-white/[0.02]">
+        <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
+            API Keys
+          </h3>
           <button
             onClick={handleCreateApiKey}
             disabled={creating}
-            className="flex cursor-pointer items-center gap-2 rounded bg-[#8B5CF6] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex cursor-pointer items-center gap-2 bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {creating ? (
               <>
@@ -266,23 +249,23 @@ export default function SettingsPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3 p-4 sm:p-6">
+          <div className="space-y-3 p-5">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
         ) : apiKeys.length === 0 ? (
-          <div className="p-4 sm:p-8 text-center">
-            <Key className="mx-auto mb-4 h-12 w-12 text-[#E0E7FF]/20" />
-            <h3 className="text-lg font-medium text-[#E0E7FF]/60">
-              No API keys found
-            </h3>
-            <p className="mt-1 mb-4 text-sm text-[#E0E7FF]/30">
-              Create your first API key to get started with programmatic access
+          <div className="p-5 sm:p-10 text-center">
+            <Key className="mx-auto mb-4 h-10 w-10 text-white/15" />
+            <p className="text-base font-medium text-white/50">
+              No API keys
+            </p>
+            <p className="mt-1 mb-4 text-sm text-white/30">
+              Create your first API key for programmatic access
             </p>
             <button
               onClick={handleCreateApiKey}
               disabled={creating}
-              className="cursor-pointer rounded bg-[#8B5CF6] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Plus className="mr-2 inline h-4 w-4" />
               Create API Key
@@ -299,22 +282,22 @@ export default function SettingsPage() {
                   className="transition-colors hover:bg-white/[0.02]"
                 >
                   <td>
-                    <code className="break-all rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-[#E0E7FF]">
+                    <code className="break-all border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-white">
                       {fullKeys[apiKey.id] || apiKey.key}
                     </code>
                     {!fullKeys[apiKey.id] && (
-                      <span className="mt-1 block text-xs text-yellow-400/60">
-                        Masked - full key shown only at creation
+                      <span className="mt-1 block text-xs text-yellow-400/50">
+                        Masked — full key shown only at creation
                       </span>
                     )}
                   </td>
                   <td>
-                    <span className="text-sm text-[#E0E7FF]/50 whitespace-nowrap">
+                    <span className="text-sm text-white/40 whitespace-nowrap">
                       {formatDate(apiKey.createdAt)}
                     </span>
                   </td>
                   <td>
-                    <span className="text-sm text-[#E0E7FF]/50 whitespace-nowrap">
+                    <span className="text-sm text-white/40 whitespace-nowrap">
                       {formatDate(apiKey.updatedAt)}
                     </span>
                   </td>
@@ -325,7 +308,7 @@ export default function SettingsPage() {
                           onClick={() =>
                             copyToClipboard(fullKeys[apiKey.id], apiKey.id)
                           }
-                          className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-[#8B5CF6]/20 bg-transparent px-3 py-1.5 text-xs text-[#8B5CF6] transition-colors hover:bg-[#8B5CF6]/10"
+                          className="flex min-h-[44px] cursor-pointer items-center gap-1.5 border border-[var(--color-accent)]/20 bg-transparent px-3 py-1.5 text-xs text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent)]/[0.06]"
                         >
                           {copiedId === apiKey.id ? (
                             <>
@@ -343,7 +326,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => confirmDeleteApiKey(apiKey.id)}
                         disabled={deletingId === apiKey.id}
-                        className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded border border-red-500/20 bg-transparent px-2 py-1.5 text-red-400 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center border border-red-500/15 bg-transparent px-2 py-1.5 text-red-400 transition-colors hover:bg-red-500/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {deletingId === apiKey.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -360,34 +343,32 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* New API Key Dialog */}
       <Dialog
         open={showNewKeyDialog}
         onClose={() => {
           setShowNewKeyDialog(false);
           setNewApiKey(null);
         }}
-        title="API Key Created Successfully"
+        title="API Key Created"
       >
         <div className="space-y-4">
-          <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
+          <div className="border border-yellow-500/20 bg-yellow-500/[0.06] p-4">
             <p className="mb-1 text-sm font-medium text-yellow-400">
-              Important: Save this API key now
+              Save this key now
             </p>
-            <p className="text-xs text-yellow-400/70">
-              This is the only time you'll see the full API key. Make sure to
-              copy and store it securely.
+            <p className="text-xs text-yellow-400/60">
+              This is the only time you&apos;ll see the full key. Copy and store it securely.
             </p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#E0E7FF]/70">
+            <label className="text-sm text-white/50">
               Your API Key:
             </label>
             <div className="flex gap-2">
               <Input value={newApiKey || ""} readOnly className="flex-1" />
               <button
                 onClick={() => copyToClipboard(newApiKey || "")}
-                className="cursor-pointer rounded bg-[#8B5CF6] px-3 py-2 text-white transition-opacity hover:opacity-90"
+                className="cursor-pointer bg-[var(--color-accent)] px-3 py-2 text-white transition-opacity hover:opacity-90"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -399,37 +380,34 @@ export default function SettingsPage() {
                 setShowNewKeyDialog(false);
                 setNewApiKey(null);
               }}
-              className="cursor-pointer rounded bg-[#8B5CF6] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="cursor-pointer bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
-              I've saved my API key
+              I&apos;ve saved my key
             </button>
           </div>
         </div>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         title="Delete API Key?"
       >
-        <p className="text-sm text-[#E0E7FF]/60">
-          Are you sure you want to delete this API key? This action cannot be
-          undone and any applications using this key will lose access
-          immediately.
+        <p className="text-sm text-white/50">
+          This action cannot be undone. Applications using this key will lose access immediately.
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={() => setShowDeleteDialog(false)}
-            className="cursor-pointer rounded border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#E0E7FF] transition-colors hover:bg-white/10"
+            className="cursor-pointer border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/[0.06]"
           >
             Cancel
           </button>
           <button
             onClick={handleDeleteApiKey}
-            className="cursor-pointer rounded bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
+            className="cursor-pointer bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
           >
-            Delete API Key
+            Delete
           </button>
         </div>
       </Dialog>

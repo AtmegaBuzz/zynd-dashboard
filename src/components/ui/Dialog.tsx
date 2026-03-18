@@ -44,7 +44,7 @@ export function Dialog({
     <dialog
       ref={dialogRef}
       className={cn(
-        "max-w-lg w-full rounded-lg border border-white/10 bg-[#0a0a0a] p-0 text-[#E0E7FF] shadow-2xl backdrop:bg-black/70",
+        "max-w-lg w-full rounded border border-white/10 bg-[#111] p-0 text-white shadow-[0_16px_70px_rgba(0,0,0,0.7)] backdrop:bg-black/70",
         className
       )}
       onClick={(e) => {
@@ -52,10 +52,10 @@ export function Dialog({
       }}
     >
       <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <h2 className="text-lg font-medium">{title}</h2>
+        <h2 className="text-base font-semibold">{title}</h2>
         <button
           onClick={onClose}
-          className="cursor-pointer text-[#E0E7FF]/50 transition-colors hover:text-[#8B5CF6]"
+          className="cursor-pointer rounded p-1 text-white/40 transition-colors hover:bg-white/5 hover:text-white"
           aria-label="Close dialog"
         >
           &#x2715;

@@ -57,7 +57,7 @@ export default function EditAgentPage({
   if (error || !agent) {
     return (
       <div className="py-16 text-center">
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-8 text-red-400">
+        <div className="border border-red-500/20 bg-red-500/[0.06] px-4 py-8 text-red-400">
           {error || "Agent not found"}
         </div>
       </div>

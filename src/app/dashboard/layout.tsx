@@ -54,7 +54,7 @@ export default function DashboardLayout({
       {sidebarOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
             onClick={closeSidebar}
           />
           <div className="fixed inset-y-0 left-0 z-50 md:hidden">
@@ -65,7 +65,7 @@ export default function DashboardLayout({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-5 md:p-8">{children}</main>
       </div>
     </div>
   );
