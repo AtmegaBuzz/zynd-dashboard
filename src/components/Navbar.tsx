@@ -4,13 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
-import { useAccount, useConnect, useSignMessage } from "wagmi";
-import { metaMask } from "wagmi/connectors";
-import { useAtomValue, useSetAtom } from "jotai";
-
 import { ButtonBasic } from "./ui/ButtonBasic";
-import { login } from "@/apis/registry";
-import { accessTokenAtom, userAtom } from "@/store/global.store";
+import { useAuth } from "@/hooks/useAuth";
 import { formatAddress } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -20,8 +15,6 @@ const NAV_LINKS = [
   { label: "Blog", href: "/blogs" },
 ] as const;
 
-const SIGN_MESSAGE = process.env.NEXT_PUBLIC_MESSAGE || "P3 AI Network";
-
 export function Navbar(): React.ReactElement {
   const router = useRouter();
   const burgerRef = useRef<HTMLDivElement>(null);
@@ -29,87 +22,22 @@ export function Navbar(): React.ReactElement {
   const menuLinksRef = useRef<HTMLDivElement>(null);
   const slideMenuRef = useRef<HTMLDivElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  const { ready, authenticated, registryToken, walletAddress, login: privyLogin } = useAuth();
 
-  const { address, isConnected } = useAccount();
-  const { connect, isPending: isConnecting } = useConnect();
-  const { signMessageAsync } = useSignMessage();
-  const setAccessToken = useSetAtom(accessTokenAtom);
-  const setUser = useSetAtom(userAtom);
-  const accessToken = useAtomValue(accessTokenAtom);
-
-  const handleGetStarted = useCallback(async () => {
-    if (isConnected && accessToken) {
+  const handleGetStarted = useCallback(() => {
+    if (authenticated && registryToken) {
       router.push("/dashboard");
       return;
     }
+    privyLogin();
+  }, [authenticated, registryToken, router, privyLogin]);
 
-    if (isConnected && address) {
-      try {
-        setIsLoggingIn(true);
-        const signature = await signMessageAsync({ message: SIGN_MESSAGE });
-        const response = await login({
-          wallet_address: address,
-          signature,
-          message: SIGN_MESSAGE,
-        });
-        setAccessToken(response.access_token);
-        router.push("/dashboard");
-      } catch {
-        router.push("/auth");
-      } finally {
-        setIsLoggingIn(false);
-      }
-      return;
-    }
-
-    try {
-      connect(
-        { connector: metaMask() },
-        {
-          onSuccess: async (data) => {
-            const walletAddress = data.accounts[0];
-            if (!walletAddress) return;
-            try {
-              setIsLoggingIn(true);
-              const signature = await signMessageAsync({ message: SIGN_MESSAGE });
-              const response = await login({
-                wallet_address: walletAddress,
-                signature,
-                message: SIGN_MESSAGE,
-              });
-              setAccessToken(response.access_token);
-              router.push("/dashboard");
-            } catch {
-              router.push("/auth");
-            } finally {
-              setIsLoggingIn(false);
-            }
-          },
-          onError: () => {
-            router.push("/auth");
-          },
-        }
-      );
-    } catch {
-      router.push("/auth");
-    }
-  }, [isConnected, accessToken, address, connect, signMessageAsync, setAccessToken, setUser, router]);
-
-  const buttonLabel = !mounted
+  const buttonLabel = !ready
     ? "GET STARTED"
-    : isLoggingIn
-      ? "SIGNING IN..."
-      : isConnecting
-        ? "CONNECTING..."
-        : isConnected && accessToken
-          ? formatAddress(address || "")
-          : isConnected
-            ? "SIGN IN"
-            : "GET STARTED";
+    : authenticated && registryToken
+      ? formatAddress(walletAddress || "")
+      : "GET STARTED";
 
   useEffect(() => {
     const burger = burgerRef.current;
@@ -227,10 +155,10 @@ export function Navbar(): React.ReactElement {
 
             <button
               onClick={handleGetStarted}
-              disabled={isConnecting || isLoggingIn}
+              disabled={!ready}
               className="nav-cta-link is-hide-mb"
               style={{
-                cursor: isConnecting || isLoggingIn ? "wait" : "pointer",
+                cursor: !ready ? "wait" : "pointer",
               }}
             >
               {buttonLabel}
