@@ -28,12 +28,12 @@ export function Sidebar({ onLinkClick, mobile }: SidebarProps) {
     >
       <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-[#BF40FF]">Zynd AI</span>
+          <span className="text-lg font-semibold text-[#8B5CF6]">Zynd AI</span>
         </Link>
         {mobile && (
           <button
             onClick={onLinkClick}
-            className="rounded p-1 text-[#f6f6f6]/60 transition-colors hover:text-[#f6f6f6]"
+            className="rounded p-1 text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]"
           >
             <X className="h-5 w-5" />
           </button>
@@ -56,8 +56,8 @@ export function Sidebar({ onLinkClick, mobile }: SidebarProps) {
                   onClick={onLinkClick}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-[#BF40FF]/10 text-[#BF40FF]"
-                      : "text-[#f6f6f6]/60 hover:bg-white/5 hover:text-[#f6f6f6]"
+                      ? "bg-[#8B5CF6]/10 text-[#8B5CF6]"
+                      : "text-[#E0E7FF]/60 hover:bg-white/5 hover:text-[#E0E7FF]"
                   }`}
                 >
                   <Icon className="h-4 w-4" />

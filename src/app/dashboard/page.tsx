@@ -12,22 +12,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl sm:text-3xl font-bold text-[#f6f6f6]">
+        <h1 className="text-xl sm:text-3xl font-bold text-[#E0E7FF]">
           Issued Credentials
         </h1>
-        <p className="mt-1 text-sm text-[#f6f6f6]/50">
+        <p className="mt-1 text-sm text-[#E0E7FF]/50">
           Discover and manage your professional credentials
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          icon={<Bot className="h-5 w-5 text-[#BF40FF]" />}
+          icon={<Bot className="h-5 w-5 text-[#8B5CF6]" />}
           label="Total Credentials"
           value={credentials.length}
         />
         <StatCard
-          icon={<CheckCircle2 className="h-5 w-5 text-[#BF40FF]" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-[#8B5CF6]" />}
           label="Active Credentials"
           value={credentials.filter((c) => !c.revoked).length}
         />
@@ -39,7 +39,7 @@ export default function DashboardPage() {
       </div>
 
       {credentials.length === 0 ? (
-        <div className="py-16 text-center text-[#f6f6f6]/40">
+        <div className="py-16 text-center text-[#E0E7FF]/40">
           No credentials found
         </div>
       ) : (
@@ -73,8 +73,8 @@ function StatCard({
         {icon}
       </div>
       <div>
-        <div className="text-xs font-medium text-[#f6f6f6]/50">{label}</div>
-        <div className="text-lg sm:text-2xl font-bold text-[#f6f6f6]">{value}</div>
+        <div className="text-xs font-medium text-[#E0E7FF]/50">{label}</div>
+        <div className="text-lg sm:text-2xl font-bold text-[#E0E7FF]">{value}</div>
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ export default function AgentsPage() {
   const renderCapabilities = (capabilities?: Capabilities) => {
     if (!capabilities || Object.keys(capabilities).length === 0) {
       return (
-        <span className="text-xs italic text-[#f6f6f6]/30">
+        <span className="text-xs italic text-[#E0E7FF]/30">
           No capabilities
         </span>
       );
@@ -89,20 +89,20 @@ export default function AgentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-[#f6f6f6]">
+          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-[#E0E7FF]">
             Agents
           </h2>
-          <p className="mt-1 text-[#f6f6f6]/50">Manage your Zynd agents</p>
+          <p className="mt-1 text-[#E0E7FF]/50">Manage your Zynd agents</p>
         </div>
       </div>
 
       <div className="rounded-lg border border-white/10 bg-[#ffffff0d]">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center">
-          <h3 className="text-lg font-medium text-[#f6f6f6]">
+          <h3 className="text-lg font-medium text-[#E0E7FF]">
             Agent Registry
           </h3>
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#f6f6f6]/30" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#E0E7FF]/30" />
             <Input
               placeholder="Search agents..."
               className="pl-8"
@@ -126,10 +126,10 @@ export default function AgentsPage() {
           </div>
         ) : filteredAgents.length === 0 ? (
           <div className="p-4 sm:p-8 text-center">
-            <p className="text-lg font-medium text-[#f6f6f6]/60">
+            <p className="text-lg font-medium text-[#E0E7FF]/60">
               {searchTerm ? "No matching agents found" : "No agents found"}
             </p>
-            <p className="mt-1 text-sm text-[#f6f6f6]/30">
+            <p className="mt-1 text-sm text-[#E0E7FF]/30">
               {searchTerm
                 ? "Try a different search term."
                 : "Register agents using the Python SDK or N8N nodes."}
@@ -137,7 +137,7 @@ export default function AgentsPage() {
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="mt-4 cursor-pointer rounded border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#f6f6f6]/60 transition-colors hover:text-[#f6f6f6]"
+                className="mt-4 cursor-pointer rounded border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]"
               >
                 Clear Search
               </button>
@@ -152,13 +152,13 @@ export default function AgentsPage() {
                   className="transition-colors hover:bg-white/[0.02]"
                 >
                   <td>
-                    <div className="font-medium text-[#f6f6f6]">{agent.name}</div>
-                    <div className="mt-0.5 text-xs text-[#f6f6f6]/30">
+                    <div className="font-medium text-[#E0E7FF]">{agent.name}</div>
+                    <div className="mt-0.5 text-xs text-[#E0E7FF]/30">
                       ID: {agent.id}
                     </div>
                   </td>
                   <td>
-                    <code className="rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-[#f6f6f6]/60">
+                    <code className="rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-[#E0E7FF]/60">
                       {agent.didIdentifier.substring(0, 18)}...
                     </code>
                   </td>
@@ -171,13 +171,13 @@ export default function AgentsPage() {
                   <td>
                     <div className="flex justify-end gap-2">
                       <Link href={`/dashboard/agents/${agent.id}`}>
-                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-[#BF40FF]/20 bg-transparent px-3 py-1.5 text-xs text-[#BF40FF] transition-colors hover:bg-[#BF40FF]/10">
+                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-[#8B5CF6]/20 bg-transparent px-3 py-1.5 text-xs text-[#8B5CF6] transition-colors hover:bg-[#8B5CF6]/10">
                           <Eye className="h-3.5 w-3.5" />
                           View
                         </button>
                       </Link>
                       <Link href={`/dashboard/agents/${agent.id}/edit`}>
-                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-white/10 bg-transparent px-3 py-1.5 text-xs text-[#f6f6f6]/60 transition-colors hover:text-[#f6f6f6]">
+                        <button className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded border border-white/10 bg-transparent px-3 py-1.5 text-xs text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]">
                           <Pencil className="h-3.5 w-3.5" />
                           Edit
                         </button>

@@ -52,22 +52,22 @@ export function TopNav({ onToggleSidebar }: TopNavProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="rounded p-1.5 text-[#f6f6f6]/60 transition-colors hover:text-[#f6f6f6] md:hidden"
+          className="rounded p-1.5 text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF] md:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="text-lg font-semibold text-[#f6f6f6]">Dashboard</div>
+        <div className="text-lg font-semibold text-[#E0E7FF]">Dashboard</div>
       </div>
 
       <div className="flex items-center gap-4">
         {isConnected && user ? (
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm text-[#f6f6f6]/60">
+            <span className="font-mono text-sm text-[#E0E7FF]/60">
               {formatAddress(user.walletAddress)}
             </span>
             <button
               onClick={handleLogout}
-              className="flex cursor-pointer items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#f6f6f6]/60 transition-colors hover:border-red-500/50 hover:text-red-400"
+              className="flex cursor-pointer items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#E0E7FF]/60 transition-colors hover:border-red-500/50 hover:text-red-400"
             >
               <LogOut className="h-3.5 w-3.5" />
               Logout

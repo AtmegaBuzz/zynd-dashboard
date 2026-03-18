@@ -47,9 +47,9 @@ const STATUS_CONFIG: Record<
   }
 > = {
   active: {
-    gradient: "from-[#BF40FF]/20 to-[#BF40FF]/5",
+    gradient: "from-[#8B5CF6]/20 to-[#8B5CF6]/5",
     icon: ShieldCheck,
-    iconColor: "text-[#BF40FF]",
+    iconColor: "text-[#8B5CF6]",
     badgeVariant: "active",
     text: "Active",
   },
@@ -164,16 +164,16 @@ export function CredentialCard({
       <div className={`group w-full rounded-lg border border-white/10 bg-gradient-to-br ${config.gradient} p-3 sm:p-5 transition-all hover:-translate-y-0.5 hover:border-white/20`}>
         <div className="mb-4 flex items-center gap-3">
           <StatusIcon className={`h-6 w-6 ${config.iconColor}`} />
-          <h3 className="text-base font-semibold text-[#f6f6f6]">
+          <h3 className="text-base font-semibold text-[#E0E7FF]">
             {credData.vc.type}
           </h3>
         </div>
 
         <div className="space-y-3 text-sm">
           <div className="min-w-0">
-            <span className="block text-xs text-[#f6f6f6]/40">Issuer</span>
+            <span className="block text-xs text-[#E0E7FF]/40">Issuer</span>
             <div className="flex items-center gap-2">
-              <span className="flex-1 truncate font-mono text-xs sm:text-sm text-[#f6f6f6]/80">
+              <span className="flex-1 truncate font-mono text-xs sm:text-sm text-[#E0E7FF]/80">
                 {formatDID(credData.vc.issuer)}
               </span>
               <button
@@ -181,33 +181,33 @@ export function CredentialCard({
                 className="cursor-pointer rounded p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors hover:bg-white/10"
               >
                 <Copy
-                  className={`h-3.5 w-3.5 ${copied ? "text-[#BF40FF]" : "text-[#f6f6f6]/40"}`}
+                  className={`h-3.5 w-3.5 ${copied ? "text-[#8B5CF6]" : "text-[#E0E7FF]/40"}`}
                 />
               </button>
             </div>
           </div>
 
           <div className="min-w-0">
-            <span className="block text-xs text-[#f6f6f6]/40">Issued To</span>
-            <span className="block truncate font-mono text-xs sm:text-sm text-[#f6f6f6]/80">
+            <span className="block text-xs text-[#E0E7FF]/40">Issued To</span>
+            <span className="block truncate font-mono text-xs sm:text-sm text-[#E0E7FF]/80">
               {formatDID(credData.vc.didIdentifier)}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="block text-xs text-[#f6f6f6]/40">
+              <span className="block text-xs text-[#E0E7FF]/40">
                 Issued At
               </span>
-              <span className="text-[#f6f6f6]/80">
+              <span className="text-[#E0E7FF]/80">
                 {formatDate(credData.vc.issuanceDate)}
               </span>
             </div>
             <div>
-              <span className="block text-xs text-[#f6f6f6]/40">
+              <span className="block text-xs text-[#E0E7FF]/40">
                 Valid Until
               </span>
-              <span className="text-[#f6f6f6]/80">
+              <span className="text-[#E0E7FF]/80">
                 {isDID ? "-" : formatDate(credData.vc.expirationDate)}
               </span>
             </div>
@@ -218,7 +218,7 @@ export function CredentialCard({
           <Badge variant={config.badgeVariant}>{config.text}</Badge>
           <button
             onClick={() => setIsDetailsOpen(true)}
-            className="cursor-pointer rounded border border-white/10 px-3 py-1.5 min-h-[44px] text-xs text-[#f6f6f6]/60 transition-colors hover:bg-white/5 hover:text-[#f6f6f6]"
+            className="cursor-pointer rounded border border-white/10 px-3 py-1.5 min-h-[44px] text-xs text-[#E0E7FF]/60 transition-colors hover:bg-white/5 hover:text-[#E0E7FF]"
           >
             View Details
           </button>
@@ -234,13 +234,13 @@ export function CredentialCard({
         <div className="mb-4 flex justify-end">
           <button
             onClick={handleCopyJSON}
-            className="flex cursor-pointer items-center gap-2 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#f6f6f6]/60 transition-colors hover:text-[#f6f6f6]"
+            className="flex cursor-pointer items-center gap-2 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#E0E7FF]/60 transition-colors hover:text-[#E0E7FF]"
           >
             <Copy className="h-3.5 w-3.5" />
             Copy JSON
           </button>
         </div>
-        <pre className="max-h-[60vh] overflow-auto rounded-lg bg-white/5 p-2 sm:p-4 text-[10px] sm:text-xs text-[#f6f6f6]/80">
+        <pre className="max-h-[60vh] overflow-auto rounded-lg bg-white/5 p-2 sm:p-4 text-[10px] sm:text-xs text-[#E0E7FF]/80">
           <code>{JSON.stringify(credential, null, 2)}</code>
         </pre>
       </Dialog>
