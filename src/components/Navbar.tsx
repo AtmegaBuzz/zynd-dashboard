@@ -23,14 +23,23 @@ export function Navbar(): React.ReactElement {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { ready, authenticated, registryToken, walletAddress, login: privyLogin } = useAuth();
+  const loginIntentRef = useRef(false);
 
   const handleGetStarted = useCallback(() => {
     if (authenticated && registryToken) {
       router.push("/dashboard");
       return;
     }
+    loginIntentRef.current = true;
     privyLogin();
   }, [authenticated, registryToken, router, privyLogin]);
+
+  useEffect(() => {
+    if (loginIntentRef.current && authenticated && registryToken) {
+      loginIntentRef.current = false;
+      router.push("/dashboard");
+    }
+  }, [authenticated, registryToken, router]);
 
   const buttonLabel = !ready
     ? "GET STARTED"

@@ -10,28 +10,30 @@ import { getMe } from "@/apis/registry/users";
 const SIGN_MESSAGE = process.env.NEXT_PUBLIC_MESSAGE || "Sign in to ZyndAI";
 
 export function useAuth() {
-  const { ready, authenticated, user: privyUser, login: privyLogin, logout: privyLogout, signMessage } = usePrivy();
-  const { wallets } = useWallets();
+  const { ready, authenticated, user: privyUser, login: privyLogin, logout: privyLogout } = usePrivy();
+  const { ready: walletsReady, wallets } = useWallets();
   const [registryToken, setRegistryToken] = useAtom(registryTokenAtom);
   const [user, setUser] = useAtom(userAtom);
   const [, setUserCreds] = useAtom(userCredsAtom);
   const loginAttemptedRef = useRef(false);
 
-  const walletAddress = wallets[0]?.address ?? null;
+  const wallet = wallets[0];
+  const walletAddress = wallet?.address ?? null;
 
   const loginToRegistry = useCallback(async () => {
-    if (!walletAddress || loginAttemptedRef.current) return;
+    if (!wallet || !walletAddress || loginAttemptedRef.current) return;
     loginAttemptedRef.current = true;
 
     try {
-      const { signature } = await signMessage(
-        { message: SIGN_MESSAGE },
-        { uiOptions: { title: "Sign in to ZyndAI", description: "This signature verifies your identity." } },
-      );
+      const provider = await wallet.getEthereumProvider();
+      const signature = await provider.request({
+        method: "personal_sign",
+        params: [SIGN_MESSAGE, walletAddress],
+      });
 
       const response = await login({
         wallet_address: walletAddress,
-        signature,
+        signature: signature as string,
         message: SIGN_MESSAGE,
       });
 
@@ -44,13 +46,13 @@ export function useAuth() {
       console.error("Registry login failed:", error);
       loginAttemptedRef.current = false;
     }
-  }, [walletAddress, signMessage, setRegistryToken, setUser, setUserCreds]);
+  }, [wallet, walletAddress, setRegistryToken, setUser, setUserCreds]);
 
   useEffect(() => {
-    if (authenticated && walletAddress && !registryToken) {
+    if (authenticated && walletsReady && walletAddress && !registryToken) {
       loginToRegistry();
     }
-  }, [authenticated, walletAddress, registryToken, loginToRegistry]);
+  }, [authenticated, walletsReady, walletAddress, registryToken, loginToRegistry]);
 
   useEffect(() => {
     if (!authenticated) {
