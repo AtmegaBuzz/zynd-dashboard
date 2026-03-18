@@ -11,6 +11,8 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^3.10.0",
+    "@privy-io/react-auth": "^3.17.0",
+    "@privy-io/wagmi": "^4.0.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
