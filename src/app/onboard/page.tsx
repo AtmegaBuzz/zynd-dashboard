@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -20,7 +20,7 @@ const STEP_LABELS: Record<Step, string> = {
   error: "Something went wrong",
 };
 
-export default function OnboardPage() {
+function OnboardPage() {
   const searchParams = useSearchParams();
   const { ready, authenticated, login } = usePrivy();
 
@@ -221,5 +221,13 @@ export default function OnboardPage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function OnboardPageWrapper() {
+  return (
+    <Suspense>
+      <OnboardPage />
+    </Suspense>
   );
 }

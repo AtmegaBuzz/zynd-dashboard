@@ -20,7 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <>{children}</>;
+    return null;
   }
 
   return (
