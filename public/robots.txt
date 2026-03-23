@@ -1,8 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /auth
+Disallow: /onboard
 
 # Allow major AI crawlers explicitly
 User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ChatGPT-User
@@ -23,4 +29,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://zynd.ai/sitemap.xml
+Sitemap: https://www.zynd.ai/sitemap.xml

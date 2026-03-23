@@ -66,41 +66,58 @@ export function FrameSequence({
     ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, img.naturalWidth * scale, img.naturalHeight * scale);
   }, []);
 
-  // Preload all frames — frame 0 first for immediate paint
+  // Preload frames only when the canvas enters the viewport
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const images: HTMLImageElement[] = new Array(totalFrames);
     let cancelled = false;
 
-    const firstImg = new Image();
-    firstImg.src = getFramePath(folder, startFrame);
-    firstImg.onload = () => {
-      if (!cancelled) {
-        images[0] = firstImg;
-        imagesRef.current = images;
-        setFirstFrameLoaded(true);
-        requestAnimationFrame(() => drawFrame(0));
-      }
-    };
-    images[0] = firstImg;
-
-    for (let i = 1; i < totalFrames; i++) {
-      const img = new Image();
-      img.src = getFramePath(folder, startFrame + i);
-      img.onload = () => {
+    const startPreload = () => {
+      const firstImg = new Image();
+      firstImg.src = getFramePath(folder, startFrame);
+      firstImg.onload = () => {
         if (!cancelled) {
-          loadedCountRef.current++;
-          if (i === currentFrameRef.current) {
-            drawFrame(i);
-          }
+          images[0] = firstImg;
+          imagesRef.current = images;
+          setFirstFrameLoaded(true);
+          requestAnimationFrame(() => drawFrame(0));
         }
       };
-      images[i] = img;
-    }
+      images[0] = firstImg;
 
-    imagesRef.current = images;
+      for (let i = 1; i < totalFrames; i++) {
+        const img = new Image();
+        img.src = getFramePath(folder, startFrame + i);
+        img.onload = () => {
+          if (!cancelled) {
+            loadedCountRef.current++;
+            if (i === currentFrameRef.current) {
+              drawFrame(i);
+            }
+          }
+        };
+        images[i] = img;
+      }
+
+      imagesRef.current = images;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          startPreload();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(canvas);
 
     return () => {
       cancelled = true;
+      observer.disconnect();
       images.forEach((img) => {
         if (img) {
           img.onload = null;
@@ -108,7 +125,7 @@ export function FrameSequence({
         }
       });
     };
-  }, [folder, startFrame, drawFrame]);
+  }, [folder, startFrame, drawFrame, totalFrames]);
 
   // ResizeObserver: redraw when the container resizes
   useEffect(() => {

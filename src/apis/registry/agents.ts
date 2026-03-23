@@ -63,10 +63,14 @@ export const getAgentById = async (id: string, authToken: string): Promise<{ age
 };
 
 export const getAgentByIdPublic = async (id: string): Promise<Agent | null> => {
+  // The public /agents list endpoint does not support ?id= filtering and
+  // /agents/:id requires auth. Fetch the first page and find by id client-side.
+  // This is only reached on direct URL navigation (no sessionStorage cache).
   const response = await apiClient.get<AgentResponse>("/agents", {
-    params: { id },
+    params: { limit: 100, offset: 0 },
   });
-  return response.data.data?.[0] || null;
+  const found = response.data.data?.find((a) => a.id === id);
+  return found ?? null;
 };
 
 export const updateAgent = async (

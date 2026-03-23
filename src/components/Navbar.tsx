@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useAuth } from "@/hooks/useAuth";
@@ -113,9 +114,11 @@ export function Navbar(): React.ReactElement {
         <div className="container">
           <div className="nav-content-wrap">
             <Link href="/" className="nav-logo-link">
-              <img
+              <Image
                 src="/zynd.png"
                 alt="ZyndAI"
+                width={40}
+                height={40}
                 className="nav-logo"
               />
               <span className="nav-logo-text">ZYND<span className="nav-logo-accent">AI</span></span>
@@ -124,7 +127,7 @@ export function Navbar(): React.ReactElement {
             <div className="burger menu" ref={burgerRef}>
               <div className="menu-content-wrap" ref={menuContentRef}>
                 <div className="menu-icon-wrap">
-                  <img src="/assets/images/burger-icon.svg" alt="Menu" className="menu-icon" />
+                  <Image src="/assets/images/burger-icon.svg" alt="Menu" width={20} height={20} className="menu-icon" />
                 </div>
                 <div>Menu</div>
               </div>

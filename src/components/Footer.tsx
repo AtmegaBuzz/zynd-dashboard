@@ -8,13 +8,13 @@ import { GridTripod } from "./ui/GridTripod";
 
 const LINKS = [
   { label: "Registry", href: "/registry" },
-  { label: "Docs", href: "https://zynd.gitbook.io/product-docs/" },
+  { label: "Docs", href: "https://docs.zynd.ai" },
   { label: "Blog", href: "/blogs" },
   { label: "Litepaper", href: "/docs/litepaper.pdf" },
 ] as const;
 
 const RESOURCES = [
-  { label: "Documentation", href: "https://zynd.gitbook.io/product-docs/" },
+  { label: "Documentation", href: "https://docs.zynd.ai" },
   { label: "GitHub", href: "https://github.com/ZyndAI" },
   { label: "npm", href: "https://www.npmjs.com/package/zyndai-mcp-server" },
   { label: "Litepaper", href: "/docs/litepaper.pdf" },

@@ -10,11 +10,6 @@ export function Hero() {
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const [agentCount, setAgentCount] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (h1Ref.current) {
-      h1Ref.current.textContent = "The Open Agent Network";
-    }
-  }, []);
 
   useEffect(() => {
     fetch("https://registry.zynd.ai/agents?limit=1&offset=0")
@@ -34,13 +29,15 @@ export function Hero() {
           <div className="hero-wrap">
             <div className="hero-top-wrap">
               <div className="hero-heading-wrap">
-                {agentCount !== null && (
-                  <div className="hero-agent-badge">
-                    <span className="hero-agent-dot" />
-                    <span>{agentCount.toLocaleString()}+ Agents on the Network</span>
-                  </div>
-                )}
-                <h1 ref={h1Ref} data-scramble="load" className="hero-h1" />
+                <div className="hero-agent-badge" style={{ minHeight: "28px" }}>
+                  {agentCount !== null && (
+                    <>
+                      <span className="hero-agent-dot" />
+                      <span>{agentCount.toLocaleString()}+ Agents on the Network</span>
+                    </>
+                  )}
+                </div>
+                <h1 ref={h1Ref} data-scramble="load" className="hero-h1">The Open Agent Network</h1>
                 <div className="hero-accent" hero-accent="">
                   <MorphingText
                     texts={["Build.", "Discover.", "Call."]}

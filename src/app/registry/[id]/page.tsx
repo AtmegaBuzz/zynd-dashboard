@@ -146,35 +146,35 @@ export default function AgentDetailPage(): React.ReactElement {
 
   useEffect(() => {
     const agentId = typeof params.id === "string" ? params.id : "";
-
-    const dataParam = searchParams.get("data");
-    if (dataParam) {
-      try {
-        const agentData = JSON.parse(decodeURIComponent(dataParam)) as Agent;
-        setAgent(agentData);
-        setLoading(false);
-        return;
-      } catch (err) {
-        console.error("Error parsing agent data, falling back to API fetch:", err);
-      }
-    }
-
-    if (agentId) {
-      getAgentByIdPublic(agentId)
-        .then((data) => {
-          if (data) setAgent(data);
-          else setError("Agent not found");
-        })
-        .catch((err) => {
-          console.error("Error fetching agent:", err);
-          setError("Failed to load agent");
-        })
-        .finally(() => setLoading(false));
-    } else {
+    if (!agentId) {
       setError("Agent not found");
       setLoading(false);
+      return;
     }
-  }, [searchParams, params.id]);
+
+    // Try sessionStorage first (populated when navigating from the registry list)
+    try {
+      const cached = sessionStorage.getItem(`agent_${agentId}`);
+      if (cached) {
+        setAgent(JSON.parse(cached) as Agent);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // sessionStorage unavailable, fall through to API
+    }
+
+    getAgentByIdPublic(agentId)
+      .then((data) => {
+        if (data) setAgent(data);
+        else setError("Agent not found");
+      })
+      .catch((err) => {
+        console.error("Error fetching agent:", err);
+        setError("Failed to load agent");
+      })
+      .finally(() => setLoading(false));
+  }, [params.id]);
 
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);

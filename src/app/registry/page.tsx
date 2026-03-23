@@ -198,8 +198,16 @@ function AgentCard({
   const remainingCount = allCapabilities.length - 3;
   const { Icon: AgentIcon, color: iconColor } = getAgentIcon(agent.name);
 
+  const handleClick = () => {
+    try {
+      sessionStorage.setItem(`agent_${agent.id}`, JSON.stringify(agent));
+    } catch {
+      // sessionStorage unavailable — detail page will show loading state
+    }
+  };
+
   return (
-    <Link href={href} className={`group relative block h-full outline-none${agent.status !== "ACTIVE" ? " opacity-50" : ""}`}>
+    <Link href={href} onClick={handleClick} className={`group relative block h-full outline-none${agent.status !== "ACTIVE" ? " opacity-50" : ""}`}>
       {/* Card container with accent border overlay */}
       <div className="solution-card-wrap" style={{ ...wrapStyle, height: "100%" }}>
         <div className="solution-card" style={{ ...cardStyle, height: "100%" }}>
@@ -635,7 +643,7 @@ export default function RegistryPage(): React.ReactElement {
                       <AgentCard
                         key={agent.id}
                         agent={agent}
-                        href={`/registry/${agent.id}?data=${encodeURIComponent(JSON.stringify(agent))}`}
+                        href={`/registry/${agent.id}`}
                       />
                     ))}
                   </div>
