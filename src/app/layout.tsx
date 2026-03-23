@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import Script from "next/script";
 
 const SITE_URL = "https://zynd.ai";
 const SITE_NAME = "ZyndAI";
@@ -231,6 +232,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const GA_ID = process.env.NEXT_PUBLIC_ANALYTICS_ID;
   return (
     <html lang="en">
       <head>
@@ -255,6 +257,18 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <Script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+        />
+        <Script>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
         <Providers>{children}</Providers>
       </body>
     </html>
