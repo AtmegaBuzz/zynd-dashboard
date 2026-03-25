@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useAuth } from "@/hooks/useAuth";
-import { formatAddress } from "@/lib/utils";
 
 const NAV_LINKS_BASE = [
   { label: "Registry", href: "/registry" },
@@ -23,33 +22,33 @@ export function Navbar(): React.ReactElement {
   const slideMenuRef = useRef<HTMLDivElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { ready, authenticated, registryToken, walletAddress, login: privyLogin } = useAuth();
+  const { ready, authenticated, user, login } = useAuth();
   const loginIntentRef = useRef(false);
 
   const handleGetStarted = useCallback(() => {
-    if (authenticated && registryToken) {
+    if (authenticated) {
       router.push("/dashboard");
       return;
     }
     loginIntentRef.current = true;
-    privyLogin();
-  }, [authenticated, registryToken, router, privyLogin]);
+    login();
+  }, [authenticated, router, login]);
 
   useEffect(() => {
-    if (loginIntentRef.current && authenticated && registryToken) {
+    if (loginIntentRef.current && authenticated) {
       loginIntentRef.current = false;
       router.push("/dashboard");
     }
-  }, [authenticated, registryToken, router]);
+  }, [authenticated, router]);
 
-  const NAV_LINKS = authenticated && registryToken
+  const NAV_LINKS = authenticated
     ? [{ label: "Dashboard", href: "/dashboard" }, ...NAV_LINKS_BASE]
     : NAV_LINKS_BASE;
 
   const buttonLabel = !ready
     ? "GET STARTED"
-    : authenticated && registryToken
-      ? formatAddress(walletAddress || "")
+    : authenticated
+      ? (user?.email ?? "Dashboard")
       : "GET STARTED";
 
   useEffect(() => {

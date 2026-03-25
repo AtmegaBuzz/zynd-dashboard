@@ -32,9 +32,31 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { getAgents } from "@/apis/registry";
-import { Agent, AgentStatus, GetAgentsParams } from "@/apis/registry/types";
 import { Badge } from "@/components/ui/Badge";
+
+type AgentStatus = "ACTIVE" | "INACTIVE" | "DEPRECATED";
+
+interface Agent {
+  id: string;
+  name: string;
+  description?: string;
+  capabilities?: Record<string, string[]>;
+  status: AgentStatus;
+  createdAt: string;
+}
+
+interface GetAgentsParams {
+  name?: string;
+  status?: AgentStatus;
+  capabilities?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+async function getAgents(_params?: GetAgentsParams): Promise<{ data: Agent[]; total: number }> {
+  // TODO: Connect to AgentDNS registry search
+  return { data: [], total: 0 };
+}
 import { Skeleton } from "@/components/ui/Skeleton";
 import { AccentCorners } from "@/components/ui/AccentCorners";
 import { GridTripod } from "@/components/ui/GridTripod";

@@ -1,87 +1,115 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useAtom } from "jotai";
-import { registryTokenAtom, userAtom, userCredsAtom } from "@/store/global.store";
-import { login } from "@/apis/registry";
-import { getMe } from "@/apis/registry/users";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
-const SIGN_MESSAGE = process.env.NEXT_PUBLIC_MESSAGE || "Sign in to ZyndAI";
+export interface DeveloperInfo {
+  developer_id: string;
+  public_key: string;
+  name: string;
+}
 
 export function useAuth() {
-  const { ready, authenticated, user: privyUser, login: privyLogin, logout: privyLogout } = usePrivy();
-  const { ready: walletsReady, wallets } = useWallets();
-  const [registryToken, setRegistryToken] = useAtom(registryTokenAtom);
-  const [user, setUser] = useAtom(userAtom);
-  const [, setUserCreds] = useAtom(userCredsAtom);
-  const loginAttemptedRef = useRef(false);
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
-  const wallet = wallets[0];
-  const walletAddress = wallet?.address ?? null;
+  const [user, setUser] = useState<User | null>(null);
+  const [developer, setDeveloper] = useState<DeveloperInfo | null>(null);
+  const [ready, setReady] = useState(false);
+  const registerAttemptedRef = useRef(false);
 
-  const loginToRegistry = useCallback(async () => {
-    if (!wallet || !walletAddress || loginAttemptedRef.current) return;
-    loginAttemptedRef.current = true;
-
-    try {
-      const provider = await wallet.getEthereumProvider();
-      const signature = await provider.request({
-        method: "personal_sign",
-        params: [SIGN_MESSAGE, walletAddress],
-      });
-
-      const response = await login({
-        wallet_address: walletAddress,
-        signature: signature as string,
-        message: SIGN_MESSAGE,
-      });
-
-      setRegistryToken(response.access_token);
-
-      const me = await getMe(response.access_token);
-      setUser(me.user);
-      setUserCreds(me.credentials);
-    } catch (error) {
-      console.error("Registry login failed:", error);
-      loginAttemptedRef.current = false;
-    }
-  }, [wallet, walletAddress, setRegistryToken, setUser, setUserCreds]);
-
+  // Get initial session and listen for changes
   useEffect(() => {
-    if (authenticated && walletsReady && walletAddress && !registryToken) {
-      loginToRegistry();
-    }
-  }, [authenticated, walletsReady, walletAddress, registryToken, loginToRegistry]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setReady(true);
+    });
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setReady(true);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  // Fetch developer info — auto-register if not found
   useEffect(() => {
-    if (!authenticated) {
-      loginAttemptedRef.current = false;
-      setRegistryToken(null);
-      setUser(null);
-      setUserCreds([]);
+    if (!user) {
+      setDeveloper(null);
+      registerAttemptedRef.current = false;
+      return;
     }
-  }, [authenticated, setRegistryToken, setUser, setUserCreds]);
 
-  const handleLogin = useCallback(() => {
-    privyLogin();
-  }, [privyLogin]);
+    async function fetchOrRegister() {
+      try {
+        // Try to fetch existing developer key
+        const res = await fetch("/api/developer/keys");
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            setDeveloper(data);
+            return;
+          }
+        }
 
-  const handleLogout = useCallback(async () => {
-    await privyLogout();
-    setRegistryToken(null);
+        // No key found — auto-register (only once per session)
+        if (registerAttemptedRef.current) return;
+        registerAttemptedRef.current = true;
+
+        console.log("No developer key found, auto-registering...");
+        const regRes = await fetch("/api/developer/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: user?.email ?? "Developer" }),
+        });
+
+        if (regRes.ok) {
+          const regData = await regRes.json();
+          setDeveloper(regData);
+        } else {
+          const err = await regRes.json().catch(() => ({ error: "Registration failed" }));
+          console.error("Developer registration failed:", err.error);
+        }
+      } catch (err) {
+        console.error("Failed to fetch/register developer:", err);
+      }
+    }
+
+    fetchOrRegister();
+  }, [user]);
+
+  const login = useCallback(() => {
+    supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }, [supabase]);
+
+  const loginWithGithub = useCallback(() => {
+    supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }, [supabase]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    setUserCreds([]);
-  }, [privyLogout, setRegistryToken, setUser, setUserCreds]);
+    setDeveloper(null);
+    registerAttemptedRef.current = false;
+  }, [supabase]);
 
   return {
     ready,
-    authenticated,
-    registryToken,
+    authenticated: !!user,
     user,
-    walletAddress,
-    login: handleLogin,
-    logout: handleLogout,
-    privyUser,
+    developer,
+    login,
+    loginWithGithub,
+    logout,
   };
 }

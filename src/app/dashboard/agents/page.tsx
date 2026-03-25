@@ -3,27 +3,35 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, Eye, Pencil } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getMyAgents } from "@/apis/registry";
-import { Agent, Capabilities } from "@/apis/registry/types";
+import type { AgentRecord } from "@/lib/supabase/db";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Table } from "@/components/ui/Table";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { registryToken: accessToken } = useAuth();
+  const { authenticated } = useAuth();
 
   useEffect(() => {
+    if (!authenticated) return;
+
     async function fetchAgents() {
       try {
         setLoading(true);
-        const response = await getMyAgents(accessToken!);
-        setAgents(response);
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from("agents")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (fetchError) throw fetchError;
+        setAgents(data || []);
         setError(null);
       } catch (err) {
         setError("Failed to load agents");
@@ -33,48 +41,19 @@ export default function AgentsPage() {
       }
     }
 
-    if (accessToken) {
-      fetchAgents();
-    }
-  }, [accessToken]);
+    fetchAgents();
+  }, [authenticated]);
 
   const filteredAgents = (agents || []).filter(
     (agent) =>
       agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.didIdentifier.toLowerCase().includes(searchTerm.toLowerCase())
+      (agent.agent_id || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const renderCapabilities = (capabilities?: Capabilities) => {
-    if (!capabilities || Object.keys(capabilities).length === 0) {
-      return (
-        <span className="text-xs italic text-[#E0E7FF]/30">
-          No capabilities
-        </span>
-      );
-    }
-
-    const allItems = Object.values(capabilities).flat().filter(Boolean) as string[];
-
-    return (
-      <div className="flex flex-wrap gap-1">
-        {allItems.slice(0, 2).map((item, idx) => (
-          <Badge key={idx} variant="active" className="text-[9px]">
-            {item}
-          </Badge>
-        ))}
-        {allItems.length > 2 && (
-          <Badge variant="default" className="text-[9px]">
-            +{allItems.length - 2} more
-          </Badge>
-        )}
-      </div>
-    );
-  };
 
   const getStatusVariant = (
     status: string
   ): "active" | "inactive" | "deprecated" => {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case "ACTIVE":
         return "active";
       case "INACTIVE":
@@ -129,7 +108,7 @@ export default function AgentsPage() {
             <p className="mt-1 text-sm text-white/30">
               {searchTerm
                 ? "Try a different search term."
-                : "Register agents using the Python SDK or N8N nodes."}
+                : "Create an agent to get started."}
             </p>
             {searchTerm && (
               <button
@@ -142,7 +121,7 @@ export default function AgentsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table headers={["Name", "DID", "Status", "Capabilities", "Actions"]}>
+            <Table headers={["Name", "Agent ID", "Status", "Tags", "Actions"]}>
               {filteredAgents.map((agent) => (
                 <tr
                   key={agent.id}
@@ -150,21 +129,42 @@ export default function AgentsPage() {
                 >
                   <td>
                     <div className="font-medium text-white">{agent.name}</div>
-                    <div className="mt-0.5 text-xs text-white/25">
-                      {agent.id}
-                    </div>
+                    {agent.description && (
+                      <div className="mt-0.5 text-xs text-white/25 truncate max-w-[200px]">
+                        {agent.description}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <code className="border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-xs text-white/50">
-                      {agent.didIdentifier.substring(0, 18)}...
+                      {agent.agent_id
+                        ? `${agent.agent_id.substring(0, 18)}...`
+                        : "—"}
                     </code>
                   </td>
                   <td>
                     <Badge variant={getStatusVariant(agent.status)}>
-                      {agent.status}
+                      {agent.status.toUpperCase()}
                     </Badge>
                   </td>
-                  <td>{renderCapabilities(agent.capabilities)}</td>
+                  <td>
+                    {agent.tags && agent.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {agent.tags.slice(0, 2).map((tag, idx) => (
+                          <Badge key={idx} variant="active" className="text-[9px]">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {agent.tags.length > 2 && (
+                          <Badge variant="default" className="text-[9px]">
+                            +{agent.tags.length - 2} more
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs italic text-[#E0E7FF]/30">None</span>
+                    )}
+                  </td>
                   <td>
                     <div className="flex justify-end gap-2">
                       <Link href={`/dashboard/agents/${agent.id}`}>

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getAgentById } from "@/apis/registry";
-import { Agent } from "@/apis/registry/types";
+import type { AgentRecord } from "@/lib/supabase/db";
 import { AgentForm } from "@/components/agents/agent-form";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -12,11 +12,11 @@ export default function EditAgentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [agent, setAgent] = useState<Agent | null>(null);
+  const [agent, setAgent] = useState<AgentRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
-  const { registryToken: accessToken } = useAuth();
+  const { authenticated } = useAuth();
 
   useEffect(() => {
     async function resolveParams() {
@@ -27,13 +27,20 @@ export default function EditAgentPage({
   }, [params]);
 
   useEffect(() => {
-    if (!agentId || !accessToken) return;
+    if (!agentId || !authenticated) return;
 
     async function fetchAgent() {
       try {
         setLoading(true);
-        const result = await getAgentById(agentId!, accessToken!);
-        setAgent(result.agent);
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("id", agentId!)
+          .single();
+
+        if (fetchError) throw fetchError;
+        setAgent(data);
       } catch (err) {
         setError("Failed to load agent details");
         console.error(err);
@@ -43,7 +50,7 @@ export default function EditAgentPage({
     }
 
     fetchAgent();
-  }, [agentId, accessToken]);
+  }, [agentId, authenticated]);
 
   if (loading) {
     return (
@@ -70,9 +77,10 @@ export default function EditAgentPage({
         agent={{
           name: agent.name,
           description: agent.description ?? "",
-          capabilities: agent.capabilities,
+          tags: agent.tags ?? [],
         }}
         isEditing={true}
+        agentId={agentId!}
       />
     </div>
   );

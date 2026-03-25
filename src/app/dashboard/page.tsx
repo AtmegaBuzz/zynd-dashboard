@@ -1,56 +1,59 @@
 "use client";
 
-import { useAtomValue } from "jotai";
-import { userCredsAtom } from "@/store/global.store";
-import { CredentialCard } from "@/components/dashboard/credential-card";
-import { Bot, CheckCircle2, XCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Key, Shield, User } from "lucide-react";
 
 export default function DashboardPage() {
-  const credentials = useAtomValue(userCredsAtom);
+  const { user, developer, authenticated } = useAuth();
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-white">
-          Credentials
+          Developer Identity
         </h1>
         <p className="mt-1 text-sm text-white/40">
-          Manage your issued credentials
+          Your developer PKI and registration status
         </p>
       </div>
 
+      {authenticated && !developer && (
+        <div className="border border-white/10 bg-white/[0.02] p-8 text-center">
+          <div className="mx-auto mb-4 h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-[var(--color-accent)]" />
+          <p className="text-sm text-white/50">Generating developer identity...</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-px sm:grid-cols-3 border border-white/10 bg-white/10">
         <StatCard
-          icon={<Bot className="h-4 w-4 text-[var(--color-accent)]" />}
-          label="Total"
-          value={credentials.length}
+          icon={<User className="h-4 w-4 text-[var(--color-accent)]" />}
+          label="Email"
+          value={user?.email ?? "—"}
         />
         <StatCard
-          icon={<CheckCircle2 className="h-4 w-4 text-[var(--color-accent)]" />}
-          label="Active"
-          value={credentials.filter((c) => !c.revoked).length}
+          icon={<Shield className="h-4 w-4 text-[var(--color-accent)]" />}
+          label="Status"
+          value={developer ? "Registered" : "Pending"}
         />
         <StatCard
-          icon={<XCircle className="h-4 w-4 text-red-400" />}
-          label="Revoked"
-          value={credentials.filter((c) => c.revoked).length}
+          icon={<Key className="h-4 w-4 text-[var(--color-accent)]" />}
+          label="Developer ID"
+          value={developer?.developer_id ? `${developer.developer_id.slice(0, 20)}...` : "—"}
         />
       </div>
 
-      {credentials.length === 0 ? (
-        <div className="border border-white/10 bg-white/[0.02] py-16 text-center text-white/30">
-          No credentials found
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {credentials.map((credential, index) => (
-            <CredentialCard
-              key={credential.id ?? index}
-              credential={credential}
-              index={index}
-              isDID={false}
-            />
-          ))}
+      {developer && (
+        <div className="rounded border border-white/10 bg-white/[0.02]">
+          <div className="border-b border-white/10 px-5 py-4">
+            <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
+              PKI Details
+            </h3>
+          </div>
+          <div className="divide-y divide-white/[0.05] px-5">
+            <DetailRow label="Developer ID" value={developer.developer_id} />
+            <DetailRow label="Public Key" value={developer.public_key} />
+            <DetailRow label="Name" value={developer.name} />
+          </div>
         </div>
       )}
     </div>
@@ -64,17 +67,28 @@ function StatCard({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value: string;
 }) {
   return (
     <div className="flex items-center gap-3 bg-[#0a0a0a] p-5">
       <div className="flex h-9 w-9 items-center justify-center rounded border border-white/10 bg-white/5">
         {icon}
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-[11px] font-medium uppercase tracking-wider text-white/40">{label}</div>
-        <div className="text-xl font-bold text-white">{value}</div>
+        <div className="truncate text-sm font-bold text-white">{value}</div>
       </div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-12 items-start gap-1 sm:gap-0 py-4">
+      <dt className="sm:col-span-3 text-sm text-white/40">{label}</dt>
+      <dd className="sm:col-span-9 break-all border border-white/10 bg-white/5 px-3 py-2 font-mono text-xs text-white">
+        {value}
+      </dd>
     </div>
   );
 }

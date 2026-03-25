@@ -33,19 +33,34 @@ import {
   ExternalLink,
   type LucideIcon,
 } from "lucide-react";
-import { useAccount, useWalletClient } from "wagmi";
-import { baseSepolia } from "viem/chains";
 import { wrapFetchWithPayment, type Signer } from "x402-fetch";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { getAgentByIdPublic } from "@/apis/registry";
-import { Agent } from "@/apis/registry/types";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { AccentCorners } from "@/components/ui/AccentCorners";
 import { GridTripod } from "@/components/ui/GridTripod";
 import { formatAddress } from "@/lib/utils";
+
+type AgentStatus = "ACTIVE" | "INACTIVE" | "DEPRECATED";
+
+interface Agent {
+  id: string;
+  name: string;
+  description?: string;
+  capabilities?: Record<string, string[]>;
+  status: AgentStatus;
+  createdAt: string;
+  owner: { walletAddress: string };
+  did: string;
+  didIdentifier: string;
+  httpWebhookUrl: string;
+}
+
+async function getAgentByIdPublic(_id: string): Promise<Agent | null> {
+  // TODO: Connect to AgentDNS registry
+  return null;
+}
 
 const ICON_COLORS = [
   "#8B5CF6", "#3B82F6", "#F59E0B", "#EC4899", "#8B5CF6",
@@ -132,8 +147,8 @@ function DetailSkeleton(): React.ReactElement {
 export default function AgentDetailPage(): React.ReactElement {
   const searchParams = useSearchParams();
   const params = useParams();
-  const { isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient({ chainId: baseSepolia.id });
+  const isConnected = false; // TODO: Reconnect wallet support
+  const walletClient: unknown = null;
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -449,7 +464,7 @@ export default function AgentDetailPage(): React.ReactElement {
                               </p>
                             </div>
                           </div>
-                          <ConnectWalletButton />
+                          {/* Wallet connection removed — PKI auth coming soon */}
                         </div>
 
                         {!isConnected && (

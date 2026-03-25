@@ -11,19 +11,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { ready, authenticated, registryToken, login } = useAuth();
+  const { ready, authenticated, login, loginWithGithub } = useAuth();
 
   useEffect(() => {
-    if (ready && authenticated && registryToken) {
+    if (ready && authenticated) {
       router.push("/dashboard");
     }
-  }, [ready, authenticated, registryToken, router]);
-
-  useEffect(() => {
-    if (ready && !authenticated) {
-      login();
-    }
-  }, [ready, authenticated, login]);
+  }, [ready, authenticated, router]);
 
   return (
     <>
@@ -72,7 +66,7 @@ export default function AuthPage() {
                           </span>
                         </p>
                         <p className="mt-2 text-sm text-white/40">
-                          Sign in with Google, X, email, or your wallet
+                          Sign in with Google, GitHub, or email
                         </p>
                       </div>
 
@@ -82,17 +76,25 @@ export default function AuthPage() {
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/10 border-t-[var(--color-accent)]" />
                             Loading...
                           </div>
-                        ) : authenticated && registryToken ? (
+                        ) : authenticated ? (
                           <p className="text-sm text-white/60">
                             Redirecting to dashboard...
                           </p>
                         ) : (
-                          <button
-                            onClick={login}
-                            className="flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110"
-                          >
-                            Sign In
-                          </button>
+                          <div className="flex w-full flex-col gap-3">
+                            <button
+                              onClick={login}
+                              className="flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110"
+                            >
+                              Continue with Google
+                            </button>
+                            <button
+                              onClick={loginWithGithub}
+                              className="flex w-full items-center justify-center gap-2 border border-white/10 bg-white/5 py-3.5 text-sm font-bold text-white transition-all hover:bg-white/10"
+                            >
+                              Continue with GitHub
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

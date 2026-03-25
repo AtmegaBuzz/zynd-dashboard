@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model DeveloperKey {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @unique @map("user_id")
+  developerId   String   @unique @map("developer_id")
+  publicKey     String   @map("public_key")
+  privateKeyEnc String   @map("private_key_enc")
+  name          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("developer_keys")
+}
+
+model Agent {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id")
+  agentId     String?  @unique @map("agent_id")
+  name        String
+  description String?
+  agentUrl    String?  @map("agent_url")
+  category    String?
+  tags        String[] @default([])
+  summary     String?
+  agentIndex  Int?     @map("agent_index")
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("agents")
+}

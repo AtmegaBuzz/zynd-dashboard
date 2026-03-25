@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { createAgent } from "@/apis/registry";
-import { Capabilities } from "@/apis/registry/types";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 
@@ -13,41 +12,39 @@ interface AgentFormProps {
   agent?: {
     name: string;
     description: string;
-    capabilities?: Capabilities;
+    tags?: string[];
   };
   isEditing?: boolean;
+  agentId?: string;
 }
 
-export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
+export function AgentForm({ agent, isEditing = false, agentId }: AgentFormProps) {
   const router = useRouter();
-  const { registryToken: accessToken } = useAuth();
+  const { authenticated } = useAuth();
 
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
-  const [capabilityInput, setCapabilityInput] = useState("");
-  const [capabilities, setCapabilities] = useState<string[]>(() => {
-    if (!agent?.capabilities) return [];
-    return Object.values(agent.capabilities).flat().filter(Boolean) as string[];
-  });
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>(agent?.tags ?? []);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addCapability = () => {
-    const trimmed = capabilityInput.trim();
-    if (trimmed && !capabilities.includes(trimmed)) {
-      setCapabilities((prev) => [...prev, trimmed]);
-      setCapabilityInput("");
+  const addTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags((prev) => [...prev, trimmed]);
+      setTagInput("");
     }
   };
 
-  const removeCapability = (cap: string) => {
-    setCapabilities((prev) => prev.filter((c) => c !== cap));
+  const removeTag = (tag: string) => {
+    setTags((prev) => prev.filter((t) => t !== tag));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addCapability();
+      addTag();
     }
   };
 
@@ -60,27 +57,37 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
       return;
     }
 
-    if (!accessToken) {
+    if (!authenticated) {
       setError("Not authenticated.");
       return;
     }
 
     try {
       setSubmitting(true);
+      const supabase = createClient();
 
-      const capabilitiesObj: Capabilities =
-        capabilities.length > 0 ? { ai: capabilities } : {};
+      if (isEditing && agentId) {
+        const { error: updateError } = await supabase
+          .from("agents")
+          .update({
+            name: name.trim(),
+            description: description.trim() || null,
+            tags: tags.length > 0 ? tags : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", agentId);
 
-      if (isEditing) {
-        setError("Edit functionality is not yet supported via the dashboard.");
-        return;
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from("agents").insert({
+          name: name.trim(),
+          description: description.trim() || null,
+          tags: tags.length > 0 ? tags : null,
+          status: "active",
+        });
+
+        if (insertError) throw insertError;
       }
-
-      await createAgent(accessToken, {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        capabilities: capabilitiesObj,
-      });
 
       router.push("/dashboard/agents");
     } catch (err) {
@@ -121,35 +128,35 @@ export function AgentForm({ agent, isEditing = false }: AgentFormProps) {
         />
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-white/50">Capabilities</label>
+          <label className="text-sm text-white/50">Tags</label>
           <div className="flex gap-2">
             <Input
               placeholder="e.g. text-generation"
-              value={capabilityInput}
-              onChange={(e) => setCapabilityInput(e.target.value)}
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleKeyDown}
               className="flex-1"
             />
             <button
               type="button"
-              onClick={addCapability}
+              onClick={addTag}
               className="flex cursor-pointer items-center gap-1.5 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/[0.08] px-3 py-2 text-sm text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent)]/15"
             >
               <Plus className="h-4 w-4" />
               Add
             </button>
           </div>
-          {capabilities.length > 0 && (
+          {tags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
-              {capabilities.map((cap) => (
+              {tags.map((tag) => (
                 <span
-                  key={cap}
+                  key={tag}
                   className="inline-flex items-center gap-1.5 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/[0.08] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--color-accent)]"
                 >
-                  {cap}
+                  {tag}
                   <button
                     type="button"
-                    onClick={() => removeCapability(cap)}
+                    onClick={() => removeTag(tag)}
                     className="cursor-pointer text-[var(--color-accent)]/50 transition-colors hover:text-[var(--color-accent)]"
                   >
                     <X className="h-3 w-3" />

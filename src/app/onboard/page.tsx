@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -20,9 +20,17 @@ const STEP_LABELS: Record<Step, string> = {
   error: "Something went wrong",
 };
 
-function OnboardPage() {
+export default function OnboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <OnboardContent />
+    </Suspense>
+  );
+}
+
+function OnboardContent() {
   const searchParams = useSearchParams();
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated, login } = useAuth();
 
   const callbackPort = searchParams.get("callback_port");
   const state = searchParams.get("state");
@@ -32,7 +40,7 @@ function OnboardPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const approveCalledRef = useRef(false);
 
-  const missingParams = !callbackPort || !state || !name;
+  const missingParams = !callbackPort || !state;
 
   const approve = useCallback(async () => {
     if (approveCalledRef.current) return;
@@ -44,7 +52,7 @@ function OnboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
+          name: name || "Developer",
           state,
           callback_port: Number(callbackPort),
         }),
@@ -74,14 +82,13 @@ function OnboardPage() {
     }
   }, [name, state, callbackPort]);
 
-  // Trigger Privy login when ready but not authenticated
+  // Trigger login when ready but not authenticated
   useEffect(() => {
     if (!ready || missingParams) return;
     if (!authenticated) {
       setStep("authenticating");
-      login();
     }
-  }, [ready, authenticated, missingParams, login]);
+  }, [ready, authenticated, missingParams]);
 
   // After auth, trigger approve
   useEffect(() => {
@@ -150,7 +157,6 @@ function OnboardPage() {
                         ) : (
                           <>
                             {(step === "init" ||
-                              step === "authenticating" ||
                               step === "approving" ||
                               step === "redirecting") && (
                               <div className="flex items-center gap-2 text-white/40">
@@ -160,12 +166,17 @@ function OnboardPage() {
                             )}
 
                             {step === "authenticating" && (
-                              <button
-                                onClick={login}
-                                className="mt-2 flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110"
-                              >
-                                Sign In
-                              </button>
+                              <div className="flex w-full flex-col gap-3">
+                                <div className="flex items-center gap-2 text-white/40 mb-2">
+                                  {STEP_LABELS[step]}
+                                </div>
+                                <button
+                                  onClick={login}
+                                  className="flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] py-3.5 text-sm font-bold text-white transition-all hover:brightness-110"
+                                >
+                                  Sign In with Google
+                                </button>
+                              </div>
                             )}
 
                             {step === "done" && (
@@ -221,13 +232,5 @@ function OnboardPage() {
       </main>
       <Footer />
     </>
-  );
-}
-
-export default function OnboardPageWrapper() {
-  return (
-    <Suspense>
-      <OnboardPage />
-    </Suspense>
   );
 }

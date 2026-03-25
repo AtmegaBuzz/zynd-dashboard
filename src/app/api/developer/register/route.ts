@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { encryptPrivateKey } from "@/lib/pki";
+import { prisma } from "@/lib/prisma";
+import crypto from "crypto";
+
+const REGISTRY_URL = process.env.AGENTDNS_REGISTRY_URL;
+const WEBHOOK_SECRET = process.env.AGENTDNS_WEBHOOK_SECRET;
+
+export async function POST(req: NextRequest) {
+  console.log("[developer/register] called");
+
+  if (!REGISTRY_URL || !WEBHOOK_SECRET) {
+    console.error("[developer/register] Registry not configured");
+    return NextResponse.json({ error: "Registry not configured" }, { status: 500 });
+  }
+
+  // Verify Supabase session
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError) {
+    console.error("[developer/register] Auth error:", authError.message);
+  }
+
+  if (!user) {
+    console.error("[developer/register] No user in session");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  console.log("[developer/register] User:", user.id, user.email);
+
+  let body: { name: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const name = body.name || user.email || "Developer";
+
+  // Check if user already has a developer key
+  const existing = await prisma.developerKey.findUnique({
+    where: { userId: user.id },
+  });
+
+  if (existing) {
+    console.log("[developer/register] Existing key found for", user.id);
+    return NextResponse.json({
+      developer_id: existing.developerId,
+      public_key: existing.publicKey,
+      name: existing.name,
+    });
+  }
+
+  // Generate a state for encryption (registry API compatibility)
+  const stateBytes = crypto.randomBytes(16);
+  const state = stateBytes.toString("hex");
+
+  console.log("[developer/register] Calling registry at", REGISTRY_URL);
+
+  try {
+    const res = await fetch(`${REGISTRY_URL}/v1/admin/developers/approve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${WEBHOOK_SECRET}`,
+      },
+      body: JSON.stringify({ name, state }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("[developer/register] Registry error:", res.status, text);
+      return NextResponse.json({ error: `Registry error: ${text}` }, { status: res.status });
+    }
+
+    const data = await res.json();
+    const { developer_id, private_key_enc: registryEncKey, public_key } = data;
+    console.log("[developer/register] Registry returned developer_id:", developer_id);
+
+    // Decrypt from registry (SHA256(state)), re-encrypt with master key
+    const aesKey = crypto.createHash("sha256").update(state).digest();
+    const ciphertextBuf = Buffer.from(registryEncKey, "base64");
+    const nonce = ciphertextBuf.subarray(0, 12);
+    const authTag = ciphertextBuf.subarray(ciphertextBuf.length - 16);
+    const encrypted = ciphertextBuf.subarray(12, ciphertextBuf.length - 16);
+
+    const decipher = crypto.createDecipheriv("aes-256-gcm", aesKey, nonce);
+    decipher.setAuthTag(authTag);
+    const rawPrivKey = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]).toString("utf8");
+
+    const masterEncrypted = encryptPrivateKey(rawPrivKey);
+
+    // Store in DB
+    await prisma.developerKey.create({
+      data: {
+        userId: user.id,
+        developerId: developer_id,
+        publicKey: public_key || "",
+        privateKeyEnc: masterEncrypted,
+        name,
+      },
+    });
+
+    console.log("[developer/register] Stored key for", user.id, developer_id);
+
+    return NextResponse.json({ developer_id, public_key, name });
+  } catch (err) {
+    console.error("[developer/register] Error:", (err as Error).message);
+    return NextResponse.json(
+      { error: `Failed: ${(err as Error).message}` },
+      { status: 502 }
+    );
+  }
+}

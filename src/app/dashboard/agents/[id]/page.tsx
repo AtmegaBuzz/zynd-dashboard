@@ -3,21 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Trash2, Copy, Check, Key } from "lucide-react";
+import { Pencil, Trash2, Copy, Check } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getAgentById } from "@/apis/registry";
-import { Agent, VCResponse } from "@/apis/registry/types";
+import type { AgentRecord } from "@/lib/supabase/db";
 import { Badge } from "@/components/ui/Badge";
-import { Tabs } from "@/components/ui/Tabs";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
-import { CredentialCard } from "@/components/dashboard/credential-card";
-
-const AGENT_TABS = [
-  { label: "Overview", value: "overview" },
-  { label: "Metadata", value: "metadata" },
-  { label: "Credentials", value: "credentials" },
-];
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -42,31 +34,18 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function TruncatedText({ text, maxLength = 20 }: { text: string; maxLength?: number }) {
-  if (!text) return null;
-
-  const truncated =
-    text.length > maxLength
-      ? `${text.substring(0, maxLength)}...${text.substring(text.length - 8)}`
-      : text;
-
-  return <span className="font-mono text-sm text-white">{truncated}</span>;
-}
-
 export default function AgentDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [agent, setAgent] = useState<Agent | null>(null);
-  const [agentCredentials, setAgentCredentials] = useState<VCResponse[]>([]);
+  const [agent, setAgent] = useState<AgentRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { registryToken: accessToken, user } = useAuth();
+  const { authenticated } = useAuth();
 
   useEffect(() => {
     async function resolveParams() {
@@ -77,14 +56,20 @@ export default function AgentDetailPage({
   }, [params]);
 
   useEffect(() => {
-    if (!agentId || !accessToken) return;
+    if (!agentId || !authenticated) return;
 
     async function fetchAgent() {
       try {
         setLoading(true);
-        const { agent, credentials } = await getAgentById(agentId!, accessToken!);
-        setAgent(agent);
-        setAgentCredentials(credentials);
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("id", agentId!)
+          .single();
+
+        if (fetchError) throw fetchError;
+        setAgent(data);
       } catch (err) {
         setError("Failed to load agent details");
         console.error(err);
@@ -94,20 +79,13 @@ export default function AgentDetailPage({
     }
 
     fetchAgent();
-  }, [agentId, accessToken]);
+  }, [agentId, authenticated]);
 
   const handleDelete = async () => {
     if (!agentId) return;
-
     try {
-      const response = await fetch(`/api/agents/${agentId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete agent");
-      }
-
+      const supabase = createClient();
+      await supabase.from("agents").delete().eq("id", agentId);
       router.push("/dashboard/agents");
     } catch (err) {
       console.error("Error deleting agent:", err);
@@ -140,14 +118,10 @@ export default function AgentDetailPage({
     );
   }
 
-  const isOwner =
-    user?.walletAddress.toLowerCase() ===
-    agent.owner.walletAddress.toLowerCase();
-
   const getStatusVariant = (
     status: string
   ): "active" | "inactive" | "deprecated" => {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case "ACTIVE":
         return "active";
       case "INACTIVE":
@@ -166,24 +140,23 @@ export default function AgentDetailPage({
               {agent.name}
             </h2>
             <Badge variant={getStatusVariant(agent.status)}>
-              {agent.status}
+              {agent.status.toUpperCase()}
             </Badge>
           </div>
-          <p className="mt-1 text-xs font-mono text-white/30">{agentId}</p>
+          <p className="mt-1 text-xs font-mono text-white/30">
+            {agent.agent_id || agentId}
+          </p>
         </div>
         <div className="flex gap-3">
-          {isOwner && (
-            <Link href={`/dashboard/agents/${agentId}/edit`}>
-              <button className="flex cursor-pointer items-center gap-2 border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/[0.06]">
-                <Pencil className="h-4 w-4" />
-                Edit
-              </button>
-            </Link>
-          )}
+          <Link href={`/dashboard/agents/${agentId}/edit`}>
+            <button className="flex cursor-pointer items-center gap-2 border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/[0.06]">
+              <Pencil className="h-4 w-4" />
+              Edit
+            </button>
+          </Link>
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            disabled
-            className="flex cursor-not-allowed items-center gap-2 border border-red-500/15 px-4 py-2 text-sm text-red-400 opacity-50"
+            className="flex cursor-pointer items-center gap-2 border border-red-500/15 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/[0.06]"
           >
             <Trash2 className="h-4 w-4" />
             Delete
@@ -191,131 +164,62 @@ export default function AgentDetailPage({
         </div>
       </div>
 
-      <Tabs tabs={AGENT_TABS} activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === "overview" && (
-          <div className="rounded border border-white/10 bg-white/[0.02]">
-            <div className="border-b border-white/10 px-5 py-4">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
-                Agent Details
-              </h3>
+      <div className="rounded border border-white/10 bg-white/[0.02]">
+        <div className="border-b border-white/10 px-5 py-4">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
+            Agent Details
+          </h3>
+        </div>
+        <div className="divide-y divide-white/[0.05] px-5">
+          {agent.agent_id && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Agent ID</dt>
+              <dd className="sm:col-span-9 flex items-center justify-between border border-white/10 bg-white/5 px-3 py-2 overflow-hidden">
+                <span className="font-mono text-sm text-white truncate">{agent.agent_id}</span>
+                <CopyButton text={agent.agent_id} />
+              </dd>
             </div>
-            <div className="divide-y divide-white/[0.05] px-5">
-              <div className="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 py-4">
-                <dt className="sm:col-span-3 text-sm text-white/40">
-                  DID
-                </dt>
-                <dd className="sm:col-span-9 flex items-center justify-between border border-white/10 bg-white/5 px-3 py-2 overflow-hidden">
-                  <TruncatedText text={agent.didIdentifier} maxLength={30} />
-                  <CopyButton text={agent.didIdentifier} />
-                </dd>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
-                <dt className="sm:col-span-3 text-sm text-white/40">
-                  Description
-                </dt>
-                <dd className="sm:col-span-9 text-sm text-white">
-                  {agent.description || (
-                    <span className="italic text-white/25">
-                      No description provided
-                    </span>
-                  )}
-                </dd>
-              </div>
-              {agent.seed && (
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
-                  <dt className="sm:col-span-3 text-sm text-white/40">
-                    Seed
-                  </dt>
-                  <dd className="sm:col-span-9 text-sm text-white">
-                    {agent.seed}
-                  </dd>
-                </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+            <dt className="sm:col-span-3 text-sm text-white/40">Description</dt>
+            <dd className="sm:col-span-9 text-sm text-white">
+              {agent.description || (
+                <span className="italic text-white/25">No description provided</span>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
-                <dt className="sm:col-span-3 text-sm text-white/40">
-                  Status
-                </dt>
-                <dd className="sm:col-span-9">
-                  <Badge variant={getStatusVariant(agent.status)}>
-                    {agent.status}
-                  </Badge>
-                </dd>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
-                <dt className="sm:col-span-3 text-sm text-white/40">
-                  Capabilities
-                </dt>
-                <dd className="sm:col-span-9">
-                  {Object.entries(agent.capabilities || {}).length === 0 ? (
-                    <span className="text-sm italic text-white/25">
-                      No capabilities defined
-                    </span>
-                  ) : (
-                    Object.entries(agent.capabilities!).map(
-                      ([category, items]) => (
-                        <div key={category} className="mb-3 last:mb-0">
-                          <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/35">
-                            {category}
-                          </h4>
-                          <div className="flex flex-wrap gap-1.5">
-                            {items?.map((item) => (
-                              <Badge
-                                key={`${category}-${item}`}
-                                variant="active"
-                              >
-                                {item}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    )
-                  )}
-                </dd>
-              </div>
+            </dd>
+          </div>
+          {agent.agent_url && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Agent URL</dt>
+              <dd className="sm:col-span-9 text-sm text-white break-all">{agent.agent_url}</dd>
             </div>
+          )}
+          {agent.category && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Category</dt>
+              <dd className="sm:col-span-9 text-sm text-white">{agent.category}</dd>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+            <dt className="sm:col-span-3 text-sm text-white/40">Status</dt>
+            <dd className="sm:col-span-9">
+              <Badge variant={getStatusVariant(agent.status)}>
+                {agent.status.toUpperCase()}
+              </Badge>
+            </dd>
           </div>
-        )}
-
-        {activeTab === "metadata" && (
-          <div className="py-8 text-center text-white/30">
-            Metadata management coming soon.
-          </div>
-        )}
-
-        {activeTab === "credentials" && (
-          <div className="space-y-6">
-            {agentCredentials.length === 0 ? (
-              <div className="rounded border border-white/10 bg-white/[0.02] p-5 sm:p-10 text-center">
-                <Key className="mx-auto mb-4 h-10 w-10 text-white/15" />
-                <p className="text-base font-medium text-white/50">
-                  No credentials
-                </p>
-                <p className="mt-1 text-sm text-white/30">
-                  This agent doesn&apos;t have any credentials yet.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {agentCredentials.map((credential, index) => (
-                  <CredentialCard
-                    key={credential.id ?? index}
-                    credential={credential}
-                    index={index}
-                    isDID={false}
-                  />
+          {agent.tags && agent.tags.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Tags</dt>
+              <dd className="sm:col-span-9 flex flex-wrap gap-1.5">
+                {agent.tags.map((tag) => (
+                  <Badge key={tag} variant="active">{tag}</Badge>
                 ))}
-                <CredentialCard
-                  key="did-card"
-                  credential={JSON.parse(agent.did)}
-                  index={agentCredentials.length + 1}
-                  isDID={true}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </Tabs>
+              </dd>
+            </div>
+          )}
+        </div>
+      </div>
 
       <Dialog
         open={showDeleteConfirm}
@@ -324,7 +228,7 @@ export default function AgentDetailPage({
       >
         <p className="text-sm text-white/50">
           This action cannot be undone. This will permanently delete the agent
-          &ldquo;{agent.name}&rdquo; and all associated metadata.
+          &ldquo;{agent.name}&rdquo;.
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <button
