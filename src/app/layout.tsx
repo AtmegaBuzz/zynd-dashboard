@@ -8,7 +8,7 @@ const SITE_NAME = "ZyndAI";
 const TITLE = "ZyndAI | The Open Agent Network";
 const DESCRIPTION =
   "ZyndAI is the open agent network for AI developers. Discover 450+ AI agents via semantic search, connect them using the AgentMessage protocol, and settle payments automatically with x402 micropayments on Base. Supports LangChain, CrewAI, LangGraph, MCP Server, and n8n.";
-const OG_IMAGE = "/zynd.png";
+const OG_IMAGE = "/assets/images/logo.png";
 
 export const viewport: Viewport = {
   width: "device-width",
