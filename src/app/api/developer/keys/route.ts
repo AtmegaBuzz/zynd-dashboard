@@ -19,7 +19,7 @@ export async function GET() {
 
   const devKey = await prisma.developerKey.findUnique({
     where: { userId: user.id },
-    select: { developerId: true, publicKey: true, name: true },
+    select: { developerId: true, publicKey: true, name: true, username: true, role: true },
   });
 
   if (!devKey) {
@@ -33,5 +33,7 @@ export async function GET() {
     developer_id: devKey.developerId,
     public_key: devKey.publicKey,
     name: devKey.name,
+    username: devKey.username,
+    role: devKey.role,
   });
 }

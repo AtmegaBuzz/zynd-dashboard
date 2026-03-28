@@ -11,13 +11,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { ready, authenticated, login, loginWithGithub } = useAuth();
+  const { ready, authenticated, needsOnboarding, login, loginWithGithub } = useAuth();
 
   useEffect(() => {
     if (ready && authenticated) {
-      router.push("/dashboard");
+      if (needsOnboarding) {
+        router.push("/onboard/setup");
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [ready, authenticated, router]);
+  }, [ready, authenticated, needsOnboarding, router]);
 
   return (
     <>

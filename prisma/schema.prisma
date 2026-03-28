@@ -14,6 +14,8 @@ model DeveloperKey {
   publicKey     String   @map("public_key")
   privateKeyEnc String   @map("private_key_enc")
   name          String
+  username      String?  @unique @map("username")
+  role          String?  @map("role")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("developer_keys")

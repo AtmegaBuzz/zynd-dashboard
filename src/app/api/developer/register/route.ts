@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   console.log("[developer/register] User:", user.id, user.email);
 
-  let body: { name: string };
+  let body: { name: string; username?: string; role?: string };
   try {
     body = await req.json();
   } catch {
@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
   }
 
   const name = body.name || user.email || "Developer";
+  const username = body.username || undefined;
+  const role = body.role || undefined;
 
   // Check if user already has a developer key
   const existing = await prisma.developerKey.findUnique({
@@ -46,11 +48,41 @@ export async function POST(req: NextRequest) {
 
   if (existing) {
     console.log("[developer/register] Existing key found for", user.id);
+
+    // If existing but missing username/role, update them (one-time profile completion)
+    if (!existing.username && username) {
+      await prisma.developerKey.update({
+        where: { userId: user.id },
+        data: { username, role },
+      });
+    }
+
     return NextResponse.json({
       developer_id: existing.developerId,
       public_key: existing.publicKey,
       name: existing.name,
+      username: existing.username || username,
+      role: existing.role || role,
     });
+  }
+
+  // Validate username is provided for new registrations
+  if (!username) {
+    return NextResponse.json(
+      { error: "Username is required for new developer registration" },
+      { status: 400 }
+    );
+  }
+
+  // Check username uniqueness locally
+  const usernameExists = await prisma.developerKey.findFirst({
+    where: { username },
+  });
+  if (usernameExists) {
+    return NextResponse.json(
+      { error: "Username is already taken" },
+      { status: 409 }
+    );
   }
 
   // Generate a state for encryption (registry API compatibility)
@@ -66,7 +98,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${WEBHOOK_SECRET}`,
       },
-      body: JSON.stringify({ name, state }),
+      body: JSON.stringify({ name, state, handle: username }),
     });
 
     if (!res.ok) {
@@ -95,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     const masterEncrypted = encryptPrivateKey(rawPrivKey);
 
-    // Store in DB
+    // Store in DB with username and role
     await prisma.developerKey.create({
       data: {
         userId: user.id,
@@ -103,12 +135,14 @@ export async function POST(req: NextRequest) {
         publicKey: public_key || "",
         privateKeyEnc: masterEncrypted,
         name,
+        username,
+        role,
       },
     });
 
-    console.log("[developer/register] Stored key for", user.id, developer_id);
+    console.log("[developer/register] Stored key for", user.id, developer_id, "username:", username);
 
-    return NextResponse.json({ developer_id, public_key, name });
+    return NextResponse.json({ developer_id, public_key, name, username, role });
   } catch (err) {
     console.error("[developer/register] Error:", (err as Error).message);
     return NextResponse.json(

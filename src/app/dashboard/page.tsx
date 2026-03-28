@@ -50,9 +50,15 @@ export default function DashboardPage() {
             </h3>
           </div>
           <div className="divide-y divide-white/[0.05] px-5">
+            {developer.username && (
+              <DetailRow label="Username" value={developer.username} />
+            )}
             <DetailRow label="Developer ID" value={developer.developer_id} />
             <DetailRow label="Public Key" value={developer.public_key} />
             <DetailRow label="Name" value={developer.name} />
+            {developer.role && (
+              <DetailRow label="Role" value={developer.role} />
+            )}
           </div>
         </div>
       )}

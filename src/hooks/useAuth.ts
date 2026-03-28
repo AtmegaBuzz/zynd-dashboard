@@ -8,6 +8,8 @@ export interface DeveloperInfo {
   developer_id: string;
   public_key: string;
   name: string;
+  username?: string;
+  role?: string;
 }
 
 export function useAuth() {
@@ -17,7 +19,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [developer, setDeveloper] = useState<DeveloperInfo | null>(null);
   const [ready, setReady] = useState(false);
-  const registerAttemptedRef = useRef(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   // Get initial session and listen for changes
   useEffect(() => {
@@ -36,50 +38,37 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  // Fetch developer info — auto-register if not found
+  // Fetch developer info — check if onboarding is needed
   useEffect(() => {
     if (!user) {
       setDeveloper(null);
-      registerAttemptedRef.current = false;
+      setNeedsOnboarding(false);
       return;
     }
 
-    async function fetchOrRegister() {
+    async function fetchDeveloper() {
       try {
-        // Try to fetch existing developer key
         const res = await fetch("/api/developer/keys");
         if (res.ok) {
           const data = await res.json();
           if (data) {
             setDeveloper(data);
+            // If developer exists but has no username, they need onboarding
+            if (!data.username) {
+              setNeedsOnboarding(true);
+            }
             return;
           }
         }
-
-        // No key found — auto-register (only once per session)
-        if (registerAttemptedRef.current) return;
-        registerAttemptedRef.current = true;
-
-        console.log("No developer key found, auto-registering...");
-        const regRes = await fetch("/api/developer/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: user?.email ?? "Developer" }),
-        });
-
-        if (regRes.ok) {
-          const regData = await regRes.json();
-          setDeveloper(regData);
-        } else {
-          const err = await regRes.json().catch(() => ({ error: "Registration failed" }));
-          console.error("Developer registration failed:", err.error);
-        }
+        // No developer key at all — needs onboarding
+        setNeedsOnboarding(true);
       } catch (err) {
-        console.error("Failed to fetch/register developer:", err);
+        console.error("Failed to fetch developer:", err);
+        setNeedsOnboarding(true);
       }
     }
 
-    fetchOrRegister();
+    fetchDeveloper();
   }, [user]);
 
   const login = useCallback(() => {
@@ -100,7 +89,7 @@ export function useAuth() {
     await supabase.auth.signOut();
     setUser(null);
     setDeveloper(null);
-    registerAttemptedRef.current = false;
+    setNeedsOnboarding(false);
   }, [supabase]);
 
   return {
@@ -108,6 +97,7 @@ export function useAuth() {
     authenticated: !!user,
     user,
     developer,
+    needsOnboarding,
     login,
     loginWithGithub,
     logout,
