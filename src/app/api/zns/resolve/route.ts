@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+const REGISTRY_URL = process.env.AGENTDNS_REGISTRY_URL;
+
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError) {
+    console.error("[zns/resolve GET] Auth error:", authError.message);
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!REGISTRY_URL) {
+    return NextResponse.json({ error: "Registry not configured" }, { status: 500 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  let developer = searchParams.get("developer");
+  let agent = searchParams.get("agent");
+
+  // Support ?fqan=registry/developer/agent or dns01.zynd.ai/developer/agent
+  const fqan = searchParams.get("fqan");
+  if (fqan) {
+    const parts = fqan.split("/");
+    if (parts.length === 3) {
+      // registry/developer/agent
+      developer = parts[1];
+      agent = parts[2];
+    } else if (parts.length === 2) {
+      // developer/agent (no registry prefix)
+      developer = parts[0];
+      agent = parts[1];
+    }
+  }
+
+  if (!developer || !agent) {
+    return NextResponse.json(
+      { error: "Provide ?fqan=developer/agent or ?developer=...&agent=..." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const res = await fetch(
+      `${REGISTRY_URL}/v1/resolve/${encodeURIComponent(developer)}/${encodeURIComponent(agent)}`
+    );
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        return NextResponse.json({ error: "Name not found" }, { status: 404 });
+      }
+      const text = await res.text();
+      console.error("[zns/resolve GET] Registry error:", res.status, text);
+      return NextResponse.json({ error: "Registry error" }, { status: res.status });
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("[zns/resolve GET] Error:", (err as Error).message);
+    return NextResponse.json({ error: "Failed to resolve name" }, { status: 502 });
+  }
+}
