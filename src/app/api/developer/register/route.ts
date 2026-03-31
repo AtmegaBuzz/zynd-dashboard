@@ -7,6 +7,25 @@ import crypto from "crypto";
 const REGISTRY_URL = process.env.AGENTDNS_REGISTRY_URL;
 const WEBHOOK_SECRET = process.env.AGENTDNS_WEBHOOK_SECRET;
 
+async function getClientIp(req: NextRequest): Promise<string | null> {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return req.headers.get("x-real-ip");
+}
+
+async function lookupCountry(ip: string | null): Promise<string | null> {
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+    return null;
+  }
+  try {
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country`, { signal: AbortSignal.timeout(3000) });
+    const data = await res.json();
+    return data.status === "success" ? data.country : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   console.log("[developer/register] called");
 
@@ -29,6 +48,10 @@ export async function POST(req: NextRequest) {
   }
 
   console.log("[developer/register] User:", user.id, user.email);
+
+  const clientIp = await getClientIp(req);
+  const country = await lookupCountry(clientIp);
+  console.log("[developer/register] IP:", clientIp, "Country:", country);
 
   let body: { name: string; username?: string; role?: string };
   try {
@@ -127,7 +150,7 @@ export async function POST(req: NextRequest) {
 
     const masterEncrypted = encryptPrivateKey(rawPrivKey);
 
-    // Store in DB with username and role
+    // Store in DB with username, role, IP, and country
     await prisma.developerKey.create({
       data: {
         userId: user.id,
@@ -137,6 +160,8 @@ export async function POST(req: NextRequest) {
         name,
         username,
         role,
+        registrationIp: clientIp,
+        country,
       },
     });
 

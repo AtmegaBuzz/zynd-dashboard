@@ -11,7 +11,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { ready, authenticated } = useAuth();
+  const { ready, authenticated, needsOnboarding } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,8 +19,10 @@ export default function DashboardLayout({
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/auth");
+    } else if (ready && authenticated && needsOnboarding) {
+      router.push("/onboard/setup");
     }
-  }, [ready, authenticated, router]);
+  }, [ready, authenticated, needsOnboarding, router]);
 
   useEffect(() => {
     setSidebarOpen(false);

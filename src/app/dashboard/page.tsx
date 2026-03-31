@@ -59,6 +59,9 @@ export default function DashboardPage() {
             {developer.role && (
               <DetailRow label="Role" value={developer.role} />
             )}
+            {developer.country && (
+              <DetailRow label="Country" value={developer.country} />
+            )}
           </div>
         </div>
       )}

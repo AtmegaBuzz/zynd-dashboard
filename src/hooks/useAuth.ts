@@ -10,6 +10,7 @@ export interface DeveloperInfo {
   name: string;
   username?: string;
   role?: string;
+  country?: string;
 }
 
 export function useAuth() {
