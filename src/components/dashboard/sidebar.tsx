@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Bot, Settings, X, AtSign, Globe } from "lucide-react";
+import { LayoutDashboard, Bot, Settings, X, Globe } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Agents", href: "/dashboard/agents", icon: Bot },
-  { name: "Handles", href: "/dashboard/handles", icon: AtSign },
   { name: "Names", href: "/dashboard/names", icon: Globe },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
