@@ -128,7 +128,7 @@ export default function AgentsPage() {
                           <Badge variant="default" className="text-[9px]">
                             +{agent.tags.length - 2} more
                           </Badge>
-                        ))}
+                        )}
                       </div>
                     ) : (
                       <span className="text-xs italic text-[#E0E7FF]/30">None</span>
