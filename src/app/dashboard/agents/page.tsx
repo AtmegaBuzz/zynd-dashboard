@@ -24,6 +24,17 @@ export default function AgentsPage() {
     async function fetchAgents() {
       try {
         setLoading(true);
+
+        // Sync agents from registry, then use the returned list
+        const syncRes = await fetch("/api/agents/sync", { method: "POST" });
+        if (syncRes.ok) {
+          const { agents: synced } = await syncRes.json();
+          setAgents(synced || []);
+          setError(null);
+          return;
+        }
+
+        // Fallback: read directly from Supabase if sync fails
         const supabase = createClient();
         const { data, error: fetchError } = await supabase
           .from("agents")

@@ -20,6 +20,7 @@ export interface AgentRecord {
   summary: string | null;
   agent_index: number | null;
   status: string;
+  source: string;
   created_at: string;
   updated_at: string;
 }

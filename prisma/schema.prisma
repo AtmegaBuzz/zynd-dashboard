@@ -43,6 +43,7 @@ model Agent {
   summary     String?
   agentIndex  Int?     @map("agent_index")
   status      String   @default("active")
+  source      String   @default("dashboard")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
