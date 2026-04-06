@@ -40,37 +40,41 @@ export function useAuth() {
   }, [supabase]);
 
   // Fetch developer info — check if onboarding is needed
+  const fetchDeveloper = useCallback(async () => {
+    try {
+      const res = await fetch("/api/developer/keys");
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          setDeveloper(data);
+          if (!data.username) {
+            setNeedsOnboarding(true);
+          }
+          return;
+        }
+      }
+      setNeedsOnboarding(true);
+    } catch (err) {
+      console.error("Failed to fetch developer:", err);
+      setNeedsOnboarding(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) {
       setDeveloper(null);
       setNeedsOnboarding(false);
       return;
     }
-
-    async function fetchDeveloper() {
-      try {
-        const res = await fetch("/api/developer/keys");
-        if (res.ok) {
-          const data = await res.json();
-          if (data) {
-            setDeveloper(data);
-            // If developer exists but has no username, they need onboarding
-            if (!data.username) {
-              setNeedsOnboarding(true);
-            }
-            return;
-          }
-        }
-        // No developer key at all — needs onboarding
-        setNeedsOnboarding(true);
-      } catch (err) {
-        console.error("Failed to fetch developer:", err);
-        setNeedsOnboarding(true);
-      }
-    }
-
     fetchDeveloper();
-  }, [user]);
+  }, [user, fetchDeveloper]);
+
+  // Poll developer info every 20s
+  useEffect(() => {
+    if (!user) return;
+    const id = setInterval(fetchDeveloper, 20_000);
+    return () => clearInterval(id);
+  }, [user, fetchDeveloper]);
 
   const login = useCallback(() => {
     supabase.auth.signInWithOAuth({

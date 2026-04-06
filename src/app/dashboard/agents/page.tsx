@@ -1,43 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Search, Eye, Pencil } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import type { AgentRecord } from "@/lib/supabase/db";
+import { useAgents } from "@/hooks/useAgents";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Table } from "@/components/ui/Table";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<AgentRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { agents, loading, error } = useAgents();
   const [searchTerm, setSearchTerm] = useState("");
-  const { authenticated } = useAuth();
-
-  useEffect(() => {
-    if (!authenticated) return;
-
-    async function fetchAgents() {
-      try {
-        setLoading(true);
-        const syncRes = await fetch("/api/agents/sync", { method: "POST" });
-        if (!syncRes.ok) throw new Error("Sync failed");
-        const { agents: synced } = await syncRes.json();
-        setAgents(synced || []);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load agents");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchAgents();
-  }, [authenticated]);
 
   const filteredAgents = (agents || []).filter(
     (agent) =>
@@ -154,7 +128,7 @@ export default function AgentsPage() {
                           <Badge variant="default" className="text-[9px]">
                             +{agent.tags.length - 2} more
                           </Badge>
-                        )}
+                        ))}
                       </div>
                     ) : (
                       <span className="text-xs italic text-[#E0E7FF]/30">None</span>
