@@ -42,6 +42,7 @@ model Agent {
   tags        String[] @default([])
   summary     String?
   agentIndex  Int?     @map("agent_index")
+  fqan        String?  @map("fqan")
   status      String   @default("active")
   source      String   @default("dashboard")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -14,6 +14,8 @@ interface RegistryAgent {
   summary?: string;
   agent_index?: number;
   status?: string;
+  fqan?: string;
+  developer_handle?: string;
 }
 
 export async function POST() {
@@ -49,6 +51,7 @@ export async function POST() {
       tags: a.tags,
       summary: a.summary,
       agent_index: a.agentIndex,
+      fqan: a.fqan,
       status: a.status,
       source: a.source,
       created_at: a.createdAt.toISOString(),
@@ -94,6 +97,7 @@ export async function POST() {
               tags: ra.tags || [],
               summary: ra.summary || null,
               agentIndex: ra.agent_index ?? null,
+              fqan: ra.fqan || null,
               status: ra.status || "active",
               source: "registry",
             },
@@ -103,6 +107,7 @@ export async function POST() {
               category: ra.category || null,
               tags: ra.tags || [],
               summary: ra.summary || null,
+              fqan: ra.fqan || null,
               status: ra.status || "active",
             },
           })
@@ -130,6 +135,7 @@ export async function POST() {
     tags: a.tags,
     summary: a.summary,
     agent_index: a.agentIndex,
+    fqan: a.fqan,
     status: a.status,
     source: a.source,
     created_at: a.createdAt.toISOString(),

@@ -6,10 +6,32 @@ import Link from "next/link";
 import { Pencil, Trash2, Copy, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { AgentRecord } from "@/lib/supabase/db";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
+
+interface AgentDetail {
+  id: string;
+  user_id: string;
+  agent_id: string | null;
+  name: string;
+  description: string | null;
+  agent_url: string | null;
+  category: string | null;
+  tags: string[] | null;
+  summary: string | null;
+  agent_index: number | null;
+  fqan: string | null;
+  developer_handle: string | null;
+  status: string;
+  source: string;
+  created_at: string;
+  updated_at: string;
+  public_key: string | null;
+  trust_score: number | null;
+  developer_id: string | null;
+  home_registry: string | null;
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -40,7 +62,7 @@ export default function AgentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [agent, setAgent] = useState<AgentRecord | null>(null);
+  const [agent, setAgent] = useState<AgentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
@@ -61,17 +83,17 @@ export default function AgentDetailPage({
     async function fetchAgent() {
       try {
         setLoading(true);
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from("agents")
-          .select("*")
-          .eq("id", agentId!)
-          .single();
-
-        if (fetchError) throw fetchError;
-        setAgent(data);
+        const res = await fetch(`/api/agents/${agentId}`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to load agent");
+        }
+        const { agent: agentData } = await res.json();
+        setAgent(agentData);
       } catch (err) {
-        setError("Failed to load agent details");
+        setError(
+          err instanceof Error ? err.message : "Failed to load agent details"
+        );
         console.error(err);
       } finally {
         setLoading(false);
@@ -171,6 +193,15 @@ export default function AgentDetailPage({
           </h3>
         </div>
         <div className="divide-y divide-white/[0.05] px-5">
+          {agent.fqan && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">FQAN</dt>
+              <dd className="sm:col-span-9 flex items-center justify-between border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/[0.04] px-3 py-2 overflow-hidden">
+                <span className="font-mono text-sm text-[var(--color-accent)] truncate">{agent.fqan}</span>
+                <CopyButton text={agent.fqan} />
+              </dd>
+            </div>
+          )}
           {agent.agent_id && (
             <div className="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 py-4">
               <dt className="sm:col-span-3 text-sm text-white/40">Agent ID</dt>
@@ -180,10 +211,16 @@ export default function AgentDetailPage({
               </dd>
             </div>
           )}
+          {agent.developer_handle && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Developer</dt>
+              <dd className="sm:col-span-9 text-sm text-white font-mono">@{agent.developer_handle}</dd>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
             <dt className="sm:col-span-3 text-sm text-white/40">Description</dt>
             <dd className="sm:col-span-9 text-sm text-white">
-              {agent.description || (
+              {agent.description || agent.summary || (
                 <span className="italic text-white/25">No description provided</span>
               )}
             </dd>
@@ -216,6 +253,12 @@ export default function AgentDetailPage({
                   <Badge key={tag} variant="active">{tag}</Badge>
                 ))}
               </dd>
+            </div>
+          )}
+          {agent.home_registry && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-0 py-4">
+              <dt className="sm:col-span-3 text-sm text-white/40">Registry</dt>
+              <dd className="sm:col-span-9 text-sm text-white/60 font-mono">{agent.home_registry}</dd>
             </div>
           )}
         </div>

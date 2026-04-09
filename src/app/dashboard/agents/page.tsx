@@ -16,7 +16,8 @@ export default function AgentsPage() {
   const filteredAgents = (agents || []).filter(
     (agent) =>
       agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (agent.agent_id || "").toLowerCase().includes(searchTerm.toLowerCase())
+      (agent.agent_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (agent.fqan || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusVariant = (
@@ -90,7 +91,7 @@ export default function AgentsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table headers={["Name", "Agent ID", "Status", "Tags", "Actions"]}>
+            <Table headers={["Name", "FQAN", "Agent ID", "Status", "Tags", "Actions"]}>
               {filteredAgents.map((agent) => (
                 <tr
                   key={agent.id}
@@ -102,6 +103,15 @@ export default function AgentsPage() {
                       <div className="mt-0.5 text-xs text-white/25 truncate max-w-[200px]">
                         {agent.description}
                       </div>
+                    )}
+                  </td>
+                  <td>
+                    {agent.fqan ? (
+                      <code className="border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/[0.04] px-2 py-1 font-mono text-xs text-[var(--color-accent)]">
+                        {agent.fqan}
+                      </code>
+                    ) : (
+                      <span className="text-xs italic text-white/25">—</span>
                     )}
                   </td>
                   <td>

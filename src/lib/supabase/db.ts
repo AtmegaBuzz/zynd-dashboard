@@ -19,6 +19,7 @@ export interface AgentRecord {
   tags: string[] | null;
   summary: string | null;
   agent_index: number | null;
+  fqan: string | null;
   status: string;
   source: string;
   created_at: string;
