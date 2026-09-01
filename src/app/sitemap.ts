@@ -60,5 +60,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...blogEntries, ...profileEntries];
+  const skillSet = new Set<string>();
+  for (const c of cards) {
+    for (const s of c.skills) {
+      if (s.name) skillSet.add(encodeURIComponent(s.name.toLowerCase().replace(/\s+/g, "-")));
+    }
+  }
+  const tagEntries: MetadataRoute.Sitemap = Array.from(skillSet).map((slug) => ({
+    url: `${BASE_URL}/tag/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...blogEntries, ...profileEntries, ...tagEntries];
 }
