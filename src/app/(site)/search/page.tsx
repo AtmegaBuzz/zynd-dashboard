@@ -62,9 +62,9 @@ export default async function SearchPage({ searchParams }: PageProps) {
           <form
             method="get"
             action="/search"
-            className="mb-12 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5"
+            className="mb-12 flex flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5"
           >
-            <div className="mb-4">
+            <div>
               <label className={LABEL} htmlFor="q">
                 Search
               </label>
@@ -131,7 +131,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
             <button
               type="submit"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#5b7cfa] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a67e0]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#5b7cfa] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a67e0]"
             >
               Search
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
