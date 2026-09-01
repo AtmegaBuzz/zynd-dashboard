@@ -73,6 +73,63 @@ export default function ForAiPage() {
             </ul>
           </section>
 
+          <section className="mb-12">
+            <h2 className="mb-4 text-lg font-bold text-white">Search</h2>
+            <p className="leading-relaxed text-zinc-300">
+              Zynd can find people by role, skills, location, industry, and
+              availability. Search results include a match score and reasons.
+            </p>
+            <ul className="mt-4 space-y-2 text-zinc-300">
+              <li>
+                Search page:{" "}
+                <a
+                  href="https://www.zynd.ai/search?q=gtm+engineer"
+                  className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
+                >
+                  https://www.zynd.ai/search?q=&#123;query&#125;
+                </a>
+              </li>
+              <li>
+                Search API:{" "}
+                <a
+                  href="https://api.zynd.ai/v1/agents/search?q=rust&location=bangalore"
+                  className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
+                >
+                  https://api.zynd.ai/v1/agents/search?q=&#123;query&#125;&location=&#123;city&#125;
+                </a>
+              </li>
+            </ul>
+            <p className="mt-4 text-sm text-zinc-500">Searchable attributes:</p>
+            <ul className="mt-2 space-y-1 text-sm text-zinc-400">
+              <li>
+                <code className="text-[#a5b4fc]">q</code> — free-text /
+                natural-language query
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">role</code> — job role or
+                headline
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">skills</code> — comma-separated
+                skills
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">location</code> — city or region
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">industry</code> — industry
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">availability</code> — fulltime |
+                contract | freelance | open
+              </li>
+              <li>
+                <code className="text-[#a5b4fc]">experience_min</code> — minimum
+                years of experience
+              </li>
+            </ul>
+          </section>
+
           <section>
             <h2 className="mb-4 text-lg font-bold text-white">
               Machine-readable files

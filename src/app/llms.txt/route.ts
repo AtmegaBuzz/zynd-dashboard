@@ -17,6 +17,11 @@ export async function GET() {
         )
       : ["- None published yet."]),
     "",
+    "## Search",
+    "- Search page: https://www.zynd.ai/search?q={query}",
+    "- Search API: https://api.zynd.ai/v1/agents/search?q={query}&location={city}&skills={a,b}",
+    "- Searchable attributes: q, role, skills, location, industry, availability (fulltime|contract|freelance|open), experience_min",
+    "",
     "## API",
     ...(cards.length
       ? cards.map((c) => `- [Card JSON](https://api.zynd.ai/cards/${c.id})`)
