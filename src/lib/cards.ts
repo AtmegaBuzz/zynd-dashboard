@@ -55,6 +55,30 @@ export interface AgentProfileCard {
   searchable_facts: string[];
   sources: Source[];
   review: Review;
+  experience_years: number | null;
+  industries: string[];
+  availability: string;
+}
+
+export interface AgentSearchResult {
+  agent_id: string;
+  handle: string;
+  name: string;
+  headline: string;
+  location: string;
+  skills: string[];
+  industries: string[];
+  availability: string;
+  experience_years: number | null;
+  match_score: number;
+  match_reasons: string[];
+  url: string;
+}
+
+export interface AgentSearchResponse {
+  query: Record<string, string | number | null>;
+  searchable_attributes: { name: string; type: string; description: string }[];
+  results: AgentSearchResult[];
 }
 
 export interface OnboardStatus {
@@ -103,6 +127,24 @@ export async function listCards(): Promise<AgentProfileCard[]> {
 export function cardCanonicalUrl(card: AgentProfileCard): string {
   const base = "https://www.zynd.ai";
   return card.handle ? `${base}/p/${card.handle}` : `${base}/profile/${card.id}`;
+}
+
+export async function searchAgents(
+  params: Record<string, string>,
+): Promise<AgentSearchResponse> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v) qs.set(k, v);
+  }
+  try {
+    const res = await fetch(`${API_BASE}/v1/agents/search?${qs}`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return { query: {}, searchable_attributes: [], results: [] };
+    return (await res.json()) as AgentSearchResponse;
+  } catch {
+    return { query: {}, searchable_attributes: [], results: [] };
+  }
 }
 
 export { API_BASE as CARDS_API };
