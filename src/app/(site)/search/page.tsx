@@ -131,7 +131,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
             <button
               type="submit"
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#5b7cfa] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a67e0] sm:w-auto sm:min-w-[180px]"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#5b7cfa] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a67e0]"
             >
               Search
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
