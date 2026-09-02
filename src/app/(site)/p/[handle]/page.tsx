@@ -1,15 +1,141 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  MapPin, Calendar, ExternalLink, Briefcase, Quote, Globe,
+  Github, Twitter, Linkedin, FileText, Code2, Layers,
+} from "lucide-react";
 
 import { Navbar } from "@/components/Navbar";
-import { fetchCardByHandle, cardCanonicalUrl, type AgentProfileCard, type Skill } from "@/lib/cards";
+import {
+  fetchCardByHandle,
+  cardCanonicalUrl,
+  type AgentProfileCard,
+  type Skill,
+} from "@/lib/cards";
 import { pageMetadata } from "@/lib/seo";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
 }
 
+// ─── token system ──────────────────────────────────────────────────────────────
+const T = {
+  bg:        "#f0f2f7",
+  surface:   "#ffffff",
+  navy:      "#0d1b2a",
+  accent:    "#5b7cfa",
+  accentMid: "#eff3ff",
+  border:    "rgba(0,0,0,0.07)",
+  shadow:    "0 1px 2px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05)",
+  textPri:   "#0f172a",
+  textSec:   "#475569",
+  textTert:  "#94a3b8",
+} as const;
+
+// ─── skill → simpleicons slug ──────────────────────────────────────────────────
+const SKILL_SLUGS: Record<string, string> = {
+  "react": "react",
+  "typescript": "typescript",
+  "javascript": "javascript",
+  "python": "python",
+  "go": "go",
+  "golang": "go",
+  "rust": "rust",
+  "node.js": "nodedotjs",
+  "nodejs": "nodedotjs",
+  "node": "nodedotjs",
+  "next.js": "nextdotjs",
+  "nextjs": "nextdotjs",
+  "postgresql": "postgresql",
+  "postgres": "postgresql",
+  "mongodb": "mongodb",
+  "docker": "docker",
+  "kubernetes": "kubernetes",
+  "k8s": "kubernetes",
+  "aws": "amazonaws",
+  "graphql": "graphql",
+  "prisma": "prisma",
+  "tailwind": "tailwindcss",
+  "tailwindcss": "tailwindcss",
+  "solidity": "solidity",
+  "ethereum": "ethereum",
+  "vue": "vuedotjs",
+  "vue.js": "vuedotjs",
+  "angular": "angular",
+  "swift": "swift",
+  "kotlin": "kotlin",
+  "java": "openjdk",
+  "c++": "cplusplus",
+  "c#": "csharp",
+  "ruby": "ruby",
+  "rails": "rubyonrails",
+  "redis": "redis",
+  "supabase": "supabase",
+  "firebase": "firebase",
+  "vercel": "vercel",
+  "github": "github",
+  "gitlab": "gitlab",
+  "linux": "linux",
+  "figma": "figma",
+  "svelte": "svelte",
+  "webassembly": "webassembly",
+  "wasm": "webassembly",
+  "openai": "openai",
+  "tensorflow": "tensorflow",
+  "pytorch": "pytorch",
+  "huggingface": "huggingface",
+  "stripe": "stripe",
+  "mysql": "mysql",
+  "sqlite": "sqlite",
+  "ansible": "ansible",
+  "terraform": "terraform",
+  "git": "git",
+  "elixir": "elixir",
+  "scala": "scala",
+  "haskell": "haskell",
+  "r": "r",
+  "flutter": "flutter",
+  "dart": "dart",
+  "unity": "unity",
+  "unreal": "unrealengine",
+  "solana": "solana",
+  "polygon": "polygon",
+};
+
+function skillSlug(name: string): string | null {
+  return SKILL_SLUGS[name.toLowerCase().trim()] ?? null;
+}
+
+// ─── utils ─────────────────────────────────────────────────────────────────────
+function isBlank(s: string | null | undefined): boolean {
+  if (!s) return true;
+  const low = s.toLowerCase().trim();
+  return low === "" || low === "n/a" || low === "not specified" || low === "unknown" || low === "none";
+}
+
+function safeUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const { protocol } = new URL(url);
+    return protocol === "http:" || protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+const LEVEL_META: Record<string, { label: string; color: string; bg: string }> = {
+  expert:       { label: "Expert",    color: "#b45309", bg: "#fef3c7" },
+  advanced:     { label: "Advanced",  color: "#6d28d9", bg: "#ede9fe" },
+  intermediate: { label: "Mid",       color: "#1d4ed8", bg: "#dbeafe" },
+  beginner:     { label: "Beginner",  color: "#065f46", bg: "#d1fae5" },
+};
+
+function levelMeta(level: string) {
+  return LEVEL_META[level.toLowerCase()] ?? LEVEL_META.intermediate;
+}
+
+// ─── SEO ───────────────────────────────────────────────────────────────────────
 function buildJsonLd(card: AgentProfileCard) {
   const { identity } = card;
   const sameAs = Object.values(identity.links)
@@ -24,7 +150,7 @@ function buildJsonLd(card: AgentProfileCard) {
     mainEntity: {
       "@type": "Person",
       name: identity.name,
-      description: card.summary || identity.headline,
+      description: card.citation_snippet || card.summary,
       image,
       sameAs,
       knowsAbout: card.skills.map((s) => s.name),
@@ -68,91 +194,57 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-const LEVEL_META: Record<string, { label: string; color: string }> = {
-  expert:       { label: "Expert",    color: "#f59e0b" },
-  advanced:     { label: "Advanced",  color: "#a78bfa" },
-  intermediate: { label: "Mid",       color: "#5b7cfa" },
-  beginner:     { label: "Beginner",  color: "#34d399" },
-};
-
-function levelMeta(level: string) {
-  return LEVEL_META[level.toLowerCase()] ?? LEVEL_META.intermediate;
-}
-
-function isBlank(s: string | null | undefined): boolean {
-  if (!s) return true;
-  const low = s.toLowerCase().trim();
-  return low === "" || low === "n/a" || low === "not specified" || low === "unknown" || low === "none";
-}
-
-function safeUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const { protocol } = new URL(url);
-    return protocol === "http:" || protocol === "https:" ? url : null;
-  } catch {
-    return null;
-  }
-}
-
-function PlatformIcon({ platform }: { platform: string }) {
+// ─── platform social icon ──────────────────────────────────────────────────────
+function SocialIcon({ platform }: { platform: string }) {
   const p = platform.toLowerCase();
-  if (p === "github") return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-    </svg>
-  );
-  if (p === "x" || p === "twitter") return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.213 5.567zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-    </svg>
-  );
-  if (p === "linkedin") return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-    </svg>
-  );
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-    </svg>
-  );
+  if (p === "github") return <Github size={14} />;
+  if (p === "x" || p === "twitter") return <Twitter size={14} />;
+  if (p === "linkedin") return <Linkedin size={14} />;
+  return <Globe size={14} />;
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+// ─── writing sample platform badge ────────────────────────────────────────────
+function PlatformDot({ platform }: { platform: string }) {
+  const p = platform.toLowerCase();
+  const isX = p === "x" || p === "twitter";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
-      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3d5068" }}>
-        {children}
-      </div>
-      <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
-    </div>
-  );
-}
-
-function SkillChip({ skill }: { skill: Skill }) {
-  const meta = levelMeta(skill.level);
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 11px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", fontSize: "13px", color: "#cbd5e1", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" }}>
-      {skill.name}
-      <span style={{ fontSize: "10px", fontWeight: 700, color: meta.color, letterSpacing: "0.04em" }}>{meta.label.toUpperCase()}</span>
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: "4px",
+      fontSize: "11px", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
+      color: isX ? "#0f172a" : "#0a66c2",
+    }}>
+      {isX ? <Twitter size={10} /> : <Linkedin size={10} />}
+      {isX ? "X" : "LinkedIn"}
     </span>
   );
 }
 
+// ─── page ─────────────────────────────────────────────────────────────────────
 export default async function PersonPage({ params }: PageProps) {
   const { handle } = await params;
   const card = await fetchCardByHandle(handle);
   if (!card) notFound();
 
   const { identity } = card;
-  const initials = (identity.name || "?").split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  const initials = (identity.name || "?")
+    .split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+
   const socialLinks = Object.entries(identity.links)
     .map(([p, u]) => [p, safeUrl(u)] as [string, string | null])
     .filter((e): e is [string, string] => e[1] !== null);
+
   const canonical = cardCanonicalUrl(card);
-  const updated = card.updated_at ? new Date(card.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : null;
+  const updated = card.updated_at
+    ? new Date(card.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+    : null;
+
+  const bannerUrl = safeUrl(identity.avatar_bg_url);
+  const avatarUrl = safeUrl(identity.avatar_url);
+
+  // top skills (with slugs) for the right-column tech stack
+  const techSkills = card.skills
+    .filter((s) => skillSlug(s.name) !== null)
+    .slice(0, 12);
 
   return (
     <>
@@ -164,129 +256,395 @@ export default async function PersonPage({ params }: PageProps) {
       />
 
       <style>{`
-        @keyframes pf-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .pf-card { animation: pf-fade 0.5s cubic-bezier(0.16,1,0.3,1) both; }
-        .pf-card:nth-child(2) { animation-delay: 0.05s; }
-        .pf-card:nth-child(3) { animation-delay: 0.10s; }
-        .pf-card:nth-child(4) { animation-delay: 0.15s; }
-        .pf-card:nth-child(5) { animation-delay: 0.20s; }
-        .pf-card:nth-child(6) { animation-delay: 0.25s; }
-        .pf-social-link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.15s ease; text-transform: capitalize; }
-        .pf-social-link:hover { background: rgba(91,124,250,0.08); border-color: rgba(91,124,250,0.3); color: #a5b4fc; }
-        .pf-project { padding: 18px 20px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; transition: border-color 0.15s ease; }
-        .pf-project:hover { border-color: rgba(91,124,250,0.25); }
-        .pf-back { display: inline-flex; align-items: center; gap: 6px; color: #475569; font-size: 13px; text-decoration: none; transition: color 0.15s ease; }
-        .pf-back:hover { color: #94a3b8; }
-        @media (max-width: 600px) { .pf-hero-inner { flex-direction: column; gap: 16px !important; } .pf-hero-name { font-size: 1.6rem !important; } }
+        @keyframes pf-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .pf-in { animation: pf-up 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+        .pf-in:nth-child(1) { animation-delay: 0.00s; }
+        .pf-in:nth-child(2) { animation-delay: 0.06s; }
+        .pf-in:nth-child(3) { animation-delay: 0.12s; }
+        .pf-in:nth-child(4) { animation-delay: 0.18s; }
+        .pf-in:nth-child(5) { animation-delay: 0.24s; }
+        .pf-in:nth-child(6) { animation-delay: 0.30s; }
+
+        .pf-grid {
+          display: grid;
+          grid-template-columns: 280px 1fr 260px;
+          grid-template-rows: auto;
+          gap: 16px;
+          align-items: start;
+        }
+        .pf-col-left  { grid-column: 1; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 20px; }
+        .pf-col-center { grid-column: 2; display: flex; flex-direction: column; gap: 12px; }
+        .pf-col-right  { grid-column: 3; display: flex; flex-direction: column; gap: 12px; }
+
+        .pf-card {
+          background: ${T.surface};
+          border: 1px solid ${T.border};
+          border-radius: 16px;
+          box-shadow: ${T.shadow};
+          overflow: hidden;
+        }
+        .pf-card-body { padding: 20px; }
+
+        .pf-section-label {
+          font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+          text-transform: uppercase; color: ${T.textTert}; margin-bottom: 14px;
+        }
+
+        .pf-social { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; background: #f8fafc; border: 1px solid ${T.border}; border-radius: 8px; color: ${T.textSec}; font-size: 13px; font-weight: 500; text-decoration: none; text-transform: capitalize; transition: background 0.12s, border-color 0.12s; }
+        .pf-social:hover { background: ${T.accentMid}; border-color: rgba(91,124,250,0.3); color: ${T.accent}; }
+
+        .pf-skill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; background: #f8fafc; border: 1px solid ${T.border}; border-radius: 8px; font-size: 13px; color: ${T.textPri}; font-weight: 500; transition: border-color 0.12s; }
+        .pf-skill:hover { border-color: rgba(91,124,250,0.3); }
+
+        .pf-project { padding: 14px 16px; background: #f8fafc; border: 1px solid ${T.border}; border-radius: 10px; transition: border-color 0.12s; }
+        .pf-project:hover { border-color: rgba(91,124,250,0.3); }
+
+        .pf-writing { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .pf-writing:last-child { border-bottom: none; padding-bottom: 0; }
+        .pf-writing:first-child { padding-top: 0; }
+
+        .pf-back { display: inline-flex; align-items: center; gap: 6px; color: ${T.textTert}; font-size: 13px; text-decoration: none; transition: color 0.12s; font-weight: 500; }
+        .pf-back:hover { color: ${T.textSec}; }
+
+        .pf-tech-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #f8fafc; border: 1px solid ${T.border}; border-radius: 10px; transition: border-color 0.12s; }
+        .pf-tech-icon:hover { border-color: rgba(91,124,250,0.3); background: ${T.accentMid}; }
+
+        @media (max-width: 900px) {
+          .pf-grid { grid-template-columns: 1fr 1fr; }
+          .pf-col-left  { grid-column: 1 / -1; position: static; }
+          .pf-col-center { grid-column: 1 / -1; }
+          .pf-col-right  { grid-column: 1 / -1; }
+        }
+        @media (max-width: 580px) {
+          .pf-grid { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pf-in { animation: none; }
+        }
       `}</style>
 
-      <div style={{ backgroundColor: "#080f1a", minHeight: "100vh", color: "#f1f5f9", fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" }}>
-        <div style={{ maxWidth: "700px", margin: "0 auto", padding: "0 24px 80px" }}>
+      <div style={{ background: T.bg, minHeight: "100vh", fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif", color: T.textPri }}>
+        <div style={{ maxWidth: "1160px", margin: "0 auto", padding: "0 24px 80px" }}>
 
-          <div className="pf-card" style={{ paddingTop: "24px", marginBottom: "32px" }}>
+          {/* back link */}
+          <div style={{ paddingTop: "20px", marginBottom: "20px" }}>
             <Link href="/directory" className="pf-back">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               Directory
             </Link>
           </div>
 
-          <div className="pf-card" style={{ padding: "28px", background: "#0c1525", border: "1px solid rgba(91,124,250,0.18)", borderRadius: "16px", marginBottom: "40px", boxShadow: "0 0 0 1px rgba(91,124,250,0.06), 0 8px 40px rgba(0,0,0,0.4)" }}>
-            <div className="pf-hero-inner" style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
-              {safeUrl(identity.avatar_url) ? (
-                <img src={safeUrl(identity.avatar_url)!} alt={identity.name} style={{ width: "72px", height: "72px", borderRadius: "12px", objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)" }} />
-              ) : (
-                <div style={{ width: "72px", height: "72px", borderRadius: "12px", background: "linear-gradient(135deg, #5b7cfa 0%, #8b5cf6 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", fontWeight: 700, color: "#fff", flexShrink: 0, letterSpacing: "-0.02em" }}>
-                  {initials}
+          {/* ─── BENTO GRID ─── */}
+          <div className="pf-grid">
+
+            {/* ── LEFT column ── */}
+            <div className="pf-col-left">
+
+              {/* Identity card */}
+              <div className="pf-card pf-in">
+                {/* Banner */}
+                <div style={{
+                  height: "110px",
+                  position: "relative",
+                  background: bannerUrl
+                    ? `url(${bannerUrl}) center/cover no-repeat`
+                    : `linear-gradient(135deg, #5b7cfa 0%, #8b5cf6 100%)`,
+                }}>
+                  {/* dark overlay for readability when bg image present */}
+                  {bannerUrl && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)" }} />
+                  )}
+                  {/* Avatar */}
+                  <div style={{ position: "absolute", bottom: "-28px", left: "20px" }}>
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={identity.name}
+                        width={60}
+                        height={60}
+                        style={{ width: "60px", height: "60px", borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", display: "block", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                      />
+                    ) : (
+                      <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "linear-gradient(135deg, #5b7cfa, #8b5cf6)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 700, color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card body */}
+                <div style={{ padding: "40px 20px 20px" }}>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em", lineHeight: 1.2, marginBottom: "4px" }}>
+                    {identity.name}
+                  </div>
+                  {!isBlank(identity.headline) && (
+                    <div style={{ fontSize: "13px", color: T.textSec, lineHeight: 1.5, marginBottom: "10px" }}>
+                      {identity.headline}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                    {!isBlank(identity.location) && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", color: T.textTert }}>
+                        <MapPin size={11} />
+                        {identity.location}
+                      </span>
+                    )}
+                    {updated && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", color: T.textTert }}>
+                        <Calendar size={11} />
+                        Updated {updated}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Social links */}
+                  {socialLinks.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "16px", paddingTop: "16px", borderTop: `1px solid ${T.border}` }}>
+                      {socialLinks.map(([platform, url]) => (
+                        <a key={platform} href={url} target="_blank" rel="noreferrer" className="pf-social">
+                          <SocialIcon platform={platform} />
+                          {platform}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Snapshot card */}
+              {(card.experience_years || card.projects.length > 0 || card.industries.length > 0) && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Snapshot</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                      {card.experience_years != null && (
+                        <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px", border: `1px solid ${T.border}` }}>
+                          <div style={{ fontSize: "22px", fontWeight: 700, color: T.accent, letterSpacing: "-0.03em" }}>{card.experience_years}</div>
+                          <div style={{ fontSize: "11px", color: T.textTert, marginTop: "2px" }}>yrs experience</div>
+                        </div>
+                      )}
+                      {card.projects.length > 0 && (
+                        <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px", border: `1px solid ${T.border}` }}>
+                          <div style={{ fontSize: "22px", fontWeight: 700, color: T.accent, letterSpacing: "-0.03em" }}>{card.projects.length}</div>
+                          <div style={{ fontSize: "11px", color: T.textTert, marginTop: "2px" }}>projects</div>
+                        </div>
+                      )}
+                      {card.skills.length > 0 && (
+                        <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px", border: `1px solid ${T.border}` }}>
+                          <div style={{ fontSize: "22px", fontWeight: 700, color: T.accent, letterSpacing: "-0.03em" }}>{card.skills.length}</div>
+                          <div style={{ fontSize: "11px", color: T.textTert, marginTop: "2px" }}>skills</div>
+                        </div>
+                      )}
+                      {card.writing_samples.length > 0 && (
+                        <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px", border: `1px solid ${T.border}` }}>
+                          <div style={{ fontSize: "22px", fontWeight: 700, color: T.accent, letterSpacing: "-0.03em" }}>{card.writing_samples.length}</div>
+                          <div style={{ fontSize: "11px", color: T.textTert, marginTop: "2px" }}>posts</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* industries */}
+                    {card.industries.length > 0 && (
+                      <div style={{ marginTop: "14px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {card.industries.map((ind) => (
+                          <span key={ind} style={{ fontSize: "11px", fontWeight: 600, padding: "3px 9px", borderRadius: "20px", background: T.accentMid, color: T.accent }}>
+                            {ind}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* availability */}
+                    {!isBlank(card.availability) && (
+                      <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
+                        <span style={{ fontSize: "12px", color: "#065f46", fontWeight: 600, textTransform: "capitalize" }}>
+                          Open to {card.availability}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="pf-hero-name" style={{ fontSize: "1.875rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: "6px" }}>
-                  {identity.name}
+            </div>
+
+            {/* ── CENTER column ── */}
+            <div className="pf-col-center">
+
+              {/* About */}
+              {!isBlank(card.summary) && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">About</div>
+                    <div style={{ fontSize: "14px", color: T.textSec, lineHeight: 1.8 }}>{card.summary}</div>
+                  </div>
                 </div>
-                {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "15px", color: "#8898aa", lineHeight: 1.4, marginBottom: "10px" }}>{identity.headline}</div>
-                )}
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
-                  {!isBlank(identity.location) && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "#64748b" }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                      {identity.location}
-                    </span>
-                  )}
-                  {updated && <span style={{ fontSize: "11px", color: "#3d5068" }}>Updated {updated}</span>}
+              )}
+
+              {/* Skills */}
+              {card.skills.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Skills</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                      {card.skills.map((skill) => {
+                        const slug = skillSlug(skill.name);
+                        const meta = levelMeta(skill.level);
+                        return (
+                          <div key={skill.name} className="pf-skill">
+                            {slug ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={`https://cdn.simpleicons.org/${slug}`}
+                                alt=""
+                                width={16}
+                                height={16}
+                                style={{ width: "16px", height: "16px", objectFit: "contain" }}
+                              />
+                            ) : (
+                              <span style={{ width: "16px", height: "16px", borderRadius: "4px", background: T.accentMid, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 700, color: T.accent }}>
+                                {skill.name[0]?.toUpperCase()}
+                              </span>
+                            )}
+                            <span>{skill.name}</span>
+                            <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: meta.bg, color: meta.color }}>
+                              {meta.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Writing samples */}
+              {card.writing_samples.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Posts & Writing</div>
+                    <div>
+                      {card.writing_samples.slice(0, 6).map((sample, i) => (
+                        <div key={i} className="pf-writing">
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
+                            <PlatformDot platform={sample.platform} />
+                            {safeUrl(sample.url) && (
+                              <a href={safeUrl(sample.url)!} target="_blank" rel="noreferrer" style={{ color: T.textTert, flexShrink: 0 }}>
+                                <ExternalLink size={12} />
+                              </a>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "13px", color: T.textSec, lineHeight: 1.7 }}>
+                            {sample.excerpt.length > 240 ? sample.excerpt.slice(0, 237) + "…" : sample.excerpt}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Projects */}
+              {card.projects.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Projects</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
+                      {card.projects.map((project) => (
+                        <div key={project.name} className="pf-project">
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "6px" }}>
+                            <div style={{ fontSize: "13px", fontWeight: 600, color: T.textPri }}>{project.name}</div>
+                            {safeUrl(project.url) && (
+                              <a href={safeUrl(project.url)!} target="_blank" rel="noreferrer" style={{ color: T.textTert, flexShrink: 0 }}>
+                                <ExternalLink size={12} />
+                              </a>
+                            )}
+                          </div>
+                          {!isBlank(project.description) && (
+                            <div style={{ fontSize: "12px", color: T.textSec, lineHeight: 1.6 }}>{project.description}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── RIGHT column ── */}
+            <div className="pf-col-right">
+
+              {/* Current role — dark navy card (signature element) */}
+              {!isBlank(identity.headline) && (
+                <div className="pf-card pf-in" style={{ background: T.navy, border: "none" }}>
+                  <div className="pf-card-body">
+                    <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Briefcase size={10} />
+                      Current Role
+                    </div>
+                    <div style={{ fontSize: "15px", fontWeight: 600, color: "#fff", lineHeight: 1.4, marginBottom: "10px" }}>
+                      {identity.headline}
+                    </div>
+                    {!isBlank(identity.location) && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+                        <MapPin size={10} />
+                        {identity.location}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tech stack icon grid */}
+              {techSkills.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Tech Stack</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                      {techSkills.map((skill) => {
+                        const slug = skillSlug(skill.name)!;
+                        return (
+                          <div key={skill.name} className="pf-tech-icon" title={skill.name}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`https://cdn.simpleicons.org/${slug}`}
+                              alt={skill.name}
+                              width={20}
+                              height={20}
+                              style={{ width: "20px", height: "20px", objectFit: "contain" }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Citation quote card */}
+              {!isBlank(card.citation_snippet) && (
+                <div className="pf-card pf-in" style={{ background: "#eff6ff", border: "1px solid rgba(91,124,250,0.15)" }}>
+                  <div className="pf-card-body" style={{ position: "relative" }}>
+                    <Quote size={28} style={{ color: "rgba(91,124,250,0.2)", position: "absolute", top: "16px", right: "16px" }} />
+                    <div style={{ fontSize: "13px", color: "#1e40af", lineHeight: 1.7, fontStyle: "italic", paddingRight: "24px" }}>
+                      {card.citation_snippet}
+                    </div>
+                    <div style={{ marginTop: "12px", fontSize: "11px", fontWeight: 700, color: "rgba(30,64,175,0.45)", letterSpacing: "0.08em" }}>
+                      ZYND.AI
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer / sources */}
+              <div className="pf-in" style={{ padding: "4px 0 0" }}>
+                <div style={{ fontSize: "11px", color: T.textTert, textAlign: "center" }}>
+                  zynd.ai/p/{handle}
                 </div>
               </div>
             </div>
 
-            {socialLinks.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                {socialLinks.map(([platform, url]) => (
-                  <a key={platform} href={url} target="_blank" rel="noreferrer" className="pf-social-link">
-                    <PlatformIcon platform={platform} />
-                    {platform}
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
-
-          {!isBlank(card.summary) && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>About</SectionLabel>
-              <div style={{ fontSize: "15px", color: "#94a3b8", lineHeight: 1.8 }}>{card.summary}</div>
-            </section>
-          )}
-
-          {card.skills.length > 0 && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>Skills</SectionLabel>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {card.skills.map((skill) => <SkillChip key={skill.name} skill={skill} />)}
-              </div>
-            </section>
-          )}
-
-          {card.projects.length > 0 && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>Projects</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-                {card.projects.map((project) => (
-                  <div key={project.name} className="pf-project">
-                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#f1f5f9", marginBottom: "6px" }}>{project.name}</div>
-                    {!isBlank(project.description) && <div style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6, marginBottom: "10px" }}>{project.description}</div>}
-                    {safeUrl(project.url) && <a href={safeUrl(project.url)!} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: "#5b7cfa", textDecoration: "none", fontWeight: 500 }}>View →</a>}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {card.writing_samples.length > 0 && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>Writing</SectionLabel>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {card.writing_samples.map((sample, i) => (
-                  <div key={i} style={{ paddingLeft: "16px", borderLeft: "2px solid rgba(91,124,250,0.3)" }}>
-                    <div style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.7, marginBottom: "6px" }}>{sample.excerpt}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "11px", color: "#3d5068", textTransform: "capitalize" }}>{sample.platform}</span>
-                      {safeUrl(sample.url) && <a href={safeUrl(sample.url)!} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "#5b7cfa", textDecoration: "none" }}>Read →</a>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <div className="pf-card" style={{ marginTop: "40px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: "12px", color: "#1e3a5f", lineHeight: 1.6 }}>{card.citation_snippet}</div>
-          </div>
-
-          <div className="pf-card" style={{ marginTop: "32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Link href="/directory" className="pf-back">← Zynd directory</Link>
-            <div style={{ fontSize: "11px", color: "#1e3a5f" }}>zynd.ai/p/{handle}</div>
-          </div>
-
         </div>
       </div>
     </>

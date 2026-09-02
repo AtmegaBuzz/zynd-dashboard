@@ -3,6 +3,7 @@ export interface Identity {
   headline: string;
   location: string;
   avatar_url: string;
+  avatar_bg_url?: string;
   links: Record<string, string>;
 }
 
