@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   MapPin, Calendar, ExternalLink, Briefcase, Quote, Globe,
-  Github, Twitter, Linkedin,
+  Github, Twitter, Linkedin, Shield, Cpu, Network, Code2,
+  CheckSquare, Layers, Search,
 } from "lucide-react";
 
 import {
@@ -131,23 +132,134 @@ const SKILL_SLUGS: Record<string, string> = {
 function skillSlug(name: string): string | null {
   const raw = name.toLowerCase().trim();
   if (SKILL_SLUGS[raw]) return SKILL_SLUGS[raw];
-
-  // Extract abbreviation from parentheses and try it: "Amazon Web Services (AWS)" → "aws"
   const abbrevMatch = raw.match(/\(([^)]+)\)/);
   if (abbrevMatch) {
     const abbrev = abbrevMatch[1].trim();
     if (SKILL_SLUGS[abbrev]) return SKILL_SLUGS[abbrev];
   }
-
-  // Strip parenthetical entirely and retry: "Go (Programming Language)" → "go"
   const stripped = raw.replace(/\s*\([^)]*\)/g, "").trim();
   if (stripped !== raw && SKILL_SLUGS[stripped]) return SKILL_SLUGS[stripped];
-
-  // First word: "Shell Scripting" → "shell"
   const firstWord = raw.split(/[\s(]/)[0];
   if (firstWord.length > 1 && SKILL_SLUGS[firstWord]) return SKILL_SLUGS[firstWord];
-
   return null;
+}
+
+// ─── devicons CDN (colorful, great for languages) ──────────────────────────────
+const DEVICON_BASE = "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons";
+const DEVICON_SLUGS: Record<string, string> = {
+  "c": "c/c-original",
+  "c++": "cplusplus/cplusplus-original",
+  "c#": "csharp/csharp-original",
+  "java": "java/java-original",
+  "ruby": "ruby/ruby-original",
+  "php": "php/php-original",
+  "swift": "swift/swift-original",
+  "kotlin": "kotlin/kotlin-original",
+  "haskell": "haskell/haskell-original",
+  "scala": "scala/scala-original",
+  "elixir": "elixir/elixir-original",
+  "dart": "dart/dart-original",
+  "flutter": "flutter/flutter-original",
+  "perl": "perl/perl-plain",
+  "r": "r/r-original",
+  "lua": "lua/lua-original",
+  "vim": "vim/vim-original",
+  "nginx": "nginx/nginx-original",
+  "apache": "apache/apache-original",
+  "ansible": "ansible/ansible-original",
+  "jenkins": "jenkins/jenkins-original",
+  "webpack": "webpack/webpack-original",
+  "jest": "jest/jest-plain",
+  "selenium": "selenium/selenium-original",
+  "unity": "unity/unity-original",
+  "matlab": "matlab/matlab-original",
+  "bash": "bash/bash-original",
+  "shell scripting": "bash/bash-original",
+  "zsh": "bash/bash-original",
+  "mysql": "mysql/mysql-original",
+  "sqlite": "sqlite/sqlite-original",
+  "redis": "redis/redis-original",
+  "mongodb": "mongodb/mongodb-original",
+  "postgresql": "postgresql/postgresql-original",
+  "prometheus": "prometheus/prometheus-original",
+  "grafana": "grafana/grafana-original",
+  "heroku": "heroku/heroku-original",
+  "arduino": "arduino/arduino-original",
+  "nuxt": "nuxtjs/nuxtjs-original",
+  "nuxt.js": "nuxtjs/nuxtjs-original",
+  "gatsby": "gatsby/gatsby-original",
+  "vite": "vitejs/vitejs-original",
+  "solidity": "solidity/solidity-original",
+  "objectivec": "objectivec/objectivec-plain",
+  "assembly": "labview/labview-original",
+};
+
+function deviconSlug(name: string): string | null {
+  const raw = name.toLowerCase().trim();
+  if (DEVICON_SLUGS[raw]) return DEVICON_SLUGS[raw];
+  const stripped = raw.replace(/\s*\([^)]*\)/g, "").trim();
+  if (stripped !== raw && DEVICON_SLUGS[stripped]) return DEVICON_SLUGS[stripped];
+  const firstWord = raw.split(/[\s(]/)[0];
+  if (firstWord.length > 1 && DEVICON_SLUGS[firstWord]) return DEVICON_SLUGS[firstWord];
+  return null;
+}
+
+// ─── category-based icons for conceptual / non-brand skills ───────────────────
+type SkillCategory = "security" | "blockchain" | "hardware" | "testing" | "networking" | "generic";
+
+function skillCategory(name: string): SkillCategory {
+  const n = name.toLowerCase();
+  if (/security|penetrat|owasp|vuln|exploit|hack|cybersec|ctf|malware|forensic|threat|audit|zap|red.team|reverse|encrypt|deciph/.test(n)) return "security";
+  if (/blockchain|smart.contract|defi|cryptoeco|nft|web3|foundry|huff|hardhat|anchor|solidity|ethereum|bitcoin|zkp|zk.proof|layer.2|l2|rollup|evm/.test(n)) return "blockchain";
+  if (/assembl|hardware|fpga|vhdl|verilog|embedded|firmware|microcontrol|circuit|soc/.test(n)) return "hardware";
+  if (/test|qa|quality|assert|spec|jest|cypress|selenium|playwright|formal.verif|verification|tdd|bdd/.test(n)) return "testing";
+  if (/network|tcp|http|api\s|api$|rest|grpc|socket|protocol|dns|web.service|load.balanc/.test(n)) return "networking";
+  return "generic";
+}
+
+const CATEGORY_STYLE: Record<SkillCategory, { color: string; bg: string }> = {
+  security:   { color: "#dc2626", bg: "#fee2e2" },
+  blockchain: { color: "#7c3aed", bg: "#ede9fe" },
+  hardware:   { color: "#475569", bg: "#e2e8f0" },
+  testing:    { color: "#059669", bg: "#d1fae5" },
+  networking: { color: "#0284c7", bg: "#e0f2fe" },
+  generic:    { color: "#5b7cfa", bg: "#eff3ff" },
+};
+
+function CategoryIcon({ category, size }: { category: SkillCategory; size: number }) {
+  if (category === "security")   return <Shield   size={size} />;
+  if (category === "blockchain") return <Layers   size={size} />;
+  if (category === "hardware")   return <Cpu      size={size} />;
+  if (category === "testing")    return <CheckSquare size={size} />;
+  if (category === "networking") return <Network  size={size} />;
+  return <Code2 size={size} />;
+}
+
+function SkillIcon({ name, size = 16 }: { name: string; size?: number }) {
+  const simpleSlug = skillSlug(name);
+  if (simpleSlug) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={`https://cdn.simpleicons.org/${simpleSlug}`} alt="" width={size} height={size}
+        style={{ width: `${size}px`, height: `${size}px`, objectFit: "contain", flexShrink: 0 }} />
+    );
+  }
+  const dvSlug = deviconSlug(name);
+  if (dvSlug) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={`${DEVICON_BASE}/${dvSlug}.svg`} alt="" width={size} height={size}
+        style={{ width: `${size}px`, height: `${size}px`, objectFit: "contain", flexShrink: 0 }} />
+    );
+  }
+  const cat = skillCategory(name);
+  const style = CATEGORY_STYLE[cat];
+  const iconSize = Math.max(9, size - 4);
+  return (
+    <span style={{ width: `${size + 2}px`, height: `${size + 2}px`, borderRadius: "4px", background: style.bg, color: style.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <CategoryIcon category={cat} size={iconSize} />
+    </span>
+  );
 }
 
 // ─── utils ─────────────────────────────────────────────────────────────────────
@@ -283,11 +395,6 @@ export default async function PersonPage({ params }: PageProps) {
 
   const bannerUrl = safeUrl(identity.avatar_bg_url);
   const avatarUrl = safeUrl(identity.avatar_url);
-
-  // top skills (with slugs) for the right-column tech stack
-  const techSkills = card.skills
-    .filter((s) => skillSlug(s.name) !== null)
-    .slice(0, 12);
 
   return (
     <>
@@ -507,6 +614,31 @@ export default async function PersonPage({ params }: PageProps) {
                   </div>
                 </div>
               )}
+
+              {/* Find similar people card */}
+              <div className="pf-card pf-in">
+                <div className="pf-card-body">
+                  <div className="pf-section-label">Explore Zynd</div>
+                  <p style={{ fontSize: "12px", color: T.textSec, lineHeight: 1.6, marginBottom: "14px" }}>
+                    Find people with similar expertise in the Zynd directory
+                  </p>
+                  {card.skills.length > 0 && (
+                    <Link
+                      href={`/search?skills=${card.skills.slice(0, 3).map(s => encodeURIComponent(s.name)).join(",")}`}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "13px", fontWeight: 600, color: "#fff", textDecoration: "none", padding: "10px 14px", borderRadius: "10px", background: T.accent, marginBottom: "8px" }}
+                    >
+                      <Search size={13} />
+                      Find Similar Profiles
+                    </Link>
+                  )}
+                  <Link
+                    href="/directory"
+                    style={{ display: "block", textAlign: "center", fontSize: "12px", color: T.textTert, textDecoration: "none", padding: "6px" }}
+                  >
+                    Browse all profiles →
+                  </Link>
+                </div>
+              </div>
             </div>
 
             {/* ── CENTER column ── */}
@@ -529,24 +661,10 @@ export default async function PersonPage({ params }: PageProps) {
                     <div className="pf-section-label">Skills</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                       {card.skills.map((skill) => {
-                        const slug = skillSlug(skill.name);
                         const meta = levelMeta(skill.level);
                         return (
                           <div key={skill.name} className="pf-skill">
-                            {slug ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={`https://cdn.simpleicons.org/${slug}`}
-                                alt=""
-                                width={16}
-                                height={16}
-                                style={{ width: "16px", height: "16px", objectFit: "contain" }}
-                              />
-                            ) : (
-                              <span style={{ width: "16px", height: "16px", borderRadius: "4px", background: T.accentMid, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 700, color: T.accent }}>
-                                {skill.name[0]?.toUpperCase()}
-                              </span>
-                            )}
+                            <SkillIcon name={skill.name} size={16} />
                             <span>{skill.name}</span>
                             <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: meta.bg, color: meta.color }}>
                               {meta.label}
@@ -615,6 +733,58 @@ export default async function PersonPage({ params }: PageProps) {
                   </div>
                 </div>
               )}
+
+              {/* Browse by skill — always renders, fills empty space, drives discovery */}
+              {card.skills.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Browse by Skill</div>
+                    <p style={{ fontSize: "12px", color: T.textTert, marginBottom: "14px", lineHeight: 1.5 }}>
+                      Find other people on Zynd with the same expertise
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                      {card.skills.map((skill) => {
+                        const tagSlug = encodeURIComponent(skill.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""));
+                        return (
+                          <Link
+                            key={skill.name}
+                            href={`/tag/${tagSlug}`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", color: T.accent, textDecoration: "none", padding: "5px 10px", borderRadius: "20px", background: T.accentMid, border: "1px solid rgba(91,124,250,0.2)", fontWeight: 500, transition: "background 0.12s" }}
+                          >
+                            <SkillIcon name={skill.name} size={13} />
+                            {skill.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Searchable topics — shows how this profile surfaces in AI search */}
+              {card.searchable_facts.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">AI Discovery Topics</div>
+                    <p style={{ fontSize: "12px", color: T.textTert, marginBottom: "12px", lineHeight: 1.5 }}>
+                      How this profile surfaces in AI-agent search queries
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {card.searchable_facts.slice(0, 6).map((fact, i) => (
+                        <div key={i} style={{ fontSize: "12px", color: T.textSec, padding: "6px 10px", borderRadius: "8px", background: "#f8fafc", border: `1px solid ${T.border}`, lineHeight: 1.4 }}>
+                          {fact}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Search size={11} style={{ color: T.textTert }} />
+                      <Link href={`/search?q=${encodeURIComponent(identity.name)}`} style={{ fontSize: "11px", color: T.accent, textDecoration: "none", fontWeight: 500 }}>
+                        Search for {identity.name.split(" ")[0]} on Zynd →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── RIGHT column ── */}
@@ -641,27 +811,17 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Tech stack icon grid */}
-              {techSkills.length > 0 && (
+              {/* Tech stack icon grid — shows ALL skills with icons (3 libraries) */}
+              {card.skills.length > 0 && (
                 <div className="pf-card pf-in">
                   <div className="pf-card-body">
                     <div className="pf-section-label">Tech Stack</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                      {techSkills.map((skill) => {
-                        const slug = skillSlug(skill.name)!;
-                        return (
-                          <div key={skill.name} className="pf-tech-icon" title={skill.name}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={`https://cdn.simpleicons.org/${slug}`}
-                              alt={skill.name}
-                              width={20}
-                              height={20}
-                              style={{ width: "20px", height: "20px", objectFit: "contain" }}
-                            />
-                          </div>
-                        );
-                      })}
+                      {card.skills.slice(0, 16).map((skill) => (
+                        <div key={skill.name} className="pf-tech-icon" title={skill.name}>
+                          <SkillIcon name={skill.name} size={20} />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -682,10 +842,41 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Footer / sources */}
-              <div className="pf-in" style={{ padding: "4px 0 0" }}>
-                <div style={{ fontSize: "11px", color: T.textTert, textAlign: "center" }}>
-                  zynd.ai/p/{handle}
+              {/* Profile sources provenance */}
+              {card.sources && card.sources.length > 0 && (
+                <div className="pf-card pf-in">
+                  <div className="pf-card-body">
+                    <div className="pf-section-label">Profile Sources</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {card.sources.map((src, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ color: T.textSec, display: "flex", alignItems: "center" }}>
+                            <SocialIcon platform={src.platform} />
+                          </span>
+                          <span style={{ fontSize: "12px", color: T.textSec, textTransform: "capitalize", flex: 1 }}>
+                            {src.platform === "resume" ? "Résumé upload" : src.platform}
+                          </span>
+                          {src.scraped_at && (
+                            <span style={{ fontSize: "10px", color: T.textTert }}>
+                              {new Date(src.scraped_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${T.border}`, fontSize: "10px", color: T.textTert, lineHeight: 1.5 }}>
+                      Profile synthesized by Zynd AI from public sources
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Verified on Zynd card */}
+              <div className="pf-card pf-in" style={{ background: "linear-gradient(135deg, #f8fafc 0%, #eff3ff 100%)", border: "1px solid rgba(91,124,250,0.12)" }}>
+                <div className="pf-card-body" style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.04em", color: T.accent, marginBottom: "4px" }}>Zynd</div>
+                  <div style={{ fontSize: "11px", color: T.textTert, marginBottom: "12px" }}>AI-native people directory</div>
+                  <div style={{ fontSize: "11px", color: T.textTert }}>zynd.ai/p/{handle}</div>
                 </div>
               </div>
             </div>
