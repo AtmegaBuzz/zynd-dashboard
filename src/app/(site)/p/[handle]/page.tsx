@@ -3,15 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   MapPin, Calendar, ExternalLink, Briefcase, Quote, Globe,
-  Github, Twitter, Linkedin, FileText, Code2, Layers,
+  Github, Twitter, Linkedin,
 } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
 import {
   fetchCardByHandle,
   cardCanonicalUrl,
   type AgentProfileCard,
-  type Skill,
 } from "@/lib/cards";
 import { pageMetadata } from "@/lib/seo";
 
@@ -54,6 +52,10 @@ const SKILL_SLUGS: Record<string, string> = {
   "kubernetes": "kubernetes",
   "k8s": "kubernetes",
   "aws": "amazonaws",
+  "amazon web services": "amazonaws",
+  "gcp": "googlecloud",
+  "google cloud": "googlecloud",
+  "azure": "microsoftazure",
   "graphql": "graphql",
   "prisma": "prisma",
   "tailwind": "tailwindcss",
@@ -91,20 +93,61 @@ const SKILL_SLUGS: Record<string, string> = {
   "ansible": "ansible",
   "terraform": "terraform",
   "git": "git",
+  "bash": "gnubash",
+  "shell": "gnubash",
+  "zsh": "gnubash",
   "elixir": "elixir",
   "scala": "scala",
   "haskell": "haskell",
-  "r": "r",
   "flutter": "flutter",
   "dart": "dart",
   "unity": "unity",
   "unreal": "unrealengine",
   "solana": "solana",
   "polygon": "polygon",
+  "nginx": "nginx",
+  "apache": "apache",
+  "jenkins": "jenkins",
+  "jira": "jira",
+  "notion": "notion",
+  "slack": "slack",
+  "fastapi": "fastapi",
+  "django": "django",
+  "flask": "flask",
+  "spring": "spring",
+  "laravel": "laravel",
+  "php": "php",
+  "wordpress": "wordpress",
+  "elasticsearch": "elasticsearch",
+  "kafka": "apachekafka",
+  "rabbitmq": "rabbitmq",
+  "celery": "celery",
+  "pandas": "pandas",
+  "numpy": "numpy",
+  "scikit": "scikitlearn",
+  "langchain": "langchain",
 };
 
 function skillSlug(name: string): string | null {
-  return SKILL_SLUGS[name.toLowerCase().trim()] ?? null;
+  const raw = name.toLowerCase().trim();
+  if (SKILL_SLUGS[raw]) return SKILL_SLUGS[raw];
+
+  // Extract abbreviation from parentheses and try it: "Amazon Web Services (AWS)" → "aws"
+  const abbrevMatch = raw.match(/\(([^)]+)\)/);
+  if (abbrevMatch) {
+    const abbrev = abbrevMatch[1].trim();
+    if (SKILL_SLUGS[abbrev]) return SKILL_SLUGS[abbrev];
+  }
+
+  // Strip parenthetical entirely and retry: "Go (Programming Language)" → "go"
+  const stripped = raw.replace(/\s*\([^)]*\)/g, "").trim();
+  if (stripped !== raw && SKILL_SLUGS[stripped]) return SKILL_SLUGS[stripped];
+
+  // First word: "Shell Scripting" → "shell"
+  const firstWord = raw.split(/[\s(]/)[0];
+  if (firstWord.length > 1 && SKILL_SLUGS[firstWord]) return SKILL_SLUGS[firstWord];
+
+  return null;
 }
 
 // ─── utils ─────────────────────────────────────────────────────────────────────
@@ -248,7 +291,6 @@ export default async function PersonPage({ params }: PageProps) {
 
   return (
     <>
-      <Navbar />
       <link rel="canonical" href={canonical} />
       <script
         type="application/ld+json"
@@ -267,12 +309,11 @@ export default async function PersonPage({ params }: PageProps) {
 
         .pf-grid {
           display: grid;
-          grid-template-columns: 280px 1fr 260px;
-          grid-template-rows: auto;
-          gap: 16px;
+          grid-template-columns: 270px 1fr 250px;
+          gap: 14px;
           align-items: start;
         }
-        .pf-col-left  { grid-column: 1; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 20px; }
+        .pf-col-left  { grid-column: 1; display: flex; flex-direction: column; gap: 12px; }
         .pf-col-center { grid-column: 2; display: flex; flex-direction: column; gap: 12px; }
         .pf-col-right  { grid-column: 3; display: flex; flex-direction: column; gap: 12px; }
 
@@ -522,9 +563,14 @@ export default async function PersonPage({ params }: PageProps) {
               {card.writing_samples.length > 0 && (
                 <div className="pf-card pf-in">
                   <div className="pf-card-body">
-                    <div className="pf-section-label">Posts & Writing</div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                      <div className="pf-section-label" style={{ marginBottom: 0 }}>Posts & Writing</div>
+                      {card.writing_samples.length > 4 && (
+                        <span style={{ fontSize: "11px", color: T.textTert }}>{card.writing_samples.length} posts</span>
+                      )}
+                    </div>
                     <div>
-                      {card.writing_samples.slice(0, 6).map((sample, i) => (
+                      {card.writing_samples.slice(0, 4).map((sample, i) => (
                         <div key={i} className="pf-writing">
                           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
                             <PlatformDot platform={sample.platform} />
