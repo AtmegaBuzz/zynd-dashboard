@@ -136,7 +136,7 @@ function applyAnswers(
   customs: Record<string, string>,
   locationInput: string,
 ): AgentProfileCard {
-  let c = { ...card, identity: { ...card.identity }, skills: [...card.skills], searchable_facts: [...card.searchable_facts] };
+  const c = { ...card, identity: { ...card.identity }, skills: [...card.skills], searchable_facts: [...card.searchable_facts] };
 
   const joinAnswers = (id: string) => [
     ...(selections[id] ?? new Set<string>()),
@@ -188,6 +188,7 @@ export default function CreateProfilePage() {
   // URL chip input
   const [urls, setUrls] = useState<string[]>([]);
   const [inputVal, setInputVal] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [resume, setResume] = useState<File | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
 
@@ -228,6 +229,19 @@ export default function CreateProfilePage() {
     const trimmed = raw.trim();
     if (!trimmed) return;
     const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    try {
+      const u = new URL(withProto);
+      const host = u.hostname.toLowerCase();
+      const needsHandle =
+        host === "github.com" || host === "x.com" || host === "twitter.com" ||
+        host === "linkedin.com";
+      const pathPart = u.pathname.replace(/^\//, "").split("/")[0];
+      if (needsHandle && !pathPart) {
+        setUrlError(`Include your username — e.g. ${host}/yourusername`);
+        return;
+      }
+    } catch { /* invalid URL — allow through so user sees it */ }
+    setUrlError(null);
     if (!urls.includes(withProto)) setUrls(p => [...p, withProto]);
     setInputVal("");
   }
@@ -307,7 +321,12 @@ export default function CreateProfilePage() {
   }
 
   function advanceQuestion() {
-    const next = questionIndexRef.current + 1;
+    let next = questionIndexRef.current + 1;
+    // Skip location question when extraction already found one
+    const locIdx = QUESTIONS.findIndex(q => q.id === "location");
+    if (next === locIdx && pendingCardRef.current?.identity.location) {
+      next += 1;
+    }
     questionIndexRef.current = next;
     setQuestionIndex(next);
     if (next >= QUESTIONS.length && jobDoneRef.current && pendingCardRef.current) {
@@ -455,6 +474,12 @@ export default function CreateProfilePage() {
                       style={{ flex: "1 1 180px", minWidth: "180px", border: "none", outline: "none", background: "transparent", fontSize: "13px", color: T.pri, fontFamily: "inherit" }}
                     />
                   </div>
+
+                  {urlError && (
+                    <div style={{ fontSize: "12px", color: "#dc2626", marginTop: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span>⚠</span> {urlError}
+                    </div>
+                  )}
 
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px", paddingBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                     <div style={{ display: "flex", gap: "5px" }}>
