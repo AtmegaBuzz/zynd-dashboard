@@ -136,7 +136,7 @@ function applyAnswers(
   customs: Record<string, string>,
   locationInput: string,
 ): AgentProfileCard {
-  let c = { ...card, identity: { ...card.identity }, skills: [...card.skills], searchable_facts: [...card.searchable_facts] };
+  const c = { ...card, identity: { ...card.identity }, skills: [...card.skills], searchable_facts: [...card.searchable_facts] };
 
   const joinAnswers = (id: string) => [
     ...(selections[id] ?? new Set<string>()),
