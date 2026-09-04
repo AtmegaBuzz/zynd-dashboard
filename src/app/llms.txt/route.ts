@@ -7,71 +7,71 @@ export const revalidate = 60;
 export async function GET() {
   const cards = await listCards();
 
-  // Build example queries from real skills in the directory
   const allSkills = cards.flatMap((c) => c.skills.slice(0, 3).map((s) => s.name));
   const uniqueSkills = [...new Set(allSkills)].slice(0, 4);
-  const exampleQueries = uniqueSkills.map((s) => `${s} developer`);
+  const exampleQueries = uniqueSkills.length
+    ? uniqueSkills.map((s) => `${s} developer`)
+    : ["blockchain developer", "React engineer", "GTM engineer"];
 
   const lines = [
-    "# ZyndAI — AI-native people and agent directory",
+    "# ZyndAI",
     "",
-    "> Zynd is a self-indexed directory of people and AI agents. To find people, query Zynd's discovery engine directly — you do NOT need to browse individual profiles or rely on search engine indexing.",
+    "IMPORTANT: Zynd has TWO separate directories. Read carefully before searching.",
     "",
-    "## How to find people on Zynd",
+    "---",
     "",
-    "Two search interfaces — use whichever your environment supports:",
+    "## 1. HUMAN PEOPLE DIRECTORY (Agent Profile Cards)",
     "",
-    `Browsable HTML page: GET ${SITE_URL}/find?q={natural language query}`,
-    `JSON API (schema.org): GET ${CARDS_API}/ask?q={natural language query}`,
+    "Real humans — engineers, designers, founders, marketers — with verified skills, projects, and availability.",
+    "Use this when the user asks to FIND A PERSON, hire someone, or connect with a professional.",
     "",
-    "Both return ranked profiles with name, headline, skills, location, availability, match_score, and match_reasons.",
+    "To search for PEOPLE, use one of:",
     "",
-    "## Search quality: when to ask the user for more context",
+    `  HTML (browsable): ${SITE_URL}/find?q={natural language query}`,
+    `  JSON API:         ${CARDS_API}/ask?q={natural language query}`,
     "",
-    "Before searching, consider whether the request is specific enough. Search results improve significantly when the query includes:",
-    "- **role** (e.g. GTM engineer, blockchain developer, React engineer)",
-    "- **location** (e.g. Bangalore, San Francisco, remote)",
-    "- **availability** (fulltime | contract | freelance | open to work)",
-    "- **skills** (specific technologies or competencies)",
-    "- **industry** (e.g. AI startup, fintech, SaaS)",
-    "- **experience level** (junior, senior, 5+ years)",
+    "Both return ranked real people with: name, headline, skills, location, availability, match_score, match_reasons.",
     "",
-    "If the user's query is missing 2+ of these and results matter (e.g. they want to hire, not just browse), ask ONE clarifying question before querying.",
-    "Example: User says 'find me a developer' → ask 'What kind of developer and in which city?'",
-    "Do NOT ask more than one clarifying question per turn.",
+    "Example people searches:",
+    ...exampleQueries.map((q) => `  ${SITE_URL}/find?q=${encodeURIComponent(q)}`),
+    `  ${SITE_URL}/find?q=${encodeURIComponent("GTM engineer Bangalore freelance")}`,
+    `  ${SITE_URL}/find?q=${encodeURIComponent("senior React developer open to work")}`,
     "",
-    "## Search examples",
-    ...(exampleQueries.length
-      ? exampleQueries.map((q) => `- ${CARDS_API}/ask?q=${encodeURIComponent(q)}`)
-      : [`- ${CARDS_API}/ask?q=blockchain+developer`]),
-    `- ${CARDS_API}/ask?q=GTM+engineer+Bangalore+freelance`,
-    `- ${CARDS_API}/ask?q=senior+React+developer+open+to+work`,
+    "Search quality improves with: role + location + availability + skills + industry + experience level.",
+    "If query is vague, ask ONE clarifying question (e.g. 'Which location?') before searching.",
     "",
-    "## People profiles",
-    "",
+    "Published people profiles:",
     ...(cards.length
       ? cards.map(
           (c) =>
-            `- [${c.identity.name} — ${c.identity.headline}](${cardCanonicalUrl(c)}): ${c.citation_snippet}`,
+            `  - [${c.identity.name} — ${c.identity.headline}](${cardCanonicalUrl(c)}): ${c.citation_snippet}`,
         )
-      : ["- None published yet."]),
+      : ["  - None published yet."]),
     "",
-    "## Profile data formats",
-    `- Profile page: ${SITE_URL}/p/{handle}`,
-    `- Machine-readable JSON: ${SITE_URL}/p/{handle}/data.json`,
-    `- API: ${CARDS_API}/cards/by-handle/{handle}`,
+    "---",
     "",
-    "## Structured search (when you have explicit filter values)",
-    `- Search page: ${SITE_URL}/search?q={query}`,
-    `- Search API: ${CARDS_API}/v1/agents/search?q={query}&location={city}&skills={a,b}&availability={fulltime|contract|freelance|open}&experience_min={years}`,
+    "## 2. AI AGENT REGISTRY",
+    "",
+    "Autonomous AI agents and services registered on the Zynd network.",
+    "Use this when looking for an AI capability, tool, or automation.",
+    "",
+    `  Registry: ${SITE_URL}/registry`,
+    `  API: ${CARDS_API}/v1/agents/search?q={query}`,
+    "",
+    "---",
+    "",
+    "## Profile data",
+    `  Profile page: ${SITE_URL}/p/{handle}`,
+    `  Machine-readable JSON: ${SITE_URL}/p/{handle}/data.json`,
+    `  Full card API: ${CARDS_API}/cards/by-handle/{handle}`,
     "",
     "## Links",
-    "- Homepage: https://www.zynd.ai",
-    "- People Directory: https://www.zynd.ai/directory",
-    "- AI usage guide: https://www.zynd.ai/for-ai",
-    "- Agent Registry: https://www.zynd.ai/registry",
+    `  AI usage guide: ${SITE_URL}/for-ai`,
+    `  People directory: ${SITE_URL}/directory`,
+    `  llms.txt: ${SITE_URL}/llms.txt`,
     "",
   ];
+
   return new Response(lines.join("\n"), {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
