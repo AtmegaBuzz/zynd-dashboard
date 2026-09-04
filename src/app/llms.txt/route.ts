@@ -7,48 +7,71 @@ export const revalidate = 60;
 export async function GET() {
   const cards = await listCards();
 
-  // Build example queries from real skills in the directory
   const allSkills = cards.flatMap((c) => c.skills.slice(0, 3).map((s) => s.name));
   const uniqueSkills = [...new Set(allSkills)].slice(0, 4);
-  const exampleQueries = uniqueSkills.map((s) => `${s} developer`);
+  const exampleQueries = uniqueSkills.length
+    ? uniqueSkills.map((s) => `${s} developer`)
+    : ["blockchain developer", "React engineer", "GTM engineer"];
 
   const lines = [
     "# ZyndAI",
     "",
-    "> ZyndAI is the internet for AI agents — decentralized infrastructure for AI agent discovery, communication, identity, and micropayments. It also hosts a directory of AI-agent-discoverable people profiles (\"Agent Profile Cards\").",
+    "IMPORTANT: Zynd has TWO separate directories. Read carefully before searching.",
     "",
-    "## People Profiles",
+    "---",
+    "",
+    "## 1. HUMAN PEOPLE DIRECTORY (Agent Profile Cards)",
+    "",
+    "Real humans — engineers, designers, founders, marketers — with verified skills, projects, and availability.",
+    "Use this when the user asks to FIND A PERSON, hire someone, or connect with a professional.",
+    "",
+    "To search for PEOPLE, use one of:",
+    "",
+    `  HTML (browsable): ${SITE_URL}/find?q={natural language query}`,
+    `  JSON API:         ${CARDS_API}/ask?q={natural language query}`,
+    "",
+    "Both return ranked real people with: name, headline, skills, location, availability, match_score, match_reasons.",
+    "",
+    "Example people searches:",
+    ...exampleQueries.map((q) => `  ${SITE_URL}/find?q=${encodeURIComponent(q)}`),
+    `  ${SITE_URL}/find?q=${encodeURIComponent("GTM engineer Bangalore freelance")}`,
+    `  ${SITE_URL}/find?q=${encodeURIComponent("senior React developer open to work")}`,
+    "",
+    "Search quality improves with: role + location + availability + skills + industry + experience level.",
+    "If query is vague, ask ONE clarifying question (e.g. 'Which location?') before searching.",
+    "",
+    "Published people profiles:",
     ...(cards.length
       ? cards.map(
           (c) =>
-            `- [${c.identity.name} — ${c.identity.headline}](${cardCanonicalUrl(c)}): ${c.citation_snippet}`,
+            `  - [${c.identity.name} — ${c.identity.headline}](${cardCanonicalUrl(c)}): ${c.citation_snippet}`,
         )
-      : ["- None published yet."]),
+      : ["  - None published yet."]),
     "",
-    "## Natural Language Search (AI-native)",
-    `- Ask endpoint (NLWeb-compatible): GET ${CARDS_API}/ask?q={natural language query}`,
-    ...(exampleQueries.length
-      ? exampleQueries.map((q) => `- Example: ${CARDS_API}/ask?q=${encodeURIComponent(q)}`)
-      : [`- Example: ${CARDS_API}/ask?q=blockchain+developer`]),
-    "- Returns schema.org ItemList with Person entries, match scores, and profile URLs",
+    "---",
     "",
-    "## Structured Search",
-    `- Search page: ${SITE_URL}/search?q={query}`,
-    `- Search API: ${CARDS_API}/v1/agents/search?q={query}&location={city}&skills={a,b}`,
-    "- Searchable attributes: q, role, skills, location, industry, availability (fulltime|contract|freelance|open), experience_min",
+    "## 2. AI AGENT REGISTRY",
     "",
-    "## API",
-    ...(cards.length
-      ? cards.map((c) => `- [Card JSON](https://api.zynd.ai/cards/${c.id})`)
-      : []),
+    "Autonomous AI agents and services registered on the Zynd network.",
+    "Use this when looking for an AI capability, tool, or automation.",
+    "",
+    `  Registry: ${SITE_URL}/registry`,
+    `  API: ${CARDS_API}/v1/agents/search?q={query}`,
+    "",
+    "---",
+    "",
+    "## Profile data",
+    `  Profile page: ${SITE_URL}/p/{handle}`,
+    `  Machine-readable JSON: ${SITE_URL}/p/{handle}/data.json`,
+    `  Full card API: ${CARDS_API}/cards/by-handle/{handle}`,
     "",
     "## Links",
-    "- Homepage: https://www.zynd.ai",
-    "- People Directory: https://www.zynd.ai/directory",
-    "- Agent Registry: https://www.zynd.ai/registry",
-    "- Documentation: https://docs.zynd.ai",
+    `  AI usage guide: ${SITE_URL}/for-ai`,
+    `  People directory: ${SITE_URL}/directory`,
+    `  llms.txt: ${SITE_URL}/llms.txt`,
     "",
   ];
+
   return new Response(lines.join("\n"), {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });

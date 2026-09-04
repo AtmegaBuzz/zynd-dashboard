@@ -44,44 +44,85 @@ export default function ForAiPage() {
                 </a>
               </li>
               <li>
-                Each profile page:{" "}
+                Each profile:{" "}
                 <a
-                  href="https://www.zynd.ai/profile/{id}"
+                  href="https://www.zynd.ai/p/0xsy3"
                   className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
                 >
-                  https://www.zynd.ai/profile/&#123;id&#125;
+                  https://www.zynd.ai/p/&#123;handle&#125;
                 </a>
               </li>
               <li>
-                Query by skill:{" "}
+                Profile machine-readable JSON:{" "}
                 <a
-                  href="https://api.zynd.ai/cards?q=rust"
+                  href="https://www.zynd.ai/p/0xsy3/data.json"
                   className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
                 >
-                  https://api.zynd.ai/cards?q=&#123;skill&#125;
+                  https://www.zynd.ai/p/&#123;handle&#125;/data.json
                 </a>
               </li>
               <li>
-                Raw card JSON:{" "}
+                Raw card API:{" "}
                 <a
-                  href="https://api.zynd.ai/cards/{id}"
+                  href="https://api.zynd.ai/cards/by-handle/0xsy3"
                   className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
                 >
-                  https://api.zynd.ai/cards/&#123;id&#125;
+                  https://api.zynd.ai/cards/by-handle/&#123;handle&#125;
                 </a>
               </li>
             </ul>
           </section>
 
           <section className="mb-12">
-            <h2 className="mb-4 text-lg font-bold text-white">Search</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">Natural language search (recommended for AI agents)</h2>
             <p className="leading-relaxed text-zinc-300">
-              Zynd can find people by role, skills, location, industry, and
-              availability. Search results include a match score and reasons.
+              The <code className="text-[#a5b4fc]">/ask</code> endpoint accepts a free-text query and returns
+              ranked profiles as a schema.org <code className="text-[#a5b4fc]">ItemList</code>. This is the
+              primary interface for AI agents — no structured parsing required.
             </p>
             <ul className="mt-4 space-y-2 text-zinc-300">
               <li>
-                Search page:{" "}
+                <strong className="text-white">Browsable (HTML):</strong>{" "}
+                <a
+                  href="https://www.zynd.ai/find?q=GTM+engineer+Bangalore+freelance"
+                  className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
+                >
+                  https://www.zynd.ai/find?q=&#123;natural language query&#125;
+                </a>
+              </li>
+              <li>
+                <strong className="text-white">JSON API:</strong>{" "}
+                <a
+                  href="https://api.zynd.ai/ask?q=GTM+engineer+Bangalore+freelance"
+                  className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
+                >
+                  https://api.zynd.ai/ask?q=&#123;natural language query&#125;
+                </a>
+              </li>
+              <li className="text-sm text-zinc-400">
+                Example: <a href="https://www.zynd.ai/find?q=blockchain+developer+open+to+work" className="text-[#5b7cfa] underline underline-offset-4 hover:text-white">blockchain developer open to work</a>
+              </li>
+              <li className="text-sm text-zinc-400">
+                Example: <a href="https://www.zynd.ai/find?q=react+engineer+San+Francisco" className="text-[#5b7cfa] underline underline-offset-4 hover:text-white">react engineer San Francisco</a>
+              </li>
+            </ul>
+            <p className="mt-4 text-sm text-zinc-500">
+              Results include <code className="text-[#a5b4fc]">name</code>, <code className="text-[#a5b4fc]">headline</code>, <code className="text-[#a5b4fc]">skills</code>, <code className="text-[#a5b4fc]">location</code>, <code className="text-[#a5b4fc]">availability</code>, <code className="text-[#a5b4fc]">match_score</code>, and <code className="text-[#a5b4fc]">match_reasons</code>.
+            </p>
+            <p className="mt-3 text-sm text-zinc-500">
+              Search quality improves significantly when the query includes: <strong className="text-zinc-300">role, location, availability, skills, industry, or experience level</strong>.
+              If the user&apos;s request is missing these, ask for them before querying.
+            </p>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="mb-4 text-lg font-bold text-white">Structured search</h2>
+            <p className="leading-relaxed text-zinc-300">
+              Use structured parameters when you have explicit filter values.
+            </p>
+            <ul className="mt-4 space-y-2 text-zinc-300">
+              <li>
+                Web UI:{" "}
                 <a
                   href="https://www.zynd.ai/search?q=gtm+engineer"
                   className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
@@ -90,7 +131,7 @@ export default function ForAiPage() {
                 </a>
               </li>
               <li>
-                Search API:{" "}
+                API:{" "}
                 <a
                   href="https://api.zynd.ai/v1/agents/search?q=rust&location=bangalore"
                   className="text-[#5b7cfa] underline underline-offset-4 hover:text-white"
@@ -99,34 +140,15 @@ export default function ForAiPage() {
                 </a>
               </li>
             </ul>
-            <p className="mt-4 text-sm text-zinc-500">Searchable attributes:</p>
+            <p className="mt-4 text-sm text-zinc-500">Filterable parameters:</p>
             <ul className="mt-2 space-y-1 text-sm text-zinc-400">
-              <li>
-                <code className="text-[#a5b4fc]">q</code> — free-text /
-                natural-language query
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">role</code> — job role or
-                headline
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">skills</code> — comma-separated
-                skills
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">location</code> — city or region
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">industry</code> — industry
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">availability</code> — fulltime |
-                contract | freelance | open
-              </li>
-              <li>
-                <code className="text-[#a5b4fc]">experience_min</code> — minimum
-                years of experience
-              </li>
+              <li><code className="text-[#a5b4fc]">q</code> — free-text / natural-language</li>
+              <li><code className="text-[#a5b4fc]">role</code> — job role or headline</li>
+              <li><code className="text-[#a5b4fc]">skills</code> — comma-separated skills</li>
+              <li><code className="text-[#a5b4fc]">location</code> — city or region</li>
+              <li><code className="text-[#a5b4fc]">industry</code> — industry vertical</li>
+              <li><code className="text-[#a5b4fc]">availability</code> — fulltime | contract | freelance | open</li>
+              <li><code className="text-[#a5b4fc]">experience_min</code> — minimum years of experience</li>
             </ul>
           </section>
 
