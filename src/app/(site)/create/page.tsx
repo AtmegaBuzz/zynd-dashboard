@@ -10,15 +10,15 @@ import type { AgentProfileCard, OnboardStatus } from "@/lib/cards";
 
 // ─── tokens ───────────────────────────────────────────────────────────────────
 const T = {
-  bg:      "#eef0f6",
+  bg:      "#f7f6f3",
   surface: "#ffffff",
-  accent:  "#5b7cfa",
-  navy:    "#0d1b2a",
-  border:  "rgba(0,0,0,0.10)",
-  shadow:  "0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08)",
-  pri:     "#0f172a",
-  sec:     "#475569",
-  tert:    "#94a3b8",
+  accent:  "#7B72E9",
+  navy:    "#1E1E1E",
+  border:  "#E5E5DE",
+  shadow:  "0 2px 4px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.07)",
+  pri:     "#1E1E1E",
+  sec:     "#2A2A2A",
+  tert:    "#8E8E88",
 } as const;
 
 type Phase   = "form" | "working" | "review" | "error";
@@ -108,7 +108,7 @@ function TextField({ label, value, onChange, rows, placeholder }: {
   rows?: number; placeholder?: string;
 }) {
   const [focused, setFocused] = useState(false);
-  const style = { ...fieldBase, borderColor: focused ? "rgba(91,124,250,0.5)" : T.border };
+  const style = { ...fieldBase, borderColor: focused ? "rgba(123,114,233,0.5)" : T.border };
   return (
     <div>
       <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.tert, marginBottom: "7px" }}>
@@ -388,14 +388,14 @@ export default function CreateProfilePage() {
         .url-inner:hover { border-color: rgba(0,0,0,0.2) !important; }
 
         .quick-btn { transition: background 0.12s, border-color 0.12s, color 0.12s; }
-        .quick-btn:hover { background: rgba(91,124,250,0.08) !important; border-color: rgba(91,124,250,0.25) !important; color: #5b7cfa !important; }
+        .quick-btn:hover { background: rgba(123,114,233,0.08) !important; border-color: rgba(123,114,233,0.25) !important; color: #7B72E9 !important; }
 
         .opt-btn { transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s; cursor: pointer; }
-        .opt-btn:hover { border-color: rgba(91,124,250,0.4) !important; }
+        .opt-btn:hover { border-color: rgba(123,114,233,0.4) !important; }
         .opt-btn:active { transform: scale(0.96); }
 
         .submit-btn { transition: opacity 0.14s, transform 0.1s, box-shadow 0.14s; }
-        .submit-btn:hover:not(:disabled) { opacity: 0.88; box-shadow: 0 4px 20px rgba(91,124,250,0.4) !important; }
+        .submit-btn:hover:not(:disabled) { opacity: 0.88; box-shadow: 0 4px 20px rgba(123,114,233,0.4) !important; }
         .submit-btn:active:not(:disabled) { transform: translateY(1px); }
 
         .chip-x { transition: opacity 0.12s; }
@@ -407,7 +407,7 @@ export default function CreateProfilePage() {
         }
       `}</style>
 
-      <div style={{ background: T.bg, minHeight: "100vh", fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" }}>
+      <div style={{ background: T.bg, minHeight: "100vh", fontFamily: "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         <div style={{ maxWidth: "520px", margin: "0 auto", padding: "40px 24px 80px" }}>
 
           <Link href="/directory" style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "13px", color: T.tert, textDecoration: "none", marginBottom: "32px", fontWeight: 500 }}>
@@ -416,7 +416,7 @@ export default function CreateProfilePage() {
           </Link>
 
           <div style={{ marginBottom: "32px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: T.accent, marginBottom: "12px", padding: "4px 10px", borderRadius: "20px", background: "rgba(91,124,250,0.08)", border: "1px solid rgba(91,124,250,0.15)" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: T.accent, marginBottom: "12px", padding: "4px 10px", borderRadius: "20px", background: "rgba(123,114,233,0.08)", border: "1px solid rgba(123,114,233,0.15)" }}>
               <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: T.accent }} />
               AI-discoverable · You review first
             </div>
@@ -432,7 +432,7 @@ export default function CreateProfilePage() {
           {/* ── FORM ── */}
           {phase === "form" && (
             <form onSubmit={startOnboard} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ background: T.surface, borderRadius: "20px", border: `1.5px solid ${T.border}`, boxShadow: T.shadow, overflow: "hidden" }}>
+              <div style={{ background: T.surface, borderRadius: "28px", border: `1.5px solid ${T.border}`, boxShadow: T.shadow, overflow: "hidden" }}>
                 <div style={{ padding: "20px 20px 0" }}>
                   <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.tert, marginBottom: "10px" }}>
                     Profiles
@@ -444,7 +444,7 @@ export default function CreateProfilePage() {
                     style={{
                       background: "#f7f9fc",
                       border: `1.5px solid ${inputFocused ? T.accent : "rgba(0,0,0,0.13)"}`,
-                      boxShadow: inputFocused ? "0 0 0 3px rgba(91,124,250,0.12)" : "inset 0 1px 2px rgba(0,0,0,0.04)",
+                      boxShadow: inputFocused ? "0 0 0 3px rgba(123,114,233,0.12)" : "inset 0 1px 2px rgba(0,0,0,0.04)",
                       borderRadius: "12px", padding: "10px 12px", cursor: "text",
                       minHeight: "52px", display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center",
                     }}
@@ -501,7 +501,7 @@ export default function CreateProfilePage() {
                     Résumé <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px" }}>— optional</span>
                   </div>
                   <button type="button" onClick={() => fileRef.current?.click()}
-                    style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "9px 12px", borderRadius: "10px", border: `1px dashed ${resume ? "rgba(91,124,250,0.3)" : "rgba(0,0,0,0.12)"}`, background: resume ? "rgba(91,124,250,0.04)" : "transparent", cursor: "pointer", color: resume ? T.accent : T.tert, fontSize: "13px", fontWeight: 500, transition: "all 0.12s" }}>
+                    style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "9px 12px", borderRadius: "10px", border: `1px dashed ${resume ? "rgba(123,114,233,0.3)" : "rgba(0,0,0,0.12)"}`, background: resume ? "rgba(123,114,233,0.04)" : "transparent", cursor: "pointer", color: resume ? T.accent : T.tert, fontSize: "13px", fontWeight: 500, transition: "all 0.12s" }}>
                     <Upload size={13} />
                     {resume ? resume.name : "Upload PDF or DOCX"}
                     {resume && (
@@ -516,7 +516,7 @@ export default function CreateProfilePage() {
               </div>
 
               <button type="submit" disabled={!hasSource} className="submit-btn"
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "15px 20px", borderRadius: "14px", background: T.accent, opacity: hasSource ? 1 : 0.35, border: "none", cursor: hasSource ? "pointer" : "not-allowed", color: "#fff", fontSize: "14px", fontWeight: 700, letterSpacing: "-0.01em", boxShadow: hasSource ? "0 4px 16px rgba(91,124,250,0.3)" : "none" }}>
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "15px 20px", borderRadius: "14px", background: T.accent, opacity: hasSource ? 1 : 0.35, border: "none", cursor: hasSource ? "pointer" : "not-allowed", color: "#fff", fontSize: "14px", fontWeight: 700, letterSpacing: "-0.01em", boxShadow: hasSource ? "0 4px 16px rgba(123,114,233,0.3)" : "none" }}>
                 Build my card
                 <ArrowRight size={16} />
               </button>
@@ -538,8 +538,8 @@ export default function CreateProfilePage() {
             // "Finishing up" screen — user answered all questions, waiting for job
             if (isDone) {
               return (
-                <div style={{ background: T.surface, borderRadius: "20px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "48px 32px", textAlign: "center" }}>
-                  <div className="spin" style={{ width: "28px", height: "28px", borderRadius: "50%", border: "2.5px solid rgba(91,124,250,0.15)", borderTopColor: T.accent, margin: "0 auto 20px" }} />
+                <div style={{ background: T.surface, borderRadius: "28px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "48px 32px", textAlign: "center" }}>
+                  <div className="spin" style={{ width: "28px", height: "28px", borderRadius: "50%", border: "2.5px solid rgba(123,114,233,0.15)", borderTopColor: T.accent, margin: "0 auto 20px" }} />
                   <div style={{ fontSize: "16px", fontWeight: 600, color: T.pri, marginBottom: "6px" }}>Finishing up…</div>
                   <div style={{ fontSize: "13px", color: T.tert }}>Building your card, almost there</div>
                 </div>
@@ -547,7 +547,7 @@ export default function CreateProfilePage() {
             }
 
             return (
-              <div style={{ background: T.surface, borderRadius: "20px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "32px 28px" }}>
+              <div style={{ background: T.surface, borderRadius: "28px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "32px 28px" }}>
                 {/* Progress dots */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "28px" }}>
                   {QUESTIONS.map((_, i) => (
@@ -578,7 +578,7 @@ export default function CreateProfilePage() {
                           style={{
                             padding: "10px 18px", borderRadius: "100px",
                             border: `1.5px solid ${selected ? T.accent : "rgba(0,0,0,0.10)"}`,
-                            background: selected ? "rgba(91,124,250,0.08)" : T.surface,
+                            background: selected ? "rgba(123,114,233,0.08)" : T.surface,
                             color: selected ? T.accent : T.sec,
                             fontSize: "14px", fontWeight: selected ? 600 : 400,
                             userSelect: "none",
@@ -637,7 +637,7 @@ export default function CreateProfilePage() {
                     Skip
                   </button>
                   <button type="button" className="submit-btn" onClick={advanceQuestion}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 20px", borderRadius: "10px", background: T.accent, border: "none", cursor: "pointer", color: "#fff", fontSize: "13px", fontWeight: 700, boxShadow: "0 4px 14px rgba(91,124,250,0.3)" }}>
+                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 20px", borderRadius: "10px", background: T.accent, border: "none", cursor: "pointer", color: "#fff", fontSize: "13px", fontWeight: 700, boxShadow: "0 4px 14px rgba(123,114,233,0.3)" }}>
                     {isLast ? "Done" : "Next"}
                     <ArrowRight size={14} />
                   </button>
@@ -678,11 +678,11 @@ export default function CreateProfilePage() {
           {/* ── REVIEW ── */}
           {phase === "review" && card && (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ background: "rgba(91,124,250,0.06)", border: "1px solid rgba(91,124,250,0.15)", borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: "#1e40af", lineHeight: 1.5 }}>
+              <div style={{ background: "rgba(123,114,233,0.06)", border: "1px solid rgba(123,114,233,0.15)", borderRadius: "12px", padding: "12px 16px", fontSize: "13px", color: "#1e40af", lineHeight: 1.5 }}>
                 Review your card — nothing goes live until you publish.
               </div>
 
-              <div style={{ background: T.surface, borderRadius: "16px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
+              <div style={{ background: T.surface, borderRadius: "20px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
                 <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.tert, marginBottom: "16px" }}>Identity</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                   <TextField label="Name" value={card.identity.name} onChange={v => updateCard({ identity: { ...card.identity, name: v } })} />
@@ -691,7 +691,7 @@ export default function CreateProfilePage() {
                 </div>
               </div>
 
-              <div style={{ background: T.surface, borderRadius: "16px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
+              <div style={{ background: T.surface, borderRadius: "20px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
                 <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.tert, marginBottom: "16px" }}>About</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                   <TextField label="Summary" value={card.summary} rows={4} onChange={v => updateCard({ summary: v })} />
@@ -699,7 +699,7 @@ export default function CreateProfilePage() {
                 </div>
               </div>
 
-              <div style={{ background: T.surface, borderRadius: "16px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
+              <div style={{ background: T.surface, borderRadius: "20px", border: `1px solid ${T.border}`, boxShadow: T.shadow, padding: "20px" }}>
                 <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.tert, marginBottom: "16px" }}>Skills</div>
                 <TextField label="One per line" value={card.skills.map(s => s.name).join("\n")} rows={5}
                   onChange={v => updateCard({
