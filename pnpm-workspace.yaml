@@ -1,0 +1,13 @@
+# pnpm 10+ blocks dependency build scripts unless listed here.
+# Native/optional speedups (keccak, bufferutil, utf-8-validate) are left off —
+# each has a pure-JS fallback and building them needs node-gyp.
+allowBuilds:
+  '@prisma/engines': true
+  '@swc/core': true
+  bufferutil: false
+  esbuild: true
+  keccak: false
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+  utf-8-validate: false
