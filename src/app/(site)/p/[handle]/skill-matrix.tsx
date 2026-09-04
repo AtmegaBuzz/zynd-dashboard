@@ -101,7 +101,8 @@ export function SkillMatrix({ skills }: { skills: { name: string; level: string 
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-[#7B72E9] font-mono text-[10px] font-bold uppercase tracking-wider text-[#7B72E9] hover:bg-[#7B72E9] hover:text-white transition-colors"
+          style={{ color: "#7B72E9" }}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-[#7B72E9] font-mono text-[10px] font-bold uppercase tracking-wider hover:bg-[#7B72E9] hover:!text-white transition-colors"
         >
           {open ? "Show less" : `See all ${skills.length} skills`}
           {/* squarer + heavier than lucide's default, to read like the Material
