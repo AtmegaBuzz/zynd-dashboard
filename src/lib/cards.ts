@@ -18,6 +18,10 @@ export interface Project {
   description: string;
   url: string;
   source: string;
+  /** Not yet emitted by the cards API — see DUMMY.projects in p/[handle]/page.tsx. */
+  stars?: number | null;
+  /** Not yet emitted by the cards API — e.g. ["Rust", "SIMD", "85k RPS"]. */
+  tech?: string[] | null;
 }
 
 export interface WritingSample {
@@ -25,6 +29,8 @@ export interface WritingSample {
   excerpt: string;
   url: string;
   posted_at: string;
+  /** Not yet emitted by the cards API — e.g. ["842 reposts", "3.1k bookmarks"]. */
+  metrics?: string[] | null;
 }
 
 export interface Source {
@@ -38,6 +44,36 @@ export interface Review {
   status: string;
   reviewed_by: string;
   reviewed_at: string;
+}
+
+/**
+ * Platform telemetry blocks. None of these are returned by the cards API today —
+ * the profile page falls back to DUMMY (see p/[handle]/page.tsx) until they are.
+ */
+export interface LinkedInStats {
+  connections: number | string;
+  posts: number | string;
+  verified?: boolean;
+}
+
+export interface XStats {
+  handle: string;
+  followers: number | string;
+  posts: number | string;
+  impressions: number | string;
+}
+
+/** `levels` holds one 0–4 intensity per day, oldest first (GitHub-style heatmap). */
+export interface ContributionStats {
+  year: number;
+  total: number;
+  avg_per_day: number;
+  levels: number[];
+}
+
+export interface Endorsement {
+  quote: string;
+  reviewer_count: number;
 }
 
 export interface AgentProfileCard {
@@ -67,7 +103,21 @@ export interface AgentProfileCard {
     total_repos: number;
     active_repos: number;
     top_languages: string[];
+    /** Not yet emitted by the cards API. */
+    loc_added?: number | string | null;
+    /** Not yet emitted by the cards API. */
+    total_commits?: number | string | null;
   } | null;
+
+  // ── Not yet emitted by the cards API; optional so the page can prefer them ──
+  /** e.g. "Ex-DeepMind • OpenAI Fellow" — the sub-headline under the role. */
+  affiliations?: string | null;
+  /** 0–100 synthesis confidence shown on the About card. */
+  synthesis_score?: number | null;
+  linkedin_stats?: LinkedInStats | null;
+  x_stats?: XStats | null;
+  contribution_stats?: ContributionStats | null;
+  endorsement?: Endorsement | null;
 }
 
 export interface AgentSearchResult {
