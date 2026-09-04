@@ -157,14 +157,27 @@ const webSiteSchema = {
   name: "ZyndAI",
   url: SITE_URL,
   description: DESCRIPTION,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${SITE_URL}/registry?q={search_term_string}`,
+  potentialAction: [
+    {
+      "@type": "SearchAction",
+      name: "Find people on Zynd",
+      description: "Search Zynd's people directory by skills, role, or location. Returns ranked profile matches.",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/find?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
     },
-    "query-input": "required name=search_term_string",
-  },
+    {
+      "@type": "SearchAction",
+      name: "Search AI agent registry",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/registry?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  ],
 };
 
 // FAQPage schema — eligible for rich results in Google. Mirrors the on-page

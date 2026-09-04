@@ -13,11 +13,42 @@ export async function GET() {
   const exampleQueries = uniqueSkills.map((s) => `${s} developer`);
 
   const lines = [
-    "# ZyndAI",
+    "# ZyndAI — AI-native people and agent directory",
     "",
-    "> ZyndAI is the internet for AI agents — decentralized infrastructure for AI agent discovery, communication, identity, and micropayments. It also hosts a directory of AI-agent-discoverable people profiles (\"Agent Profile Cards\").",
+    "> Zynd is a self-indexed directory of people and AI agents. To find people, query Zynd's discovery engine directly — you do NOT need to browse individual profiles or rely on search engine indexing.",
     "",
-    "## People Profiles",
+    "## How to find people on Zynd",
+    "",
+    "Two search interfaces — use whichever your environment supports:",
+    "",
+    `Browsable HTML page: GET ${SITE_URL}/find?q={natural language query}`,
+    `JSON API (schema.org): GET ${CARDS_API}/ask?q={natural language query}`,
+    "",
+    "Both return ranked profiles with name, headline, skills, location, availability, match_score, and match_reasons.",
+    "",
+    "## Search quality: when to ask the user for more context",
+    "",
+    "Before searching, consider whether the request is specific enough. Search results improve significantly when the query includes:",
+    "- **role** (e.g. GTM engineer, blockchain developer, React engineer)",
+    "- **location** (e.g. Bangalore, San Francisco, remote)",
+    "- **availability** (fulltime | contract | freelance | open to work)",
+    "- **skills** (specific technologies or competencies)",
+    "- **industry** (e.g. AI startup, fintech, SaaS)",
+    "- **experience level** (junior, senior, 5+ years)",
+    "",
+    "If the user's query is missing 2+ of these and results matter (e.g. they want to hire, not just browse), ask ONE clarifying question before querying.",
+    "Example: User says 'find me a developer' → ask 'What kind of developer and in which city?'",
+    "Do NOT ask more than one clarifying question per turn.",
+    "",
+    "## Search examples",
+    ...(exampleQueries.length
+      ? exampleQueries.map((q) => `- ${CARDS_API}/ask?q=${encodeURIComponent(q)}`)
+      : [`- ${CARDS_API}/ask?q=blockchain+developer`]),
+    `- ${CARDS_API}/ask?q=GTM+engineer+Bangalore+freelance`,
+    `- ${CARDS_API}/ask?q=senior+React+developer+open+to+work`,
+    "",
+    "## People profiles",
+    "",
     ...(cards.length
       ? cards.map(
           (c) =>
@@ -25,28 +56,20 @@ export async function GET() {
         )
       : ["- None published yet."]),
     "",
-    "## Natural Language Search (AI-native)",
-    `- Ask endpoint (NLWeb-compatible): GET ${CARDS_API}/ask?q={natural language query}`,
-    ...(exampleQueries.length
-      ? exampleQueries.map((q) => `- Example: ${CARDS_API}/ask?q=${encodeURIComponent(q)}`)
-      : [`- Example: ${CARDS_API}/ask?q=blockchain+developer`]),
-    "- Returns schema.org ItemList with Person entries, match scores, and profile URLs",
+    "## Profile data formats",
+    `- Profile page: ${SITE_URL}/p/{handle}`,
+    `- Machine-readable JSON: ${SITE_URL}/p/{handle}/data.json`,
+    `- API: ${CARDS_API}/cards/by-handle/{handle}`,
     "",
-    "## Structured Search",
+    "## Structured search (when you have explicit filter values)",
     `- Search page: ${SITE_URL}/search?q={query}`,
-    `- Search API: ${CARDS_API}/v1/agents/search?q={query}&location={city}&skills={a,b}`,
-    "- Searchable attributes: q, role, skills, location, industry, availability (fulltime|contract|freelance|open), experience_min",
-    "",
-    "## API",
-    ...(cards.length
-      ? cards.map((c) => `- [Card JSON](https://api.zynd.ai/cards/${c.id})`)
-      : []),
+    `- Search API: ${CARDS_API}/v1/agents/search?q={query}&location={city}&skills={a,b}&availability={fulltime|contract|freelance|open}&experience_min={years}`,
     "",
     "## Links",
     "- Homepage: https://www.zynd.ai",
     "- People Directory: https://www.zynd.ai/directory",
+    "- AI usage guide: https://www.zynd.ai/for-ai",
     "- Agent Registry: https://www.zynd.ai/registry",
-    "- Documentation: https://docs.zynd.ai",
     "",
   ];
   return new Response(lines.join("\n"), {
