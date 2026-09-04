@@ -541,6 +541,36 @@ export default async function PersonPage({ params }: PageProps) {
                   </p>
                 )}
 
+                {(card.working_on.length > 0 || card.experience_years != null || card.can_help_with.length > 0) && (
+                  <div className="mt-2.5 flex flex-col gap-1.5">
+                    {card.working_on.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Building</span>
+                        {card.working_on.slice(0, 3).map((item) => (
+                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/15 border border-white/25 font-mono text-[10px] text-white font-medium">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {card.can_help_with.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Helps with</span>
+                        {card.can_help_with.slice(0, 2).map((item) => (
+                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/80 font-medium">
+                            {item}
+                          </span>
+                        ))}
+                        {card.experience_years != null && (
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/60">
+                            {card.experience_years}y exp
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className={`relative mt-2.5 pt-2.5 border-t border-dashed border-white/40 font-mono text-[10.5px] text-white/75 ${verified ? "pr-[72px]" : ""}`}>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     {!isBlank(identity.location) && <span>{identity.location}</span>}
