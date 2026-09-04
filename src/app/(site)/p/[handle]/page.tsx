@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Globe, Search } from "lucide-react";
+import { BadgeCheck, Globe, Search } from "lucide-react";
 
 import {
   fetchCardByHandle,
@@ -516,6 +516,12 @@ export default async function PersonPage({ params }: PageProps) {
           <div className="flex flex-col lg:flex-row items-stretch gap-5 mb-5 zd-pin" id="identity">
             {/* Identity Hero Panel */}
             <div className="lg:w-5/12 bg-[#7B72E9] text-white rounded-[28px] p-6 relative overflow-hidden bento-corner bento-corner-light flex flex-col shadow-sm">
+              {verified && (
+                <div className="absolute top-5 right-5 z-20 inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-[#0B0B0B]/85 backdrop-blur-sm border border-white/20 shadow-lg">
+                  <BadgeCheck size={15} className="text-[#FBC46A]" />
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">Verified</span>
+                </div>
+              )}
               <div className="flex justify-center pb-4 relative z-10">
                 <div className="w-[148px] h-[148px] rounded-full border-2 border-white/70 flex items-center justify-center p-3">
                   {avatarUrl ? (
@@ -541,12 +547,9 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
 
               <div className="pt-3 relative z-10">
-                {(!isBlank(identity.headline) || !isBlank(card.affiliations)) && (
-                  <p className="text-[12.5px] leading-snug text-white/85 font-medium max-w-[34ch]">
+                {!isBlank(identity.headline) && (
+                  <p className="text-[12.5px] leading-snug text-white/85 font-medium line-clamp-2">
                     {identity.headline}
-                    {!isBlank(card.affiliations) && (
-                      <span className="block font-mono text-[11.5px] text-white/70 font-normal mt-0.5">{card.affiliations}</span>
-                    )}
                   </p>
                 )}
 
@@ -590,7 +593,7 @@ export default async function PersonPage({ params }: PageProps) {
                   </div>
                 )}
 
-                <div className={`relative mt-2.5 pt-2.5 border-t border-dashed border-white/40 font-mono text-[10.5px] text-white/75 ${verified ? "pr-[72px]" : ""}`}>
+                <div className="relative mt-2.5 pt-2.5 border-t border-dashed border-white/40 font-mono text-[10.5px] text-white/75">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     {!isBlank(identity.location) && <span>{identity.location}</span>}
                     {syncedAt && <span>Updated {syncedAt}</span>}
@@ -610,13 +613,6 @@ export default async function PersonPage({ params }: PageProps) {
                           <LinkGlyph platform={platform} />
                         </a>
                       ))}
-                    </div>
-                  )}
-
-                  {verified && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[64px] h-[64px] rounded-full bg-[#0B0B0B] flex flex-col items-center justify-center text-center font-mono text-[9px] font-bold uppercase leading-[1.5] tracking-wider text-white z-20">
-                      <span>Verified</span>
-                      <span>on Zynd</span>
                     </div>
                   )}
                 </div>
