@@ -225,10 +225,18 @@ function buildView(card: AgentProfileCard) {
     tech: p.tech ?? [],
   }));
 
-  const writing = card.writing_samples.map((s) => ({
-    ...s,
-    metrics: s.metrics ?? [],
-  }));
+  const skillKeywords = new Set(card.skills.map((s) => s.name.toLowerCase()));
+  const writing = card.writing_samples
+    .map((s) => ({ ...s, metrics: s.metrics ?? [] }))
+    .sort((a, b) => {
+      const score = (text: string) => {
+        const t = text.toLowerCase();
+        let n = 0;
+        for (const kw of skillKeywords) if (t.includes(kw)) n++;
+        return n;
+      };
+      return score(b.excerpt) - score(a.excerpt);
+    });
 
   // Real citation_snippet is preferred; no fabricated quote otherwise — the
   // endorsement card simply doesn't render when there is nothing real to show.
@@ -246,7 +254,8 @@ function buildView(card: AgentProfileCard) {
     },
     github: {
       repos: card.github_stats?.total_repos ?? null,
-      locAdded: card.github_stats?.loc_added ?? null,
+      activeRepos: card.github_stats?.active_repos ?? null,
+      topLanguages: card.github_stats?.top_languages ?? [],
       commits: card.github_stats?.total_commits ?? null,
     },
     x: {
@@ -541,13 +550,23 @@ export default async function PersonPage({ params }: PageProps) {
                   </p>
                 )}
 
-                {(card.working_on.length > 0 || card.experience_years != null || card.can_help_with.length > 0) && (
+                {(card.working_on.length > 0 || card.experience_years != null || card.can_help_with.length > 0 || card.love_talking_about.length > 0) && (
                   <div className="mt-2.5 flex flex-col gap-1.5">
                     {card.working_on.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 items-center">
                         <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Building</span>
                         {card.working_on.slice(0, 3).map((item) => (
                           <span key={item} className="px-2 py-0.5 rounded-full bg-white/15 border border-white/25 font-mono text-[10px] text-white font-medium">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {card.love_talking_about.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Talks about</span>
+                        {card.love_talking_about.slice(0, 3).map((item) => (
+                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/80 font-medium">
                             {item}
                           </span>
                         ))}
@@ -693,20 +712,23 @@ export default async function PersonPage({ params }: PageProps) {
                     <span className="font-mono text-[11px] font-semibold text-white/90">@{githubHandle}</span>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2 my-2">
+                <div className="grid grid-cols-2 gap-2 my-2">
                   <div>
                     <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.repos ?? "—"} /></span>
                     <p className="font-mono text-[10px] text-white/75">repos</p>
                   </div>
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.locAdded ?? "—"} /></span>
-                    <p className="font-mono text-[10px] text-white/75">loc added</p>
-                  </div>
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.commits ?? "—"} delay={150} /></span>
-                    <p className="font-mono text-[10px] text-white/75">commits</p>
+                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.activeRepos ?? "—"} /></span>
+                    <p className="font-mono text-[10px] text-white/75">active repos</p>
                   </div>
                 </div>
+                {v.github.topLanguages.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {v.github.topLanguages.slice(0, 4).map((lang) => (
+                      <span key={lang} className="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 font-mono text-[10px] text-white/80">{lang}</span>
+                    ))}
+                  </div>
+                )}
                 <span className="font-mono text-[10px] text-emerald-300 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active Contributor
                 </span>
@@ -785,15 +807,13 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
               )}
 
+              {v.writing.length > 0 && (
               <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-7 bento-corner bento-corner-dark shadow-sm" id="posts">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
                     <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-[#F0F0EA] px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
                   </div>
-                  {v.writing.length === 0 ? (
-                    <p className="text-[12px] text-[#8E8E88] font-mono text-center py-6">No posts archived yet.</p>
-                  ) : (
                     <div className="flex flex-col gap-3">
                       {v.writing.slice(0, 10).map((post, idx) => {
                         const style = POST_STYLES[idx % POST_STYLES.length];
@@ -830,9 +850,9 @@ export default async function PersonPage({ params }: PageProps) {
                         );
                       })}
                     </div>
-                  )}
                 </div>
               </div>
+              )}
 
               <div className="bg-[#0B0B0B] text-white rounded-[28px] p-7 bento-corner bento-corner-light shadow-sm flex flex-col justify-between" id="activity-graph">
                 <div className="flex items-center justify-between mb-3">
