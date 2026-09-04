@@ -18,9 +18,7 @@ export interface Project {
   description: string;
   url: string;
   source: string;
-  /** Not yet emitted by the cards API — see DUMMY.projects in p/[handle]/page.tsx. */
   stars?: number | null;
-  /** Not yet emitted by the cards API — e.g. ["Rust", "SIMD", "85k RPS"]. */
   tech?: string[] | null;
 }
 
@@ -29,7 +27,6 @@ export interface WritingSample {
   excerpt: string;
   url: string;
   posted_at: string;
-  /** Not yet emitted by the cards API — e.g. ["842 reposts", "3.1k bookmarks"]. */
   metrics?: string[] | null;
 }
 
@@ -46,10 +43,6 @@ export interface Review {
   reviewed_at: string;
 }
 
-/**
- * Platform telemetry blocks. None of these are returned by the cards API today —
- * the profile page falls back to DUMMY (see p/[handle]/page.tsx) until they are.
- */
 export interface LinkedInStats {
   connections: number | string;
   posts: number | string;
@@ -103,14 +96,10 @@ export interface AgentProfileCard {
     total_repos: number;
     active_repos: number;
     top_languages: string[];
-    /** Not yet emitted by the cards API. */
-    loc_added?: number | string | null;
-    /** Not yet emitted by the cards API. */
     total_commits?: number | string | null;
+    loc_added?: number | string | null;
   } | null;
 
-  // ── Not yet emitted by the cards API; optional so the page can prefer them ──
-  /** e.g. "Ex-DeepMind • OpenAI Fellow" — the sub-headline under the role. */
   affiliations?: string | null;
   /** 0–100 synthesis confidence shown on the About card. */
   synthesis_score?: number | null;
