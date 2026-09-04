@@ -9,7 +9,6 @@ import {
   type AgentProfileCard,
   type ContributionStats,
   type Project,
-  type WritingSample,
 } from "@/lib/cards";
 import { pageMetadata } from "@/lib/seo";
 import { DossierShell } from "./dossier-shell";
@@ -36,58 +35,6 @@ interface PageProps {
    dummy fallbacks; those sections just hide when the card has no real data.
    ═══════════════════════════════════════════════════════════════════════════ */
 const DUMMY = {
-  /** card.linkedin_stats */
-  linkedin: { connections: "500+", posts: 38 },
-
-  /** card.github_stats.loc_added / .total_commits */
-  github: { locAdded: "184k", commits: "1,420" },
-
-  /** card.x_stats */
-  x: { handle: "@chen_ai", followers: "14.2k", posts: 612, impressions: "3.4M" },
-
-  /** card.writing_samples — used only when the card has none at all. */
-  writingSamples: [
-    {
-      platform: "x",
-      posted_at: "2024-10-18",
-      url: "",
-      excerpt:
-        "Why speculative decoding plus KV cache compression is fundamentally reshaping inference cost curves in 2025. Benchmarks on 70B models show a 3.4x throughput leap without accuracy degradation across 100k synthetic prompts…",
-      metrics: ["842 reposts", "3.1k bookmarks"],
-    },
-    {
-      platform: "linkedin",
-      posted_at: "2024-10-04",
-      url: "",
-      excerpt:
-        "Reflections on building distributed GPU clusters from scratch. The hardest bottleneck is rarely compute density — it is PCIe topology, NUMA node thrashing, and cross-switch collective latency. Here are 5 hard lessons…",
-      metrics: ["1.2k reactions", "184 comments"],
-    },
-    {
-      platform: "x",
-      posted_at: "2024-09-28",
-      url: "",
-      excerpt:
-        "Released open-source benchmarks comparing FlashAttention-3 vs Triton kernels on H100 SXM5 architectures. Reproducible configs inside repo…",
-      metrics: ["2.4k stars on benchmark repo"],
-    },
-  ] satisfies WritingSample[],
-
-  /** writing_sample.metrics — cycled per post when a real sample carries none. */
-  writingMetrics: [
-    ["842 reposts", "3.1k bookmarks"],
-    ["1.2k reactions", "184 comments"],
-    ["2.4k stars on benchmark repo"],
-  ],
-
-  /** project.stars / project.tech — cycled per project, by index. */
-  projectStars: [4200, 2900, 1800],
-  projectTech: [
-    ["Rust", "SIMD", "85k RPS"],
-    ["C++", "CUDA", "vLLM Plugin"],
-    ["Ray", "Python", "50B Edges"],
-  ],
-
   /** card.contribution_stats — heatmap is synthesized deterministically from
    *  the card id so a given profile always renders the same pattern. */
   contributions: {
@@ -272,20 +219,15 @@ function buildView(card: AgentProfileCard) {
     .map(([platform, url]) => [platform, safeUrl(url)] as const)
     .filter((e): e is readonly [string, string] => e[1] !== null);
 
-  const projects: (Project & { stars: number | null; tech: string[] })[] = card.projects.map((p, i) => ({
+  const projects: (Project & { stars: number | null; tech: string[] })[] = card.projects.map((p) => ({
     ...p,
-    // DUMMY: project.stars — cycled placeholder until the API returns star counts.
-    stars: p.stars ?? DUMMY.projectStars[i % DUMMY.projectStars.length],
-    // DUMMY: project.tech — cycled placeholder until the API returns a tech list.
-    tech: p.tech ?? [...DUMMY.projectTech[i % DUMMY.projectTech.length]],
+    stars: p.stars ?? null,
+    tech: p.tech ?? [],
   }));
 
-  // DUMMY: whole writing_samples list, only when the card carries none.
-  const rawSamples = card.writing_samples.length > 0 ? card.writing_samples : [...DUMMY.writingSamples];
-  const writing = rawSamples.map((s, i) => ({
+  const writing = card.writing_samples.map((s) => ({
     ...s,
-    // DUMMY: writing_sample.metrics — engagement numbers the API does not send.
-    metrics: s.metrics ?? [...DUMMY.writingMetrics[i % DUMMY.writingMetrics.length]],
+    metrics: s.metrics ?? [],
   }));
 
   // Real citation_snippet is preferred; no fabricated quote otherwise — the
@@ -299,26 +241,22 @@ function buildView(card: AgentProfileCard) {
     endorsementQuote,
 
     linkedin: {
-      // DUMMY: card.linkedin_stats
-      connections: card.linkedin_stats?.connections ?? DUMMY.linkedin.connections,
-      posts: card.linkedin_stats?.posts ?? DUMMY.linkedin.posts,
+      connections: card.linkedin_stats?.connections ?? null,
+      posts: card.linkedin_stats?.posts ?? null,
     },
     github: {
       repos: card.github_stats?.total_repos ?? null,
-      // DUMMY: github_stats.loc_added / .total_commits
-      locAdded: card.github_stats?.loc_added ?? DUMMY.github.locAdded,
-      commits: card.github_stats?.total_commits ?? DUMMY.github.commits,
+      locAdded: card.github_stats?.loc_added ?? null,
+      commits: card.github_stats?.total_commits ?? null,
     },
     x: {
-      // DUMMY: card.x_stats (handle prefers the real identity link when present)
       handle:
         card.x_stats?.handle ??
-        (identity.links?.x ? `@${usernameFromUrl(identity.links.x)}` : DUMMY.x.handle),
-      followers: card.x_stats?.followers ?? DUMMY.x.followers,
-      posts: card.x_stats?.posts ?? DUMMY.x.posts,
-      impressions: card.x_stats?.impressions ?? DUMMY.x.impressions,
+        (identity.links?.x ? `@${usernameFromUrl(identity.links.x)}` : null),
+      followers: card.x_stats?.followers ?? null,
+      posts: card.x_stats?.posts ?? null,
+      impressions: card.x_stats?.impressions ?? null,
     },
-    // DUMMY: card.contribution_stats
     contributions: card.contribution_stats ?? dummyContributions(card.id || card.handle),
   };
 }
@@ -702,11 +640,11 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-3 my-2">
                   <div>
-                    <span className="font-display text-[28px] font-bold leading-tight"><CountUp value={v.linkedin.connections} /></span>
+                    <span className="font-display text-[28px] font-bold leading-tight"><CountUp value={v.linkedin.connections ?? "—"} /></span>
                     <p className="font-mono text-[11px] text-white/75">connections</p>
                   </div>
                   <div>
-                    <span className="font-display text-[28px] font-bold leading-tight"><CountUp value={v.linkedin.posts} /></span>
+                    <span className="font-display text-[28px] font-bold leading-tight"><CountUp value={v.linkedin.posts ?? "—"} /></span>
                     <p className="font-mono text-[11px] text-white/75">published posts</p>
                   </div>
                 </div>
@@ -731,11 +669,11 @@ export default async function PersonPage({ params }: PageProps) {
                     <p className="font-mono text-[10px] text-white/75">repos</p>
                   </div>
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.locAdded} /></span>
+                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.locAdded ?? "—"} /></span>
                     <p className="font-mono text-[10px] text-white/75">loc added</p>
                   </div>
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.commits} delay={150} /></span>
+                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.commits ?? "—"} delay={150} /></span>
                     <p className="font-mono text-[10px] text-white/75">commits</p>
                   </div>
                 </div>
@@ -751,22 +689,22 @@ export default async function PersonPage({ params }: PageProps) {
                     <span>X / Twitter</span>
                   </div>
                   {xUrl ? (
-                    <a href={xUrl} target="_blank" rel="noreferrer" className="font-mono text-[11px] font-semibold pf-c-amber">{v.x.handle} ↗</a>
-                  ) : (
+                    <a href={xUrl} target="_blank" rel="noreferrer" className="font-mono text-[11px] font-semibold pf-c-amber">{v.x.handle ?? "↗"} ↗</a>
+                  ) : v.x.handle ? (
                     <span className="font-mono text-[11px] font-semibold text-amber-300">{v.x.handle}</span>
-                  )}
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-3 gap-2 my-2">
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.followers} /></span>
+                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.followers ?? "—"} /></span>
                     <p className="font-mono text-[10px] text-white/75">followers</p>
                   </div>
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.posts} /></span>
+                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.posts ?? "—"} /></span>
                     <p className="font-mono text-[10px] text-white/75">posts</p>
                   </div>
                   <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-amber-400"><CountUp value={v.x.impressions} delay={150} /></span>
+                    <span className="font-display text-[22px] font-bold leading-tight text-amber-400"><CountUp value={v.x.impressions ?? "—"} delay={150} /></span>
                     <p className="font-mono text-[10px] text-white/75">impressions</p>
                   </div>
                 </div>
@@ -817,13 +755,15 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
               )}
 
-              {v.writing.length > 0 && (
-                <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-7 bento-corner bento-corner-dark shadow-sm" id="posts">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
-                      <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-[#F0F0EA] px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
-                    </div>
+              <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-7 bento-corner bento-corner-dark shadow-sm" id="posts">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
+                    <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-[#F0F0EA] px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
+                  </div>
+                  {v.writing.length === 0 ? (
+                    <p className="text-[12px] text-[#8E8E88] font-mono text-center py-6">No posts archived yet.</p>
+                  ) : (
                     <div className="flex flex-col gap-3">
                       {v.writing.slice(0, 10).map((post, idx) => {
                         const style = POST_STYLES[idx % POST_STYLES.length];
@@ -860,9 +800,9 @@ export default async function PersonPage({ params }: PageProps) {
                         );
                       })}
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <div className="bg-[#0B0B0B] text-white rounded-[28px] p-7 bento-corner bento-corner-light shadow-sm flex flex-col justify-between" id="activity-graph">
                 <div className="flex items-center justify-between mb-3">
@@ -871,7 +811,7 @@ export default async function PersonPage({ params }: PageProps) {
                     <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-semibold">GitHub Telemetry</span>
                   </div>
                   <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 font-semibold">
-                    <CountUp value={v.github.commits} /> IN {v.contributions.year}
+                    {v.github.commits != null ? <><CountUp value={v.github.commits} /> IN {v.contributions.year}</> : v.contributions.year}
                   </span>
                 </div>
                 <div className="overflow-x-auto pb-1 my-auto">

@@ -33,7 +33,8 @@ export function ShareButton({ url }: { url: string }) {
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black text-[#0B0B0B] hover:text-white border border-[#DCDCD7] text-[12px] font-mono font-medium transition-all shadow-sm group"
+        style={{ color: "#0B0B0B" }}
+      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px] font-mono font-medium transition-all shadow-sm group"
       >
         <Link2 size={15} className="text-[#8E8E88] group-hover:text-white transition-colors" />
         <span>Share</span>
