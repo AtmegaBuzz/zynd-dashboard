@@ -1,10 +1,26 @@
 import { NextResponse } from "next/server";
 import { zns } from "@/lib/zns";
-import { listCards, cardCanonicalUrl, type AgentProfileCard } from "@/lib/cards";
+import type { AgentProfileCard } from "@/lib/cards";
+import { cardCanonicalUrl } from "@/lib/cards";
 
 export const revalidate = 60;
 
 const SITE_URL = "https://www.zynd.ai";
+const CARDS_API = process.env.NEXT_PUBLIC_API_URL || "https://api.zynd.ai";
+
+async function fetchCards(): Promise<AgentProfileCard[]> {
+  try {
+    const res = await fetch(`${CARDS_API}/cards`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as AgentProfileCard[];
+  } catch {
+    return [];
+  }
+}
 
 function intParam(raw: string | null, fallback: number, min: number, max: number): number {
   const n = raw === null ? NaN : Number(raw);
@@ -87,7 +103,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         })
       : Promise.resolve([] as Record<string, unknown>[]),
     includePeople && (!category || category === "person")
-      ? listCards().then((cards) => cards.map(cardToEntity))
+      ? fetchCards().then((cards) => cards.map(cardToEntity))
       : Promise.resolve([] as Record<string, unknown>[]),
   ]);
 
