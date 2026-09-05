@@ -114,17 +114,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const entities = [...people, ...agents];
 
   return NextResponse.json(
-    {
-      entities,
-      count: entities.length,
-      _debug: {
-        cards_status: cardsResult.status,
-        cards_reason: cardsResult.status === "rejected" ? String((cardsResult as PromiseRejectedResult).reason) : undefined,
-        people_count: people.length,
-        agents_count: agents.length,
-        cards_api: CARDS_API,
-      },
-    },
+    { entities, count: entities.length },
     { headers: { "cache-control": "public, s-maxage=60, stale-while-revalidate=300" } },
   );
 }
