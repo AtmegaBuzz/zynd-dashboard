@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { BLOG_POSTS } from "@/lib/blogs/posts";
 import { listCards, cardCanonicalUrl } from "@/lib/cards";
 
+export const revalidate = 3600;
+
 const BASE_URL = "https://www.zynd.ai";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
