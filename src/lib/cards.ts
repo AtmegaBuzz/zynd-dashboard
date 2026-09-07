@@ -107,6 +107,7 @@ export interface AgentProfileCard {
   x_stats?: XStats | null;
   contribution_stats?: ContributionStats | null;
   endorsement?: Endorsement | null;
+  calendly_url?: string | null;
 }
 
 export interface AgentSearchResult {

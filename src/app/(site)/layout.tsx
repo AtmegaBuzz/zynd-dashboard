@@ -6,7 +6,6 @@ import "../globals.css";
 import "@/zynd-ui.css";
 
 const SITE_URL = "https://www.zynd.ai";
-    return (await res.json()) as AgentProfileCard[];
 const SITE_NAME = "ZyndAI";
 const TITLE = "The Internet for AI Agents | ZyndAI Open Agent Network";
 const DESCRIPTION =
