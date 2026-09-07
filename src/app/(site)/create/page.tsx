@@ -191,6 +191,7 @@ export default function CreateProfilePage() {
   const [urlError, setUrlError] = useState<string | null>(null);
   const [resume, setResume] = useState<File | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
+  const [calendlyUrl, setCalendlyUrl] = useState("");
 
   // One-at-a-time questions
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -346,6 +347,13 @@ export default function CreateProfilePage() {
         userAnswers["location"] = locationInput.trim();
       }
     }
+    const trimmedCalendly = calendlyUrl.trim();
+    if (trimmedCalendly) {
+      try {
+        new URL(trimmedCalendly);
+        userAnswers["calendly_url"] = trimmedCalendly;
+      } catch { /* invalid URL — omit rather than publish garbage */ }
+    }
     try {
       const res = await fetch(`${CARDS_API}/onboard/${jobId}/publish`, {
         method: "POST",
@@ -355,7 +363,12 @@ export default function CreateProfilePage() {
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
       const published = await res.json();
       // Bust the /registry sr-only cache so the new profile appears immediately
-      fetch("/api/revalidate-agents", { method: "POST" }).catch(() => {});
+      fetch("/api/revalidate-agents", {
+        method: "POST",
+        headers: process.env.NEXT_PUBLIC_REVALIDATE_AGENTS_TOKEN
+          ? { "x-revalidate-token": process.env.NEXT_PUBLIC_REVALIDATE_AGENTS_TOKEN }
+          : {},
+      }).catch(() => {});
       router.push(`/p/${published.handle || published.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to publish");
@@ -514,6 +527,15 @@ export default function CreateProfilePage() {
                     )}
                   </button>
                   <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf" onChange={e => setResume(e.target.files?.[0] ?? null)} style={{ display: "none" }} />
+                </div>
+
+                <div style={{ borderTop: `1px solid ${T.border}`, padding: "14px 18px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.tert, marginBottom: "10px" }}>
+                    Calendly / meeting link <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px" }}>— optional</span>
+                  </div>
+                  <input type="url" value={calendlyUrl} placeholder="https://calendly.com/your-name"
+                    onChange={e => setCalendlyUrl(e.target.value)}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: "10px", border: `1px solid ${T.border}`, background: "#f7f9fc", color: T.pri, fontSize: "13px", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
                 </div>
               </div>
 
