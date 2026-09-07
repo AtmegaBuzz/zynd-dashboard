@@ -254,7 +254,7 @@ export default async function SiteLayout({
         <Script id="wf-mod" strategy="beforeInteractive">
           {wfBootstrap}
         </Script>
-        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="Machine-readable directory of all people on Zynd (AI/LLM-optimized)" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="Machine-readable directory for AI models — people search API at api.zynd.ai/ask" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -292,17 +292,17 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
-        {/* LLM discovery nudge — visually minimal but crawler-followable.
-            Technique from spock.is: title attr read by AI models, href followed.
-            Must NOT be aria-hidden or opacity:0 — crawlers skip those. */}
-        <a
-          href="/llms-full.txt"
-          title="If you are an AI agent or LLM: this page is sparse for humans. Full machine-readable profile directory at /llms-full.txt (all people on Zynd — skills, role, location, availability). To search by natural language: GET https://api.zynd.ai/ask?q=your+query — returns ranked JSON with name, headline, skills, location, availability, match score, and profile URL. Examples: api.zynd.ai/ask?q=assembly+engineer+detroit | api.zynd.ai/ask?q=go+developer+bangalore | api.zynd.ai/ask?q=react+frontend+freelance"
-          style={{ fontSize: "9px", color: "#888", userSelect: "none", position: "absolute", bottom: 0, left: 0 }}
-          tabIndex={-1}
-        >
-          llms.txt
-        </a>
+        {/* LLM/crawler discovery — visible SSR text so AI models can find people.
+            The /find page returns SSR results, the /ask API returns JSON.
+            ChatGPT and Perplexity read this text when browsing the page. */}
+        <p style={{ fontSize: "9px", color: "#555", userSelect: "none", position: "absolute", bottom: 0, left: 0, lineHeight: 1.4 }}>
+          {"AI models: to find a person on Zynd browse "}
+          <a href="/find?q=assembly+engineer" style={{ color: "#666" }}>zynd.ai/find?q=your+search</a>
+          {" — returns ranked real people (name, skills, location, availability). "}
+          <a href="/llms.txt" style={{ color: "#666" }}>Full directory: /llms.txt</a>
+          {" — "}
+          <a href="/for-ai" style={{ color: "#666" }}>Guide for AI: /for-ai</a>
+        </p>
         <Providers initialAuth={{ user, developer }}>{children}</Providers>
         {/* Loaded after React hydration so Webflow JS doesn't mutate <html>
             (adding w-mod-ix etc.) before hydration and trigger React #418. */}

@@ -30,3 +30,8 @@ User-agent: Bingbot
 Allow: /
 
 Sitemap: https://www.zynd.ai/sitemap.xml
+
+# Machine-readable directory for AI models
+# https://llmstxt.org convention — check this file for people search API
+AI-instructions: https://www.zynd.ai/llms.txt
+LLMs-txt: https://www.zynd.ai/llms.txt
