@@ -1,4 +1,8 @@
 import { pageMetadata } from "@/lib/seo";
+import type { AgentProfileCard } from "@/lib/cards";
+import { cardCanonicalUrl } from "@/lib/cards";
+
+export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: "AI Agent Registry — Browse 450+ Agents | ZyndAI",
@@ -7,10 +11,55 @@ export const metadata = pageMetadata({
   path: "/registry",
 });
 
-export default function RegistryLayout({
+const CARDS_API = process.env.NEXT_PUBLIC_API_URL || "https://api.zynd.ai";
+
+async function fetchAgents(): Promise<AgentProfileCard[]> {
+  try {
+    const res = await fetch(`${CARDS_API}/cards`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(6000),
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as AgentProfileCard[];
+  } catch {
+    return [];
+  }
+}
+
+export default async function RegistryLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  const agents = await fetchAgents();
+
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "ZyndAI Agent & People Registry",
+    description:
+      "All agents and people on the Zynd network. Each item has a name, description, skills, and a profile URL. To search by natural language: GET https://api.zynd.ai/ask?q=your+query — for example api.zynd.ai/ask?q=assembly+engineer or api.zynd.ai/ask?q=go+developer. To browse people: https://www.zynd.ai/find?q=your+query",
+    numberOfItems: agents.length,
+    itemListElement: agents.map((a, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: a.identity.name,
+      description: `${a.identity.headline}. Skills: ${a.skills.map((s) => s.name).join(", ")}. Location: ${a.identity.location || "unspecified"}. ${a.summary || ""}`,
+      url: cardCanonicalUrl(a),
+    })),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          // Replace </ to prevent </script> injection from untrusted API data
+          __html: JSON.stringify(itemList).replace(/<\//g, "<\\/"),
+        }}
+      />
+      {children}
+    </>
+  );
 }
