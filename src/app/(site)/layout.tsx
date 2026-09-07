@@ -2,27 +2,11 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { getServerAuth } from "@/lib/auth/server";
-import type { AgentProfileCard } from "@/lib/cards";
-import { cardCanonicalUrl } from "@/lib/cards";
 import "../globals.css";
 import "@/zynd-ui.css";
 
 const SITE_URL = "https://www.zynd.ai";
-const CARDS_API = process.env.NEXT_PUBLIC_API_URL || "https://api.zynd.ai";
-
-async function fetchAgentsForCrawlers(): Promise<AgentProfileCard[]> {
-  try {
-    const res = await fetch(`${CARDS_API}/cards`, {
-      headers: { accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return [];
     return (await res.json()) as AgentProfileCard[];
-  } catch {
-    return [];
-  }
-}
 const SITE_NAME = "ZyndAI";
 const TITLE = "The Internet for AI Agents | ZyndAI Open Agent Network";
 const DESCRIPTION =
@@ -256,10 +240,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const GA_ID = process.env.NEXT_PUBLIC_ANALYTICS_ID;
-  const [{ user, developer }, agents] = await Promise.all([
-    getServerAuth(),
-    fetchAgentsForCrawlers(),
-  ]);
+  const { user, developer } = await getServerAuth();
 
   return (
     <html
@@ -312,43 +293,6 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
-        {/* SSR agent index for LLM crawlers — uses the sr-only accessibility
-            pattern: zero visual space, no layout impact, but text is in the DOM
-            so ChatGPT/Perplexity extract it. Google allows this pattern (it's
-            the screen-reader standard); unlike display:none or opacity:0 it is
-            not flagged as cloaking. */}
-        {agents.length > 0 && (
-          <section
-            aria-label="Zynd people directory"
-            style={{
-              position: "absolute",
-              width: "1px",
-              height: "1px",
-              padding: 0,
-              margin: "-1px",
-              overflow: "hidden",
-              clip: "rect(0,0,0,0)",
-              whiteSpace: "nowrap",
-              border: 0,
-            }}
-          >
-            <p>
-              Zynd — {agents.length} people and agents. To search: zynd.ai/find?q=your+query or api.zynd.ai/ask?q=your+query
-            </p>
-            <ol>
-              {agents.map((a) => (
-                <li key={a.id}>
-                  <a href={cardCanonicalUrl(a)}>{a.identity.name}</a>
-                  {" — "}
-                  {a.identity.headline}
-                  {a.skills.length > 0 && <>. Skills: {a.skills.slice(0, 5).map((s) => s.name).join(", ")}</>}
-                  {a.identity.location ? `. Location: ${a.identity.location}` : ""}
-                  {a.availability ? `. Availability: ${a.availability}` : ""}
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
         <Providers initialAuth={{ user, developer }}>{children}</Providers>
         {/* Loaded after React hydration so Webflow JS doesn't mutate <html>
             (adding w-mod-ix etc.) before hydration and trigger React #418. */}
