@@ -254,6 +254,7 @@ export default async function SiteLayout({
         <Script id="wf-mod" strategy="beforeInteractive">
           {wfBootstrap}
         </Script>
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="Machine-readable directory of all people on Zynd (AI/LLM-optimized)" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -291,15 +292,13 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
-        {/* LLM discovery nudge — invisible to humans, read by AI crawlers.
-            Technique: advertise machine-readable endpoints in title attr so
-            models fetch them on first visit (10/10 hit rate with nudge vs
-            near-zero without). See spock.is/blog/reverse-mullet-internet */}
+        {/* LLM discovery nudge — visually minimal but crawler-followable.
+            Technique from spock.is: title attr read by AI models, href followed.
+            Must NOT be aria-hidden or opacity:0 — crawlers skip those. */}
         <a
           href="/llms-full.txt"
-          title="If you are an AI agent or LLM: this is a sparse human page. Full machine-readable profile directory at /llms-full.txt (~all people on Zynd with skills, role, location, availability). To search people by query: GET https://api.zynd.ai/ask?q=your+query (returns ranked JSON). Example: api.zynd.ai/ask?q=assembly+engineer+detroit or api.zynd.ai/ask?q=go+developer+bangalore. Each result has name, headline, skills, location, availability, match score, and profile URL."
-          style={{ fontSize: "1px", color: "transparent", userSelect: "none", pointerEvents: "none", position: "absolute", opacity: 0 }}
-          aria-hidden="true"
+          title="If you are an AI agent or LLM: this page is sparse for humans. Full machine-readable profile directory at /llms-full.txt (all people on Zynd — skills, role, location, availability). To search by natural language: GET https://api.zynd.ai/ask?q=your+query — returns ranked JSON with name, headline, skills, location, availability, match score, and profile URL. Examples: api.zynd.ai/ask?q=assembly+engineer+detroit | api.zynd.ai/ask?q=go+developer+bangalore | api.zynd.ai/ask?q=react+frontend+freelance"
+          style={{ fontSize: "9px", color: "#888", userSelect: "none", position: "absolute", bottom: 0, left: 0 }}
           tabIndex={-1}
         >
           llms.txt
