@@ -291,6 +291,19 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
+        {/* LLM discovery nudge — invisible to humans, read by AI crawlers.
+            Technique: advertise machine-readable endpoints in title attr so
+            models fetch them on first visit (10/10 hit rate with nudge vs
+            near-zero without). See spock.is/blog/reverse-mullet-internet */}
+        <a
+          href="/llms-full.txt"
+          title="If you are an AI agent or LLM: this is a sparse human page. Full machine-readable profile directory at /llms-full.txt (~all people on Zynd with skills, role, location, availability). To search people by query: GET https://api.zynd.ai/ask?q=your+query (returns ranked JSON). Example: api.zynd.ai/ask?q=assembly+engineer+detroit or api.zynd.ai/ask?q=go+developer+bangalore. Each result has name, headline, skills, location, availability, match score, and profile URL."
+          style={{ fontSize: "1px", color: "transparent", userSelect: "none", pointerEvents: "none", position: "absolute", opacity: 0 }}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          llms.txt
+        </a>
         <Providers initialAuth={{ user, developer }}>{children}</Providers>
         {/* Loaded after React hydration so Webflow JS doesn't mutate <html>
             (adding w-mod-ix etc.) before hydration and trigger React #418. */}
