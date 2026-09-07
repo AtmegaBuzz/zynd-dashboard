@@ -15,6 +15,7 @@ import { DossierShell } from "./dossier-shell";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareButton, CopyPermalinkIcon } from "./share-controls";
 import { CountUp } from "./count-up";
+import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -382,6 +383,7 @@ export default async function PersonPage({ params }: PageProps) {
   const githubHandle = usernameFromUrl(identity.links?.github) || card.handle || "profile";
   const githubUrl = safeUrl(identity.links?.github);
   const xUrl = safeUrl(identity.links?.x);
+  const calendlyUrl = safeUrl(card.calendly_url);
 
   return (
     <>
@@ -613,6 +615,18 @@ export default async function PersonPage({ params }: PageProps) {
                           <LinkGlyph platform={platform} />
                         </a>
                       ))}
+                    </div>
+                  )}
+                  {calendlyUrl && (
+                    <div className="mt-2.5">
+                      <a
+                        href={calendlyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-[#1E1E1E] border border-white/25 font-mono text-[11px] font-semibold hover:bg-white/90 transition-colors"
+                      >
+                        Schedule a call ↗
+                      </a>
                     </div>
                   )}
                 </div>
@@ -975,6 +989,7 @@ export default async function PersonPage({ params }: PageProps) {
           </div>
         </DossierShell>
       </div>
+      <ProfileChatWidget handle={handle} personName={identity.name} />
     </>
   );
 }
