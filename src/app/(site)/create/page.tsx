@@ -354,6 +354,8 @@ export default function CreateProfilePage() {
       });
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
       const published = await res.json();
+      // Bust the /registry sr-only cache so the new profile appears immediately
+      fetch("/api/revalidate-agents", { method: "POST" }).catch(() => {});
       router.push(`/p/${published.handle || published.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to publish");

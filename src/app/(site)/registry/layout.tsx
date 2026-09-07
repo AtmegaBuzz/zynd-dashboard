@@ -18,10 +18,11 @@ async function fetchAgents(): Promise<AgentProfileCard[]> {
     const res = await fetch(`${CARDS_API}/cards`, {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(6000),
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: ["agents-index"] },
     });
     if (!res.ok) return [];
-    return (await res.json()) as AgentProfileCard[];
+    const all = (await res.json()) as AgentProfileCard[];
+    return all.slice(0, 100);
   } catch {
     return [];
   }
