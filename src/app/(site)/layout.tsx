@@ -2,10 +2,27 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { getServerAuth } from "@/lib/auth/server";
+import type { AgentProfileCard } from "@/lib/cards";
+import { cardCanonicalUrl } from "@/lib/cards";
 import "../globals.css";
 import "@/zynd-ui.css";
 
 const SITE_URL = "https://www.zynd.ai";
+const CARDS_API = process.env.NEXT_PUBLIC_API_URL || "https://api.zynd.ai";
+
+async function fetchAgentsForCrawlers(): Promise<AgentProfileCard[]> {
+  try {
+    const res = await fetch(`${CARDS_API}/cards`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as AgentProfileCard[];
+  } catch {
+    return [];
+  }
+}
 const SITE_NAME = "ZyndAI";
 const TITLE = "The Internet for AI Agents | ZyndAI Open Agent Network";
 const DESCRIPTION =
@@ -239,7 +256,10 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const GA_ID = process.env.NEXT_PUBLIC_ANALYTICS_ID;
-  const { user, developer } = await getServerAuth();
+  const [{ user, developer }, agents] = await Promise.all([
+    getServerAuth(),
+    fetchAgentsForCrawlers(),
+  ]);
 
   return (
     <html
@@ -292,17 +312,37 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
-        {/* LLM/crawler discovery — visible SSR text so AI models can find people.
-            The /find page returns SSR results, the /ask API returns JSON.
-            ChatGPT and Perplexity read this text when browsing the page. */}
-        <p style={{ fontSize: "9px", color: "#555", userSelect: "none", position: "absolute", bottom: 0, left: 0, lineHeight: 1.4 }}>
-          {"AI models: to find a person on Zynd browse "}
-          <a href="/find?q=assembly+engineer" style={{ color: "#666" }}>zynd.ai/find?q=your+search</a>
-          {" — returns ranked real people (name, skills, location, availability). "}
-          <a href="/llms.txt" style={{ color: "#666" }}>Full directory: /llms.txt</a>
-          {" — "}
-          <a href="/for-ai" style={{ color: "#666" }}>Guide for AI: /for-ai</a>
-        </p>
+        {/* SSR agent index — rendered before any client JS runs so LLM browsing
+            tools (ChatGPT, Perplexity) see real data on every page including /.
+            NOT hidden: no display:none / opacity:0 / aria-hidden.
+            Small + muted so human readers ignore it. */}
+        {agents.length > 0 && (
+          <section
+            aria-label="Zynd people directory — for AI models"
+            style={{ fontSize: "10px", color: "#555", lineHeight: 1.7, padding: "6px 16px 0" }}
+          >
+            <p style={{ margin: 0 }}>
+              <strong style={{ color: "#666" }}>Zynd — {agents.length} people &amp; agents.</strong>
+              {" Search: "}
+              <a href="/find?q=your+query" style={{ color: "#666" }}>zynd.ai/find?q=your+query</a>
+              {" · "}
+              <a href="https://api.zynd.ai/ask?q=your+query" style={{ color: "#666" }}>api.zynd.ai/ask?q=your+query</a>
+              {" · "}
+              <a href="/for-ai" style={{ color: "#666" }}>AI guide</a>
+            </p>
+            <ol style={{ margin: "2px 0 0 0", padding: "0 0 0 1.2em" }}>
+              {agents.map((a) => (
+                <li key={a.id} style={{ marginBottom: 1 }}>
+                  <a href={cardCanonicalUrl(a)} style={{ color: "#666" }}>{a.identity.name}</a>
+                  {" — "}{a.identity.headline}
+                  {a.skills.length > 0 && <> · {a.skills.slice(0, 4).map((s) => s.name).join(", ")}</>}
+                  {a.identity.location ? ` · ${a.identity.location}` : ""}
+                  {a.availability ? ` · ${a.availability}` : ""}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
         <Providers initialAuth={{ user, developer }}>{children}</Providers>
         {/* Loaded after React hydration so Webflow JS doesn't mutate <html>
             (adding w-mod-ix etc.) before hydration and trigger React #418. */}
