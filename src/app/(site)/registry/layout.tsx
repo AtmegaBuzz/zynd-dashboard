@@ -59,46 +59,34 @@ export default async function RegistryLayout({
           __html: JSON.stringify(itemList).replace(/<\//g, "<\\/"),
         }}
       />
-      {/* AI-readable agent index — rendered server-side so LLM browsing tools
-          see actual data before any client JS runs. Font size and color make it
-          visually unobtrusive for humans; it is NOT hidden (no display:none,
-          opacity:0, or aria-hidden) so crawlers read it. */}
+      {/* sr-only agent index — zero visual space, full DOM text for LLM crawlers */}
       {agents.length > 0 && (
         <section
-          aria-label="Agent index for AI models"
+          aria-label="Zynd agent directory"
           style={{
-            fontSize: "10px",
-            color: "#6b7280",
-            lineHeight: 1.7,
-            padding: "8px 24px 0",
-            maxWidth: 900,
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            padding: 0,
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+            border: 0,
           }}
         >
           <p>
-            <strong style={{ color: "#9ca3af" }}>
-              Zynd registry — {agents.length} agents &amp; people
-            </strong>
-            {" · "}
-            To search: <a href="/find?q=your+query" style={{ color: "#818cf8" }}>zynd.ai/find?q=your+query</a>
-            {" or "}
-            <a href="https://api.zynd.ai/ask?q=your+query" style={{ color: "#818cf8" }}>api.zynd.ai/ask?q=your+query</a>
+            Zynd registry — {agents.length} agents and people. To search: zynd.ai/find?q=your+query or api.zynd.ai/ask?q=your+query
           </p>
-          <ol style={{ margin: "4px 0 0 0", padding: "0 0 0 1.2em" }}>
+          <ol>
             {agents.map((a) => (
-              <li key={a.id} style={{ marginBottom: 2 }}>
-                <a href={cardCanonicalUrl(a)} style={{ color: "#818cf8" }}>
-                  {a.identity.name}
-                </a>
+              <li key={a.id}>
+                <a href={cardCanonicalUrl(a)}>{a.identity.name}</a>
                 {" — "}
                 {a.identity.headline}
-                {a.skills.length > 0 && (
-                  <>
-                    {" · skills: "}
-                    {a.skills.slice(0, 5).map((s) => s.name).join(", ")}
-                  </>
-                )}
-                {a.identity.location ? ` · ${a.identity.location}` : ""}
-                {a.availability ? ` · ${a.availability}` : ""}
+                {a.skills.length > 0 && <>. Skills: {a.skills.slice(0, 5).map((s) => s.name).join(", ")}</>}
+                {a.identity.location ? `. Location: ${a.identity.location}` : ""}
+                {a.availability ? `. Availability: ${a.availability}` : ""}
               </li>
             ))}
           </ol>
