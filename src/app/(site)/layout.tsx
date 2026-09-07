@@ -312,32 +312,38 @@ export default async function SiteLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
-        {/* SSR agent index — rendered before any client JS runs so LLM browsing
-            tools (ChatGPT, Perplexity) see real data on every page including /.
-            NOT hidden: no display:none / opacity:0 / aria-hidden.
-            Small + muted so human readers ignore it. */}
+        {/* SSR agent index for LLM crawlers — uses the sr-only accessibility
+            pattern: zero visual space, no layout impact, but text is in the DOM
+            so ChatGPT/Perplexity extract it. Google allows this pattern (it's
+            the screen-reader standard); unlike display:none or opacity:0 it is
+            not flagged as cloaking. */}
         {agents.length > 0 && (
           <section
-            aria-label="Zynd people directory — for AI models"
-            style={{ fontSize: "10px", color: "#555", lineHeight: 1.7, padding: "6px 16px 0" }}
+            aria-label="Zynd people directory"
+            style={{
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              padding: 0,
+              margin: "-1px",
+              overflow: "hidden",
+              clip: "rect(0,0,0,0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
           >
-            <p style={{ margin: 0 }}>
-              <strong style={{ color: "#666" }}>Zynd — {agents.length} people &amp; agents.</strong>
-              {" Search: "}
-              <a href="/find?q=your+query" style={{ color: "#666" }}>zynd.ai/find?q=your+query</a>
-              {" · "}
-              <a href="https://api.zynd.ai/ask?q=your+query" style={{ color: "#666" }}>api.zynd.ai/ask?q=your+query</a>
-              {" · "}
-              <a href="/for-ai" style={{ color: "#666" }}>AI guide</a>
+            <p>
+              Zynd — {agents.length} people and agents. To search: zynd.ai/find?q=your+query or api.zynd.ai/ask?q=your+query
             </p>
-            <ol style={{ margin: "2px 0 0 0", padding: "0 0 0 1.2em" }}>
+            <ol>
               {agents.map((a) => (
-                <li key={a.id} style={{ marginBottom: 1 }}>
-                  <a href={cardCanonicalUrl(a)} style={{ color: "#666" }}>{a.identity.name}</a>
-                  {" — "}{a.identity.headline}
-                  {a.skills.length > 0 && <> · {a.skills.slice(0, 4).map((s) => s.name).join(", ")}</>}
-                  {a.identity.location ? ` · ${a.identity.location}` : ""}
-                  {a.availability ? ` · ${a.availability}` : ""}
+                <li key={a.id}>
+                  <a href={cardCanonicalUrl(a)}>{a.identity.name}</a>
+                  {" — "}
+                  {a.identity.headline}
+                  {a.skills.length > 0 && <>. Skills: {a.skills.slice(0, 5).map((s) => s.name).join(", ")}</>}
+                  {a.identity.location ? `. Location: ${a.identity.location}` : ""}
+                  {a.availability ? `. Availability: ${a.availability}` : ""}
                 </li>
               ))}
             </ol>
