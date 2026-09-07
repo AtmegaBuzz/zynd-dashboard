@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFeaturedAgents, uniqueCategories, type FeaturedAgent } from "@/lib/landing/featuredAgents";
 import { AgentCard, AgentCardStyles, dotColorFor } from "./AgentCard";
 
@@ -20,6 +20,8 @@ function padRow(arr: FeaturedAgent[], min = 6): FeaturedAgent[] {
 export function AgentDirectoryMarquee(): React.ReactElement | null {
   const { agents, loading } = useFeaturedAgents(300);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const display = useMemo(
     () => (activeCategory ? agents.filter((a) => a.category === activeCategory) : agents),
@@ -257,8 +259,8 @@ export function AgentDirectoryMarquee(): React.ReactElement | null {
           </div>
         </div>
 
-        {loading && agents.length === 0 ? (
-          <div className="adm-empty">Loading registry…</div>
+        {!mounted || (loading && agents.length === 0) ? (
+          <div className="adm-empty" suppressHydrationWarning>{mounted ? "Loading registry…" : ""}</div>
         ) : noResults ? (
           <div className="adm-empty">
             {activeCategory ? `No entities in ${activeCategory} yet.` : "Registry is currently unreachable."}
