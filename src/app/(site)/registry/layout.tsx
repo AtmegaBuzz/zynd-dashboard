@@ -22,7 +22,16 @@ async function fetchAgents(): Promise<AgentProfileCard[]> {
     });
     if (!res.ok) return [];
     const all = (await res.json()) as AgentProfileCard[];
-    return all.slice(0, 100);
+    // Deduplicate by id, sort newest first, cap at 100
+    const seen = new Set<string>();
+    return all
+      .sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? ""))
+      .filter((a) => {
+        if (seen.has(a.id)) return false;
+        seen.add(a.id);
+        return true;
+      })
+      .slice(0, 100);
   } catch {
     return [];
   }

@@ -362,14 +362,20 @@ export default function CreateProfilePage() {
       });
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
       const published = await res.json();
-      // Bust the /registry sr-only cache so the new profile appears immediately
+      const handle = published.handle || published.id;
+      // Fire-and-forget: bust /registry cache + ping Bing IndexNow
       fetch("/api/revalidate-agents", {
         method: "POST",
         headers: process.env.NEXT_PUBLIC_REVALIDATE_AGENTS_TOKEN
           ? { "x-revalidate-token": process.env.NEXT_PUBLIC_REVALIDATE_AGENTS_TOKEN }
           : {},
       }).catch(() => {});
-      router.push(`/p/${published.handle || published.id}`);
+      fetch("/api/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle }),
+      }).catch(() => {});
+      router.push(`/p/${handle}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to publish");
       setPhase("error");
