@@ -271,7 +271,11 @@ function CreateProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editHandle = searchParams.get("edit");
-  const { ready, authenticated, user, login, loginWithGithub } = useAuth();
+  const { ready, authenticated, user } = useAuth();
+
+  const loginRedirect = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback?next=/create`;
+  const login = () => createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: loginRedirect } });
+  const loginWithGithub = () => createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
 
   const [phase, setPhase] = useState<Phase>("form");
   const [jobId, setJobId] = useState<string | null>(null);
