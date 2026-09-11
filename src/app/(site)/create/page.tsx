@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 
+import { useAuth } from "@/hooks/useAuth";
+import { createClient } from "@/lib/supabase/client";
 import { CARDS_API } from "@/lib/cards";
 import type { AgentProfileCard, OnboardStatus, Project, WritingSample } from "@/lib/cards";
 
@@ -259,9 +261,18 @@ function publishableCard(card: AgentProfileCard, excluded: Set<string>): AgentPr
   };
 }
 
+async function getToken(): Promise<string | null> {
+  const { data } = await createClient().auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
-export default function CreateProfilePage() {
+function CreateProfilePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editHandle = searchParams.get("edit");
+  const { ready, authenticated, user, login, loginWithGithub } = useAuth();
+
   const [phase, setPhase] = useState<Phase>("form");
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -290,6 +301,7 @@ export default function CreateProfilePage() {
   const [calendlyInput, setCalendlyInput] = useState("");
 
   const [jobDone, setJobDone] = useState(false);
+  const [existingHandle, setExistingHandle] = useState<string | null>(null);
   const pendingCardRef = useRef<AgentProfileCard | null>(null);
   const questionIndexRef = useRef(0);
   const jobDoneRef = useRef(false);
@@ -312,6 +324,33 @@ export default function CreateProfilePage() {
   useEffect(() => () => {
     if (pollRef.current) clearInterval(pollRef.current);
   }, []);
+
+  // Check if this authenticated user already has a card
+  useEffect(() => {
+    if (!authenticated || editHandle) return;
+    getToken().then(token => {
+      if (!token) return;
+      fetch(`${CARDS_API}/cards/mine`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (data?.handle) setExistingHandle(data.handle); })
+        .catch(() => { /* non-fatal — user just sees create form */ });
+    });
+  }, [authenticated, editHandle]);
+
+  // Edit mode: load the existing card and jump to review
+  useEffect(() => {
+    if (!authenticated || !editHandle) return;
+    fetch(`${CARDS_API}/cards/by-handle/${encodeURIComponent(editHandle)}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+      .then((data: AgentProfileCard) => {
+        setCard(data);
+        setPhase("review");
+      })
+      .catch(() => {
+        setError("Couldn't load that card for editing.");
+        setPhase("error");
+      });
+  }, [authenticated, editHandle]);
 
   // ── URL chip helpers ──
   function addUrl(raw: string) {
@@ -424,24 +463,45 @@ export default function CreateProfilePage() {
   }
 
   async function publish() {
-    if (!card || !jobId) return;
+    if (!card) return;
     setError(null);
-    const userAnswers: Record<string, string> = {};
-    for (const q of QUESTIONS) {
-      if (q.type === "chips") {
-        const parts = [...(selections[q.id] ?? new Set<string>()), ...(customs[q.id]?.trim() ? [customs[q.id].trim()] : [])];
-        if (parts.length > 0) userAnswers[q.id] = parts.join(", ");
-      } else if (q.id === "location" && locationInput.trim()) {
-        userAnswers["location"] = locationInput.trim();
-      } else if (q.id === "calendly_url" && calendlyInput.trim()) {
-        userAnswers["calendly_url"] = calendlyInput.trim();
-      }
-    }
+    const token = await getToken();
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
+      // Edit mode: PATCH the existing card directly (no job needed)
+      if (editHandle) {
+        const res = await fetch(`${CARDS_API}/cards/by-handle/${encodeURIComponent(editHandle)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(publishableCard(card, excluded)),
+        });
+        if (res.status === 403) throw new Error("You don't own this card.");
+        if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
+        router.push(`/p/${editHandle}`);
+        return;
+      }
+
+      if (!jobId) return;
+      const userAnswers: Record<string, string> = {};
+      for (const q of QUESTIONS) {
+        if (q.type === "chips") {
+          const parts = [...(selections[q.id] ?? new Set<string>()), ...(customs[q.id]?.trim() ? [customs[q.id].trim()] : [])];
+          if (parts.length > 0) userAnswers[q.id] = parts.join(", ");
+        } else if (q.id === "location" && locationInput.trim()) {
+          userAnswers["location"] = locationInput.trim();
+        } else if (q.id === "calendly_url" && calendlyInput.trim()) {
+          userAnswers["calendly_url"] = calendlyInput.trim();
+        }
+      }
       const res = await fetch(`${CARDS_API}/onboard/${jobId}/publish`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ card: publishableCard(card, excluded), user_answers: userAnswers }),
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({
+          card: publishableCard(card, excluded),
+          user_answers: userAnswers,
+          owner_email: user?.email ?? null,
+        }),
       });
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
       const published = await res.json();
@@ -468,9 +528,23 @@ export default function CreateProfilePage() {
   const panel =
     phase === "review"
       ? {
-          badge: "Nothing is live yet · You approve",
-          title: <>Review<br />your card</>,
-          body: "Every line came from what's public. Edit anything that reads wrong — publishing is the only step that makes it visible.",
+          badge: editHandle ? "Editing your card · Changes go live on save" : "Nothing is live yet · You approve",
+          title: editHandle ? <>Edit<br />your card</> : <>Review<br />your card</>,
+          body: editHandle
+            ? "Make any changes below — your profile updates the moment you save."
+            : "Every line came from what's public. Edit anything that reads wrong — publishing is the only step that makes it visible.",
+        }
+      : !authenticated
+      ? {
+          badge: "AI-discoverable · You review first",
+          title: <>Sign in<br />to start</>,
+          body: "Create your AI-readable profile. Sign in first so you can edit it anytime.",
+        }
+      : existingHandle && !editHandle
+      ? {
+          badge: "Your profile is live",
+          title: <>You already<br />have a card</>,
+          body: "Your profile is discoverable by AI agents. Edit it anytime or create a new one.",
         }
       : {
           badge: "AI-discoverable · You review first",
@@ -632,8 +706,71 @@ export default function CreateProfilePage() {
             {/* ── right column ── */}
             <div className="zc-col">
 
-              {/* ── STEP 0 — paste links ── */}
-              {phase === "form" && (
+              {/* ── AUTH: loading ── */}
+              {!ready && phase === "form" && (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span className="zc-spin" style={{ width: "22px", height: "22px", borderRadius: "50%", border: `2px solid ${T.dotOff}`, borderTopColor: T.accent, display: "block" }} />
+                </div>
+              )}
+
+              {/* ── AUTH: sign-in gate ── */}
+              {ready && !authenticated && phase === "form" && (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "20px", padding: "0 4px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted }}>Get started</span>
+                    <p style={{ font: `700 26px/1.15 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0 }}>
+                      Sign in to build<br />your AI profile
+                    </p>
+                    <p style={{ font: `400 14px/1.6 ${SANS}`, color: T.soft, margin: 0, maxWidth: "380px" }}>
+                      Your profile is editable anytime — sign in so it belongs to you.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "360px" }}>
+                    <button type="button" onClick={login}
+                      style={{ background: T.accent, color: "#fff", border: "none", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", letterSpacing: "-.01em" }}>
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#fff" fillOpacity=".9"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#fff" fillOpacity=".7"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#fff" fillOpacity=".5"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#fff" fillOpacity=".3"/></svg>
+                      Sign in with Google
+                    </button>
+                    <button type="button" onClick={loginWithGithub}
+                      style={{ background: T.card, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", letterSpacing: "-.01em" }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                      Sign in with GitHub
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── AUTH: user already has a card ── */}
+              {ready && authenticated && existingHandle && !editHandle && phase === "form" && (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "24px", padding: "0 4px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted }}>Your profile</span>
+                    <p style={{ font: `700 26px/1.15 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0 }}>
+                      Live at<br />zynd.ai/p/{existingHandle}
+                    </p>
+                    <p style={{ font: `400 14px/1.6 ${SANS}`, color: T.soft, margin: 0 }}>
+                      Your card is discoverable by AI agents. Edit it or create a new one.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "360px" }}>
+                    <a href={`/create?edit=${existingHandle}`}
+                      style={{ background: T.accent, color: "#fff", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em" }}>
+                      Edit my card <span style={{ font: `400 16px/1 ${SANS}` }}>→</span>
+                    </a>
+                    <a href={`/p/${existingHandle}`}
+                      style={{ background: T.card, color: T.soft, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `500 15px/1 ${SANS}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}>
+                      View profile <span>↗</span>
+                    </a>
+                    <button type="button" onClick={() => setExistingHandle(null)}
+                      style={{ background: "none", border: "none", padding: "8px 0", font: `400 13px/1 ${SANS}`, color: T.faint, cursor: "pointer", textAlign: "left" }}>
+                      Create a new profile instead →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── STEP 0 — paste links (only when authenticated + no existing card blocking) ── */}
+              {ready && authenticated && (!existingHandle || editHandle) && phase === "form" && (
                 <form onSubmit={startOnboard} style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1, minHeight: 0 }}>
 
                   <div className="zc-card" style={{ padding: "28px 28px 26px", display: "flex", flexDirection: "column", gap: "18px" }}>
@@ -1071,5 +1208,13 @@ export default function CreateProfilePage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function CreateProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateProfilePageContent />
+    </Suspense>
   );
 }

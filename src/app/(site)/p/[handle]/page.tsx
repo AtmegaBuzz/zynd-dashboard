@@ -14,6 +14,7 @@ import { pageMetadata } from "@/lib/seo";
 import { DossierShell } from "./dossier-shell";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareButton, CopyPermalinkIcon } from "./share-controls";
+import { EditCardButton } from "./edit-card-button";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
@@ -479,6 +480,7 @@ export default async function PersonPage({ params }: PageProps) {
                 SYNTHESIS_ACTIVE
               </span>
               <ShareButton url={canonical} />
+              <EditCardButton handle={card.handle || handle} />
             </div>
           </div>
 
