@@ -273,9 +273,18 @@ function CreateProfilePageContent() {
   const editHandle = searchParams.get("edit");
   const { ready, authenticated, user } = useAuth();
 
-  const loginRedirect = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback?next=/create`;
-  const login = () => createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: loginRedirect } });
-  const loginWithGithub = () => createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
+  // Carry the post-OAuth destination in a cookie, not a query string. Some
+  // Supabase allowlists match redirect URLs exactly, and a `?next=` query
+  // breaks that match — GoTrue then falls back to its Site URL (localhost).
+  const loginRedirect = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`;
+  const login = () => {
+    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: loginRedirect } });
+  };
+  const loginWithGithub = () => {
+    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
+  };
 
   const [phase, setPhase] = useState<Phase>("form");
   const [jobId, setJobId] = useState<string | null>(null);

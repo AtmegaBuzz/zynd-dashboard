@@ -27,10 +27,12 @@ export default function AuthorizePage() {
 
         if (!session) {
           // Not signed in → Google, returning here (req preserved) via the dashboard callback.
-          const next = encodeURIComponent(`/authorize?req=${req}`);
+          // `next` travels in a cookie, not the redirect URL — query strings can
+          // fail Supabase allowlist matching and bounce users to the Site URL.
+          document.cookie = `zynd_next=${encodeURIComponent(`/authorize?req=${req}`)}; path=/; samesite=lax`;
           await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: `${window.location.origin}/auth/callback?next=${next}` },
+            options: { redirectTo: `${window.location.origin}/auth/callback` },
           });
           return;
         }
