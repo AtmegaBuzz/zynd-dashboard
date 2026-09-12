@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Check, Copy, Link2 } from "lucide-react";
+import { Check, Copy, Link2, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 async function writeClipboard(text: string): Promise<void> {
   try {
@@ -66,5 +67,43 @@ export function CopyPermalinkIcon({ url }: { url: string }) {
     >
       {copied ? <Check size={16} /> : <Copy size={16} />}
     </button>
+  );
+}
+
+/** Top-rail "QR" pill + popover with a scannable code for the profile URL. */
+export function QrButton({ url }: { url: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        aria-label="Show QR code"
+        style={{ color: "#0B0B0B" }}
+        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px] font-mono font-medium transition-all shadow-sm group"
+      >
+        <QrCode size={15} className="text-[#8E8E88] group-hover:text-white transition-colors" />
+        <span>QR</span>
+      </button>
+      {open && (
+        <>
+          {/* Invisible backdrop — click anywhere else closes the popover. */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-[#E5E5DE] rounded-2xl shadow-xl p-4 flex flex-col items-center gap-2.5">
+            <div className="rounded-xl overflow-hidden border border-[#F0F0EA] p-2.5 bg-white leading-none">
+              <QRCodeSVG value={url} size={136} fgColor="#0B0B0B" bgColor="#ffffff" level="M" marginSize={0} />
+            </div>
+            <span className="font-mono text-[10px] text-[#8E8E88] break-all max-w-[170px] text-center leading-snug">
+              {url.replace(/^https?:\/\//, "")}
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#7B72E9] font-bold">
+              Scan to view profile
+            </span>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

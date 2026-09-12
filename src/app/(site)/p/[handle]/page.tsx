@@ -13,7 +13,7 @@ import {
 import { pageMetadata } from "@/lib/seo";
 import { DossierShell } from "./dossier-shell";
 import { SkillMatrix } from "./skill-matrix";
-import { ShareButton, CopyPermalinkIcon } from "./share-controls";
+import { ShareButton, CopyPermalinkIcon, QrButton } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
@@ -468,6 +468,7 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 SYNTHESIS_ACTIVE
               </span>
               <ShareButton url={canonical} />
+              <QrButton url={canonical} />
               <EditCardButton handle={card.handle || handle} />
             </div>
           </div>
