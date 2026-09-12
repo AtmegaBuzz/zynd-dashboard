@@ -65,22 +65,42 @@ const QUESTIONS: { id: string; label: string; type: QuestionType; options?: stri
   {
     id: "working_on", type: "chips",
     label: "What are you working on?",
-    options: ["Building a startup", "At a company", "Doing research", "Freelancing", "Open source", "Side project", "Investing", "Job hunting"],
+    options: [
+      "Building a startup", "Building with AI", "Open source", "Side project", "Indie hacking",
+      "B2B SaaS", "Consumer apps", "Deep tech / research", "Freelancing", "At a company",
+      "Doing research", "Grad school", "Writing", "Teaching / mentoring", "Community building",
+      "Design / creative work", "Investing", "Job hunting",
+    ],
   },
   {
     id: "can_help", type: "chips",
     label: "What can you help people with?",
-    options: ["Code review", "Fundraising", "ML / AI", "Technical interviews", "Hiring", "Design", "Go-to-market", "Investing"],
+    options: [
+      "Code review", "System design", "ML / AI", "Cloud / infra", "Data / analytics", "Security",
+      "Technical interviews", "Hiring", "Career advice", "Fundraising", "Pitching / storytelling",
+      "Sales", "Marketing", "Go-to-market", "Design", "Legal / compliance", "Immigration / visas",
+      "Public speaking",
+    ],
   },
   {
     id: "connect_with", type: "chips",
     label: "Who would you like to connect with?",
-    options: ["Founders", "Investors", "Engineers", "ML Researchers", "Product Managers", "Designers", "Operators", "Scientists"],
+    options: [
+      "Founders", "Investors", "Engineers", "ML Researchers", "Product Managers", "Designers",
+      "Operators", "Scientists", "Recruiters", "Mentors", "Potential co-founders", "Customers",
+      "Students", "Writers", "DevRel", "Researchers in my field", "Healthcare builders",
+      "Robotics people",
+    ],
   },
   {
     id: "love_talking", type: "chips",
     label: "What do you love talking about?",
-    options: ["AI / ML", "Web3 / Crypto", "Startups", "Open source", "Design", "Climate tech", "Developer tools", "Research"],
+    options: [
+      "AI / ML", "Agentic AI", "Startups", "Developer tools", "Open source", "Web3 / Crypto",
+      "Climate tech", "Robotics", "Hardware", "Design", "Research", "SaaS",
+      "Engineering culture", "Books", "Philosophy", "Personal finance", "Gaming",
+      "History / science",
+    ],
   },
   {
     id: "location", type: "text",
@@ -318,6 +338,7 @@ function CreateProfilePageContent() {
   // Set once publishing succeeds — flips the review column into the
   // post-publish "claim your card" screen.
   const [published, setPublished] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const pendingCardRef = useRef<AgentProfileCard | null>(null);
   const questionIndexRef = useRef(0);
   const jobDoneRef = useRef(false);
@@ -742,49 +763,66 @@ function CreateProfilePageContent() {
 
               {/* ── POST-PUBLISH: you're live — claim it / view it ── */}
               {published && phase === "review" && (
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "24px", padding: "0 4px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted }}>Published</span>
-                    <p style={{ font: `700 26px/1.15 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0 }}>
-                      Your profile is live at<br />zynd.ai/p/{published}
-                    </p>
-                    <p style={{ font: `400 14px/1.6 ${SANS}`, color: T.soft, margin: 0, maxWidth: "380px" }}>
-                      Discoverable by AI agents right now. Sign in to claim it so you can edit it anytime.
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "360px" }}>
-                    <a href={`/p/${published}`}
-                      style={{ background: T.accent, color: "#fff", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em" }}>
-                      View my profile <span style={{ font: `400 16px/1 ${SANS}` }}>→</span>
-                    </a>
-                    {!authenticated && (
-                      <>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
-                          <div style={{ height: "1px", background: T.border, flex: 1 }} />
-                          <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.faint }}>Claim it</span>
-                          <div style={{ height: "1px", background: T.border, flex: 1 }} />
-                        </div>
-                        <button type="button" onClick={login}
-                          style={{ width: "100%", background: T.accent, color: "#fff", border: "none", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
-                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#fff" fillOpacity=".9"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#fff" fillOpacity=".7"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#fff" fillOpacity=".5"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#fff" fillOpacity=".3"/></svg>
-                          Sign in with Google
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                  <div className="zc-card" style={{ width: "100%", maxWidth: "480px", padding: "44px 40px 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: "22px", textAlign: "center" }}>
+
+                    <div style={{ width: "58px", height: "58px", borderRadius: "50%", background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <path d="M5 12.5 10 17.5 19 7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+                      <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.accentHi }}>Published</span>
+                      <p style={{ font: `700 30px/1.15 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0 }}>
+                        You&apos;re live
+                      </p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "10px 12px 10px 18px" }}>
+                        <span style={{ font: `500 14px/1 ${MONO}`, color: T.ink }}>zynd.ai/p/{published}</span>
+                        <button type="button" onClick={() => { navigator.clipboard?.writeText(`https://zynd.ai/p/${published}`).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1600); }}
+                          style={{ background: T.ink, color: "#fff", border: "none", borderRadius: "999px", padding: "7px 14px", font: `600 11px/1 ${MONO}`, letterSpacing: ".04em", cursor: "pointer", flexShrink: 0 }}>
+                          {copied ? "Copied" : "Copy"}
                         </button>
-                        <button type="button" onClick={loginWithGithub}
-                          style={{ width: "100%", background: T.card, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                          Sign in with GitHub
-                        </button>
-                        <p style={{ font: `400 12px/1.5 ${SANS}`, color: T.faint, margin: 0, textAlign: "center" }}>
-                          Signing in returns you here and links the card to your account.
-                        </p>
-                      </>
-                    )}
-                    {authenticated && (
-                      <a href={`/create?edit=${published}`}
-                        style={{ background: T.card, color: T.soft, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `500 15px/1 ${SANS}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}>
-                        Edit my card <span>→</span>
+                      </div>
+                      <p style={{ font: `400 14px/1.6 ${SANS}`, color: T.soft, margin: 0, maxWidth: "340px" }}>
+                        Discoverable by AI agents right now. Sign in to claim it so you can edit it anytime.
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+                      <a href={`/p/${published}`}
+                        style={{ background: T.accent, color: "#fff", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em", width: "100%", boxSizing: "border-box" }}>
+                        View my profile <span style={{ font: `400 16px/1 ${SANS}` }}>→</span>
                       </a>
-                    )}
+                      {!authenticated && (
+                        <>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+                            <div style={{ height: "1px", background: T.border, flex: 1 }} />
+                            <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.faint }}>Claim it</span>
+                            <div style={{ height: "1px", background: T.border, flex: 1 }} />
+                          </div>
+                          <button type="button" onClick={login}
+                            style={{ width: "100%", background: T.ink, color: "#fff", border: "none", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#fff" fillOpacity=".9"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#fff" fillOpacity=".7"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#fff" fillOpacity=".5"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#fff" fillOpacity=".3"/></svg>
+                            Sign in with Google
+                          </button>
+                          <button type="button" onClick={loginWithGithub}
+                            style={{ width: "100%", background: T.surface, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                            Sign in with GitHub
+                          </button>
+                          <p style={{ font: `400 12px/1.5 ${SANS}`, color: T.faint, margin: 0, textAlign: "center" }}>
+                            Signing in returns you here and links the card to your account.
+                          </p>
+                        </>
+                      )}
+                      {authenticated && (
+                        <a href={`/create?edit=${published}`}
+                          style={{ background: T.surface, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", width: "100%", boxSizing: "border-box" }}>
+                          Edit my card <span>→</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

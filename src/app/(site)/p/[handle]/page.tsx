@@ -24,27 +24,12 @@ interface PageProps {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DUMMY DATA
+   PERSON-INTENT TILES
    ───────────────────────────────────────────────────────────────────────────
-   Placeholders for card fields the cards API does not return yet. Every one of
-   these is consumed through `buildView()` below as a `real ?? DUMMY` fallback,
-   so the moment the API starts sending the corresponding field the real value
-   takes over and nothing here needs to change. The matching optional fields are
-   declared on AgentProfileCard in src/lib/cards.ts.
-
-   Each use site downstream is marked with a `// DUMMY:` comment. Fields that
-   would fabricate a specific factual claim about a real, named person — an
-   employer, a peer-review quote, a review count — are deliberately NOT given
-   dummy fallbacks; those sections just hide when the card has no real data.
+   The three bento tiles (who to connect with / love talking about / working
+   on) render ONLY when the card has real data for them. No fabricated
+   fallbacks — an empty array hides the tile.
    ═══════════════════════════════════════════════════════════════════════════ */
-const DUMMY = {
-  /** The 3 pinned bento tiles, when the card's arrays are empty. */
-  obsessions: {
-    connect_with: ["Founders", "AI researchers", "Systems engineers"],
-    love_talking_about: ["Distributed systems", "LLM optimization", "Kernel benchmarking"],
-    working_on: ["Distributed inference", "Generative AI"],
-  },
-} as const;
 
 /* ─── utils ─────────────────────────────────────────────────────────────── */
 
@@ -169,7 +154,7 @@ function linkLabel(platform: string) {
   return LINK_LABELS[platform.toLowerCase()] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
-/* ─── view model: real card data, with DUMMY as the fallback layer ──────── */
+/* ─── view model: real card data ──────── */
 
 function buildView(card: AgentProfileCard) {
   const { identity } = card;
@@ -316,7 +301,10 @@ export default async function PersonPage({ params }: PageProps) {
   const nameParts = (identity.name || "").trim().split(/\s+/);
   const nameLines = nameParts.length > 1 ? [nameParts.slice(0, -1).join(" "), nameParts[nameParts.length - 1]] : nameParts;
 
-  const avatarUrl = githubAvatar(identity.links?.github) ?? safeUrl(identity.avatar_url);
+  // Backend now sets avatar_url deterministically (LinkedIn > X > GitHub), so
+// prefer it; the GitHub-derived hi-res URL is only a fallback for old cards
+// whose avatar_url was never populated.
+const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.github);
   const verified = card.review?.status === "human_approved";
   const skills = card.skills.slice().sort((a, b) => b.evidence_count - a.evidence_count);
 
@@ -330,10 +318,10 @@ export default async function PersonPage({ params }: PageProps) {
     love_talking_about: card.love_talking_about,
     working_on: card.working_on,
   };
-  const obsessions = OBSESSION_CARDS.map((row) => ({
+  // Tiles render only for fields the card actually has — no fabricated data.
+  const obsessions = OBSESSION_CARDS.filter((row) => obsessionSources[row.key].length > 0).map((row) => ({
     ...row,
-    // DUMMY: any row whose card array is empty falls back to DUMMY.obsessions
-    items: obsessionSources[row.key].length > 0 ? obsessionSources[row.key] : [...DUMMY.obsessions[row.key]],
+    items: obsessionSources[row.key],
   }));
 
   const linkedinHandle = usernameFromUrl(identity.links?.linkedin);
@@ -633,21 +621,23 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
 
               {/* What I'm about */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {obsessions.map((tile) => (
-                  <div key={tile.key} className={`rounded-[26px] p-5 bento-corner shadow-sm flex flex-col justify-between min-h-[180px] ${tile.card} ${tile.corner}`}>
-                    <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
-                      <span>{tile.label}</span>
+              {obsessions.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                  {obsessions.map((tile) => (
+                    <div key={tile.key} className={`rounded-[26px] p-5 bento-corner shadow-sm flex flex-col justify-between min-h-[180px] ${tile.card} ${tile.corner}`}>
+                      <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
+                        <span>{tile.label}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 my-2">
+                        {tile.items.map((item) => (
+                          <span key={item} className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold leading-tight ${tile.chip}`}>{item}</span>
+                        ))}
+                      </div>
+                      <span className={`font-mono text-[10px] ${tile.foot}`}>{tile.items.length} {tile.unit}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 my-2">
-                      {tile.items.map((item) => (
-                        <span key={item} className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold leading-tight ${tile.chip}`}>{item}</span>
-                      ))}
-                    </div>
-                    <span className={`font-mono text-[10px] ${tile.foot}`}>{tile.items.length} {tile.unit}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
