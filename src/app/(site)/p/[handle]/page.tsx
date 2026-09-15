@@ -147,6 +147,21 @@ function linkLabel(platform: string) {
   return LINK_LABELS[platform.toLowerCase()] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
+const LEVEL_META: Record<string, { label: string; color: string; bar: string; glow: string; bars: number }> = {
+  expert: { label: "Expert", color: "#D97706", bar: "#F59E0B", glow: "rgba(245,158,11,.4)", bars: 3 },
+  advanced: { label: "Advanced", color: "#5448D4", bar: "#7B72E9", glow: "rgba(123,114,233,.35)", bars: 2 },
+  intermediate: { label: "Mid", color: "#0284C7", bar: "#0EA5E9", glow: "rgba(14,165,233,.35)", bars: 1 },
+  beginner: { label: "Beginner", color: "#059669", bar: "#10B981", glow: "rgba(16,185,129,.35)", bars: 1 },
+};
+const levelMeta = (l: string) => LEVEL_META[l.toLowerCase()] ?? LEVEL_META.intermediate;
+
+const SKILL_ACCENTS: Record<string, string> = {
+  rust: "#F97316", "c++": "#0070BA", cuda: "#5C9400", python: "#0284C7", kubernetes: "#6366F1",
+  pytorch: "#E11D48", terraform: "#9333EA", go: "#14B8A6", "distributed systems": "#0891B2",
+  "performance testing": "#059669",
+};
+const skillAccent = (name: string) => SKILL_ACCENTS[name.trim().toLowerCase()] ?? "#7B72E9";
+
 /* ─── view model ──────────────────────────────────────────────────────────── */
 
 function buildView(card: AgentProfileCard) {
@@ -904,58 +919,10 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* ─ ROW 4: PROJECTS + WRITING ───────────────────────────── */}
-
-            {v.projects.length > 0 && (
-              <div className={`col-span-12 ${v.writing.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc`}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Live in Production</span>
-                  <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{v.projects.length} HIGHLIGHTS</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {v.projects.slice(0, 4).map((proj) => {
-                    const url = safeUrl(proj.url);
-                    return (
-                      <div
-                        key={proj.name}
-                        className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex flex-col justify-between aspect-square hover:border-gray-200 transition-colors"
-                      >
-                        <div>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            {url ? (
-                              <a href={url} target="_blank" rel="noreferrer" className="font-display font-semibold text-[14px] pf-c-dark pf-hv-purple transition-colors inline-flex items-start gap-1">
-                                <span className="line-clamp-2">{proj.name}</span>
-                                <span className="text-[10px] text-[#8E8E88] flex-shrink-0 mt-0.5">↗</span>
-                              </a>
-                            ) : (
-                              <span className="font-display font-semibold text-[14px] text-[#0B0B0B] line-clamp-2">{proj.name}</span>
-                            )}
-                          </div>
-                          {!isBlank(proj.description) && (
-                            <p className="text-[11px] text-[#4A4A45] leading-snug line-clamp-3">{proj.description}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-                          {proj.tech.length > 0 && (
-                            <span className="font-mono text-[9px] text-[#7B72E9] font-medium truncate">
-                              {proj.tech.slice(0, 2).join(" · ")}
-                            </span>
-                          )}
-                          {proj.stars != null && (
-                            <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                              ★ {compact(proj.stars)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* ─ ROW 4: WRITING ───────────────────────────── */}
 
             {v.writing.length > 0 && (
-              <div className={`col-span-12 ${v.projects.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc`}>
+              <div className="col-span-12 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
                   <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-gray-100 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
@@ -998,10 +965,114 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* ─ ROW 5: CALENDLY + SKILL MATRIX ─────────────────────── */}
+            {/* ─ ROW 5: LIVE IN PRODUCTION & SKILL MATRIX (BENTO ROW) ── */}
+
+            {(v.projects.length > 0 || skills.length > 0) && (
+              <div className="col-span-12 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 tc tc-b">
+                
+                {v.projects.length > 0 && (
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-400">
+                      <span>Live in Production</span>
+                      <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
+                        {v.projects.length} {v.projects.length === 1 ? 'Highlight' : 'Highlights'}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {v.projects.slice(0, 4).map((proj) => {
+                        const url = safeUrl(proj.url);
+                        return (
+                          <div
+                            key={proj.name}
+                            className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl transition cursor-pointer border border-transparent hover:border-gray-200"
+                          >
+                            <div>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                {url ? (
+                                  <a href={url} target="_blank" rel="noreferrer" className="font-bold text-sm text-gray-900 hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1">
+                                    {proj.name}
+                                  </a>
+                                ) : (
+                                  <span className="font-bold text-sm text-gray-900">{proj.name}</span>
+                                )}
+                                {proj.stars != null && (
+                                  <span className="text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                    ★ {compact(proj.stars)}
+                                  </span>
+                                )}
+                              </div>
+                              {!isBlank(proj.description) && (
+                                <p className="text-xs text-gray-500 font-mono line-clamp-1">{proj.description}</p>
+                              )}
+                              {proj.tech.length > 0 && (
+                                <div className="flex gap-1.5 mt-1">
+                                  {proj.tech.slice(0, 3).map((t) => (
+                                    <span key={t} className="text-[9px] text-[#7B72E9] font-mono">{t}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            {url && <span className="text-gray-400">↗</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {v.projects.length > 0 && skills.length > 0 && (
+                  <div className="w-px bg-gray-200 hidden md:block" />
+                )}
+
+                {skills.length > 0 && (
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-400">
+                      <span>Skill Matrix</span>
+                      <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
+                        {skills.length} Tracked
+                      </span>
+                    </div>
+                    <div className="space-y-2 font-mono text-sm">
+                      {skills.slice(0, 6).map((skill) => {
+                        const meta = levelMeta(skill.level);
+                        const accent = skillAccent(skill.name);
+                        
+                        // Abbreviation for prefix
+                        let short = skill.name.slice(0, 2).toUpperCase();
+                        if (skill.name.toLowerCase().includes("golang") || skill.name.toLowerCase().includes("go")) short = "Go";
+                        else if (skill.name.toLowerCase().includes("typescript")) short = "TS";
+                        else if (skill.name.toLowerCase().includes("javascript")) short = "JS";
+                        else if (skill.name.toLowerCase().includes("python")) short = "Py";
+                        else if (skill.name.toLowerCase().includes("rust")) short = "Rs";
+
+                        const isExpert = skill.level.toLowerCase() === 'expert';
+                        const isAdvanced = skill.level.toLowerCase() === 'advanced';
+                        const isMid = skill.level.toLowerCase() === 'intermediate' || skill.level.toLowerCase() === 'mid';
+                        const blocks = isExpert ? '■■■■' : isAdvanced ? '■■■□' : isMid ? '■■□□' : '■□□□';
+
+                        return (
+                          <div key={skill.name} className="flex justify-between items-center bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100">
+                            <span className="flex items-center gap-2">
+                              <span style={{ color: accent }} className="font-bold">{short}</span>
+                              <span className="text-gray-900 font-medium font-sans">{skill.name}</span>
+                            </span>
+                            <span className="text-gray-400 text-xs">
+                              {meta.label} <span style={{ color: meta.bar }} className="ml-1 tracking-wider">{blocks}</span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* ─ ROW 6: CALENDLY (if present) ─────────────────────────── */}
 
             {calendlyUrl && (
-              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
+              <div className="col-span-12 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[11px] font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
                   <h3 className="text-lg! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1</h3>
@@ -1018,12 +1089,6 @@ export default async function PersonPage({ params }: PageProps) {
                 >
                   Calendly ↗
                 </a>
-              </div>
-            )}
-
-            {skills.length > 0 && (
-              <div className={`col-span-12 ${calendlyUrl ? "lg:col-span-6" : ""}`}>
-                <SkillMatrix skills={skills} />
               </div>
             )}
 

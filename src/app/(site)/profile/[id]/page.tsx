@@ -227,8 +227,39 @@ export default async function ProfilePage({ params }: PageProps) {
           border: 1px solid rgba(255,255,255,0.07);
           border-radius: 10px;
           transition: border-color 0.15s ease;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
         }
         .pf-project:hover { border-color: rgba(91,124,250,0.25); }
+        .pf-bento-row {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+        .pf-bento-col {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+        }
+        .pf-bento-divider {
+          display: none;
+          width: 1px;
+          background: rgba(255,255,255,0.06);
+        }
+        .pf-project-item:hover {
+          background: rgba(255,255,255,0.04) !important;
+          border-color: rgba(255,255,255,0.1) !important;
+        }
+        @media (min-width: 768px) {
+          .pf-bento-row {
+            flex-direction: row !important;
+          }
+          .pf-bento-divider {
+            display: block !important;
+          }
+        }
         .pf-edit-btn {
           display: inline-flex;
           align-items: center;
@@ -367,46 +398,82 @@ export default async function ProfilePage({ params }: PageProps) {
             </section>
           )}
 
-          {/* Skills */}
-          {hasSkills && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>Skills</SectionLabel>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {card.skills.map((skill) => (
-                  <SkillChip key={skill.name} skill={skill} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Projects */}
-          {hasProjects && (
-            <section className="pf-card" style={{ marginBottom: "36px" }}>
-              <SectionLabel>Projects</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-                {card.projects.map((project) => (
-                  <div key={project.name} className="pf-project">
-                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#f1f5f9", marginBottom: "6px" }}>
-                      {project.name}
+          {/* Skills & Projects (Bento Row) */}
+          {(hasSkills || hasProjects) && (
+            <section className="pf-card pf-bento-row" style={{ marginBottom: "36px", padding: "28px", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px" }}>
+              
+              {hasProjects && (
+                <div className="pf-bento-col">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                    <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3d5068" }}>Live in Production</div>
+                    <div style={{ fontSize: "10px", fontWeight: 700, color: "#f1f5f9", background: "rgba(255,255,255,0.08)", padding: "2px 8px", borderRadius: "4px" }}>
+                      {card.projects.length} {card.projects.length === 1 ? 'Highlight' : 'Highlights'}
                     </div>
-                    {!isBlank(project.description) && (
-                      <div style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6, marginBottom: "10px" }}>
-                        {project.description}
-                      </div>
-                    )}
-                    {safeUrl(project.url) && (
-                      <a
-                        href={safeUrl(project.url)!}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ fontSize: "12px", color: "#5b7cfa", textDecoration: "none", fontWeight: 500 }}
-                      >
-                        View →
-                      </a>
-                    )}
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {card.projects.map((project) => (
+                      <div key={project.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid transparent", transition: "all 0.2s" }} className="pf-project-item">
+                        <div>
+                          <div style={{ fontSize: "14px", fontWeight: 600, color: "#f1f5f9", marginBottom: "4px" }}>
+                            {project.name}
+                          </div>
+                          {!isBlank(project.description) && (
+                            <div style={{ fontSize: "12px", color: "#64748b", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" }}>
+                              {project.description}
+                            </div>
+                          )}
+                        </div>
+                        {safeUrl(project.url) && (
+                          <a
+                            href={safeUrl(project.url)!}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: "#5b7cfa", textDecoration: "none", paddingLeft: "12px", fontWeight: 700 }}
+                          >
+                            ↗
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {hasSkills && hasProjects && (
+                <div className="pf-bento-divider" />
+              )}
+
+              {hasSkills && (
+                <div className="pf-bento-col">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                    <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3d5068" }}>Skill Matrix</div>
+                    <div style={{ fontSize: "10px", fontWeight: 700, color: "#f1f5f9", background: "rgba(255,255,255,0.08)", padding: "2px 8px", borderRadius: "4px" }}>
+                      {card.skills.length} Tracked
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {card.skills.map((skill) => {
+                      const meta = levelMeta(skill.level);
+                      const isExpert = skill.level.toLowerCase() === 'expert';
+                      const isAdvanced = skill.level.toLowerCase() === 'advanced';
+                      const isMid = skill.level.toLowerCase() === 'intermediate';
+                      const blocks = isExpert ? '■■■■' : isAdvanced ? '■■■□' : isMid ? '■■□□' : '■□□□';
+                      
+                      return (
+                        <div key={skill.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                          <span style={{ fontSize: "13px", color: "#cbd5e1", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" }}>
+                            <span style={{ color: meta.color, fontWeight: 700, marginRight: "8px" }}>■</span>
+                            {skill.name}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            {meta.label} <span style={{ color: meta.color, marginLeft: "4px", letterSpacing: "1px" }}>{blocks}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
