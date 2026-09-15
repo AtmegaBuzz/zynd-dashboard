@@ -61,7 +61,7 @@ export function ShareQrGroup({ url }: { url: string }) {
           type="button"
           onClick={onShare}
           style={{ color: copied ? undefined : "#0B0B0B" }}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-mono font-medium transition-all group
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px]! font-mono font-medium transition-all group
             ${copied ? "bg-emerald-500 text-white" : "hover:bg-black hover:text-white"}`}
         >
           {copied
@@ -81,7 +81,7 @@ export function ShareQrGroup({ url }: { url: string }) {
           aria-expanded={qrOpen}
           aria-label="Show QR code"
           style={{ color: qrOpen ? undefined : "#0B0B0B" }}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-mono font-medium transition-all group
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px]! font-mono font-medium transition-all group
             ${qrOpen ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}
         >
           <QrCode size={14} className={`transition-colors ${qrOpen ? "text-white" : "text-[#8E8E88] group-hover:text-white"}`} />
@@ -106,7 +106,7 @@ export function ShareQrGroup({ url }: { url: string }) {
             <button
               type="button"
               onClick={onDownloadQr}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black text-white hover:bg-[#333] transition-colors font-mono text-[10px] font-semibold mt-0.5"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black text-white hover:bg-[#333] transition-colors font-mono text-[10px]! font-semibold mt-0.5"
             >
               <Download size={12} />
               Download QR
@@ -149,7 +149,7 @@ export function ShareButton({ url }: { url: string }) {
         type="button"
         onClick={onClick}
         style={{ color: "#0B0B0B" }}
-      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px] font-mono font-medium transition-all shadow-sm group"
+      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px]! font-mono font-medium transition-all shadow-sm group"
       >
         <Link2 size={15} className="text-[#8E8E88] group-hover:text-white transition-colors" />
         <span>Share</span>
@@ -196,7 +196,7 @@ export function QrButton({ url }: { url: string }) {
         aria-expanded={open}
         aria-label="Show QR code"
         style={{ color: "#0B0B0B" }}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px] font-mono font-medium transition-all shadow-sm group"
+        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-black hover:!text-white border border-[#DCDCD7] text-[12px]! font-mono font-medium transition-all shadow-sm group"
       >
         <QrCode size={15} className="text-[#8E8E88] group-hover:text-white transition-colors" />
         <span>QR</span>
