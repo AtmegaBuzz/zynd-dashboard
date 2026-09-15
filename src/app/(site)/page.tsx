@@ -77,7 +77,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="page-w" data-wf-page="644340149db6917510d9c0b1" data-wf-site="644340149db691bd8cd9c0b0">
+    <div className="page-w">
       <div className="styles w-embed">
         <style>{ZYND_CSS}</style>
       </div>
