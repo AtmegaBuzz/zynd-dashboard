@@ -75,9 +75,11 @@ const HEAT = ["#f1f5f9", "#d8b4fe", "#c084fc", "#a855f7", "#7e22ce"];
 
 const VSCROLL_VISIBLE = 1;
 const VSCROLL_SECS_PER_ROW = 3.5;
-const PROJECT_ROW_H = 92;
 const POST_ROW_H = 104;
 const POST_GAP = 12;
+const SOCIAL_CARD_H = 360;
+const SOCIAL_POST_ROW_H = 84;
+const SOCIAL_POST_VISIBLE = 1;
 
 const POST_STYLES = [
   { card: "bg-[#0B0B0B] text-white border-slate-800 hover:border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-0" },
@@ -175,11 +177,31 @@ function buildView(card: AgentProfileCard) {
 
   const endorsementQuote = card.endorsement?.quote ?? (isBlank(card.citation_snippet) ? null : card.citation_snippet);
 
+  const xQuote =
+    writing.find((s) => ["x", "twitter"].includes(s.platform.toLowerCase()))?.excerpt ??
+    writing[0]?.excerpt ??
+    endorsementQuote ??
+    (isBlank(card.summary) ? null : card.summary);
+
+  const linkedinPosts = writing
+    .filter((s) => s.platform.toLowerCase() === "linkedin")
+    .map((s) => s.excerpt);
+  const xPosts = writing
+    .filter((s) => ["x", "twitter"].includes(s.platform.toLowerCase()))
+    .map((s) => s.excerpt);
+
+  // Fallbacks so there is always at least one scrollable item per card.
+  const linkedinScrollItems = linkedinPosts.length > 0 ? linkedinPosts : endorsementQuote ? [endorsementQuote] : [];
+  const xScrollItems = xPosts.length > 0 ? xPosts : xQuote ? [xQuote] : [];
+
   return {
     links,
     projects,
     writing,
     endorsementQuote,
+    xQuote,
+    linkedinScrollItems,
+    xScrollItems,
 
     linkedin: {
       connections: card.linkedin_stats?.connections ?? null,
@@ -341,8 +363,6 @@ export default async function PersonPage({ params }: PageProps) {
   const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
   const showX = !!(v.x.handle || v.x.followers != null);
   const showGithub = !!githubHandle;
-  const socialCount = [showLinkedin, showX, showGithub].filter(Boolean).length;
-  const socialColSpan = socialCount === 3 ? "lg:col-span-4" : socialCount === 2 ? "lg:col-span-6" : "lg:col-span-12";
 
   return (
     <>
@@ -460,20 +480,6 @@ export default async function PersonPage({ params }: PageProps) {
               <span className="font-semibold text-[#0B0B0B]">@{card.handle || card.id}</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
-              {v.links.map(([platform, url]) => (
-                <a
-                  key={platform}
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition shadow-sm flex-shrink-0"
-                  style={{ color: "#0B0B0B" }}
-                  title={linkLabel(platform)}
-                >
-                  <LinkGlyph platform={platform} size={15} />
-                </a>
-              ))}
-              {v.links.length > 0 && <span className="w-px h-5 bg-gray-300 flex-shrink-0" />}
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                 SYNTHESIS_ACTIVE
@@ -530,6 +536,22 @@ export default async function PersonPage({ params }: PageProps) {
                     )}
                   </div>
                 )}
+                {v.links.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {v.links.map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-8 h-8 rounded-full items-center justify-center bg-white/15 border border-white/20 text-white hover:bg-white/25 transition-colors flex-shrink-0"
+                        title={linkLabel(platform)}
+                      >
+                        <LinkGlyph platform={platform} size={15} />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="mt-8 pt-4 border-t border-white/10 text-xs text-white/70 font-mono">
                 {syncedAt && !isBlank(identity.location) ? (
@@ -573,18 +595,21 @@ export default async function PersonPage({ params }: PageProps) {
               {/* Obsession tiles */}
               {obsessions.length > 0 && (
                 <div
-                  className="grid gap-4"
+                  className="grid gap-4 auto-rows-fr"
                   style={{ gridTemplateColumns: `repeat(${Math.min(obsessions.length, 3)}, minmax(0, 1fr))` }}
                 >
                   {obsessions.map((tile) => (
                     <div
                       key={tile.key}
-                      className={`rounded-[28px] p-5 tc shadow-sm flex flex-col justify-between min-h-[150px] ${tile.card}`}
+                      className={`rounded-[28px] p-5 tc shadow-sm flex flex-col h-[140px] overflow-hidden ${tile.card}`}
                     >
-                      <div className="text-[10px] font-mono uppercase tracking-widest opacity-60 mb-3">
+                      <div className="flex-shrink-0 text-[10px] font-mono uppercase tracking-widest opacity-60 mb-3">
                         {tile.label} ({tile.items.length} {tile.unit})
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div
+                        className="flex-1 flex flex-wrap content-start gap-1.5 overflow-y-auto pr-1"
+                        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                      >
                         {tile.items.map((item) => (
                           <span
                             key={item}
@@ -657,43 +682,20 @@ export default async function PersonPage({ params }: PageProps) {
                       <p className="text-xs text-[#8E8E88] mt-1">{identity.location}</p>
                     )}
                   </div>
-                  {v.projects.length > 0 && (
-                    <div className="border-l-2 border-gray-200 pl-4">
-                      <h4 className="font-bold text-[#0B0B0B] text-[14px] mb-2">Notable Projects</h4>
-                      <div className="space-y-1.5">
-                        {v.projects.slice(0, 2).map((proj) => (
-                          <p key={proj.name} className="text-sm text-[#4A4A45] leading-snug">
-                            <span className="font-medium text-[#0B0B0B]">{proj.name}</span>
-                            {!isBlank(proj.description) && (
-                              <span className="text-[#8E8E88]"> — {proj.description}</span>
-                            )}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : v.projects.length > 0 ? (
-                <div className="space-y-4 flex-1">
-                  {v.projects.slice(0, 3).map((proj, idx) => (
-                    <div key={proj.name} className={`border-l-2 pl-4 ${idx === 0 ? "border-[#7B72E9]" : "border-gray-200"}`}>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <h4 className="font-bold text-[#0B0B0B] text-[14px]">{proj.name}</h4>
-                        {proj.stars != null && (
-                          <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">★ {compact(proj.stars)}</span>
-                        )}
-                      </div>
-                      {!isBlank(proj.description) && (
-                        <p className="text-sm text-[#4A4A45] mt-0.5 line-clamp-2">{proj.description}</p>
-                      )}
-                      {proj.tech.length > 0 && (
-                        <p className="font-mono text-[10px] text-[#7B72E9] mt-0.5">{proj.tech.slice(0, 3).join(" · ")}</p>
-                      )}
-                    </div>
-                  ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#8E8E88] font-mono flex-1">No work history synced yet.</p>
+                <div className="flex-1">
+                  <p className="text-sm text-[#8E8E88] font-mono mb-3">No LinkedIn work experience synced yet.</p>
+                  <div className="border-l-2 border-gray-200 pl-4">
+                    <h4 className="font-bold text-[#0B0B0B] text-[14px] mb-1">Current role</h4>
+                    <p className="text-sm text-[#4A4A45]">
+                      {!isBlank(identity.headline) ? identity.headline : "Profile headline"}
+                      {card.experience_years != null && (
+                        <span className="ml-2 text-xs font-mono text-[#8E8E88]">({card.experience_years}y exp)</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -701,35 +703,51 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* LinkedIn */}
             {showLinkedin && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0A66C2] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between`}>
-                <div>
-                  <div className="flex justify-between items-start mb-3 text-xs font-mono">
-                    <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
-                      <LinkedinGlyph size={14} />
-                      LINKEDIN
-                    </span>
-                    {linkedinUrl ? (
-                      <a href={linkedinUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
-                        {linkedinHandle ? `in/${linkedinHandle}` : "Profile"} ↗
-                      </a>
-                    ) : linkedinHandle ? (
-                      <span className="text-white/70">in/{linkedinHandle}</span>
-                    ) : null}
-                  </div>
-                  <div className="my-3">
-                    <h4 className="text-lg font-bold">{identity.name}</h4>
-                    {!isBlank(identity.headline) && (
-                      <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
-                    )}
-                  </div>
-                  {v.endorsementQuote && (
-                    <p className="text-white/85 text-sm leading-relaxed line-clamp-3 italic mb-3">
-                      &ldquo;{v.endorsementQuote}&rdquo;
+              <div
+                className="col-span-12 md:col-span-4 lg:col-span-3 self-start bg-[#0A66C2] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
+                style={{ height: SOCIAL_CARD_H }}
+              >
+                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
+                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
+                    <LinkedinGlyph size={14} />
+                    LINKEDIN
+                  </span>
+                  {linkedinUrl ? (
+                    <a href={linkedinUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
+                      {linkedinHandle ? `in/${linkedinHandle}` : "Profile"} ↗
+                    </a>
+                  ) : linkedinHandle ? (
+                    <span className="text-white/70">in/{linkedinHandle}</span>
+                  ) : null}
+                </div>
+                <div className="flex-shrink-0 mb-3">
+                  <h4 className="text-lg font-bold">{identity.name}</h4>
+                  {!isBlank(identity.headline) && (
+                    <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
+                  )}
+                </div>
+                <div className="flex-1 min-h-0 -mx-1 px-1">
+                  {v.linkedinScrollItems.length > 0 ? (
+                    <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
+                      {v.linkedinScrollItems.map((text, i) => (
+                        <div key={i} className="pf-vrow flex flex-col justify-center" style={{ height: SOCIAL_POST_ROW_H }}>
+                          <p className="text-white/90 text-[13px] leading-snug line-clamp-4 italic">
+                            &ldquo;{text}&rdquo;
+                          </p>
+                          {i === 0 && (
+                            <span className="mt-2 text-[9px] font-mono uppercase tracking-wider text-white/50">Latest post</span>
+                          )}
+                        </div>
+                      ))}
+                    </AutoScroll>
+                  ) : (
+                    <p className="text-white/70 text-[13px] italic leading-snug">
+                      No LinkedIn posts synced yet.
                     </p>
                   )}
                 </div>
                 {v.linkedin.connections != null && (
-                  <div className="grid grid-cols-2 gap-3 text-center border-t border-white/20 pt-4 font-mono">
+                  <div className="flex-shrink-0 grid grid-cols-2 gap-3 text-center border-t border-white/20 pt-3 mt-3 font-mono">
                     <div>
                       <div className="text-xl font-bold"><CountUp value={v.linkedin.connections} /></div>
                       <div className="text-[10px] text-white/70 uppercase">Connections</div>
@@ -747,33 +765,51 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* X / Twitter */}
             {showX && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0f1419] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between`}>
-                <div>
-                  <div className="flex justify-between items-start mb-3 text-xs font-mono">
-                    <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
-                      <XGlyph size={13} />
-                      X / TWITTER
-                    </span>
-                    {xUrl ? (
-                      <a href={xUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
-                        {v.x.handle ?? "Profile"} ↗
-                      </a>
-                    ) : v.x.handle ? (
-                      <span className="text-white/70">{v.x.handle}</span>
-                    ) : null}
-                  </div>
-                  <div className="my-3">
-                    <h4 className="text-lg font-bold">{identity.name}</h4>
-                    {!isBlank(identity.headline) && (
-                      <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
-                    )}
-                  </div>
-                  {card.industries.length > 0 && (
-                    <p className="font-mono text-[10px] text-white/40 mb-3">{card.industries.join(" · ")}</p>
+              <div
+                className="col-span-12 md:col-span-4 lg:col-span-3 self-start bg-[#0f1419] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
+                style={{ height: SOCIAL_CARD_H }}
+              >
+                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
+                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
+                    <XGlyph size={13} />
+                    X / TWITTER
+                  </span>
+                  {xUrl ? (
+                    <a href={xUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
+                      {v.x.handle ?? "Profile"} ↗
+                    </a>
+                  ) : v.x.handle ? (
+                    <span className="text-white/70">{v.x.handle}</span>
+                  ) : null}
+                </div>
+                <div className="flex-shrink-0 mb-3">
+                  <h4 className="text-lg font-bold">{identity.name}</h4>
+                  {!isBlank(identity.headline) && (
+                    <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
+                  )}
+                </div>
+                <div className="flex-1 min-h-0 -mx-1 px-1">
+                  {v.xScrollItems.length > 0 ? (
+                    <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
+                      {v.xScrollItems.map((text, i) => (
+                        <div key={i} className="pf-vrow flex flex-col justify-center" style={{ height: SOCIAL_POST_ROW_H }}>
+                          <p className="text-white/90 text-[13px] leading-snug line-clamp-4 italic">
+                            &ldquo;{text}&rdquo;
+                          </p>
+                          {i === 0 && (
+                            <span className="mt-2 text-[9px] font-mono uppercase tracking-wider text-white/50">Latest post</span>
+                          )}
+                        </div>
+                      ))}
+                    </AutoScroll>
+                  ) : (
+                    <p className="text-white/70 text-[13px] italic leading-snug">
+                      No X posts synced yet.
+                    </p>
                   )}
                 </div>
                 {(v.x.followers != null || v.x.posts != null || v.x.impressions != null) && (
-                  <div className="grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-4 font-mono">
+                  <div className="flex-shrink-0 grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-3 mt-3 font-mono">
                     <div>
                       <div className="text-lg font-bold">{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</div>
                       <div className="text-[10px] text-white/50 uppercase">Followers</div>
@@ -793,7 +829,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* GitHub Stats + Heatmap */}
             {showGithub && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between`}>
+              <div className="col-span-12 md:col-span-12 lg:col-span-6 self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
                     <span className="flex items-center gap-1.5" style={{ color: "#0B0B0B" }}>
@@ -876,40 +912,45 @@ export default async function PersonPage({ params }: PageProps) {
                   <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Live in Production</span>
                   <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{v.projects.length} HIGHLIGHTS</span>
                 </div>
-                <AutoScroll
-                  rowHeight={PROJECT_ROW_H}
-                  visible={VSCROLL_VISIBLE}
-                  secondsPerRow={VSCROLL_SECS_PER_ROW}
-                >
-                  {v.projects.map((proj) => {
+                <div className="grid grid-cols-2 gap-3">
+                  {v.projects.slice(0, 4).map((proj) => {
                     const url = safeUrl(proj.url);
                     return (
-                      <div key={proj.name} className="pf-vrow pf-vrow-proj py-2 border-b border-gray-100 last:border-b-0">
-                        <div className="flex items-center justify-between">
-                          {url ? (
-                            <a href={url} target="_blank" rel="noreferrer" className="font-display font-semibold text-[15px] pf-c-dark pf-hv-purple transition-colors inline-flex items-center gap-1">
-                              <span className="pf-clamp-1">{proj.name}</span>
-                              <span className="text-[11px] text-[#8E8E88] flex-shrink-0">↗</span>
-                            </a>
-                          ) : (
-                            <span className="font-display font-semibold text-[15px] text-[#0B0B0B] pf-clamp-1">{proj.name}</span>
+                      <div
+                        key={proj.name}
+                        className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex flex-col justify-between aspect-square hover:border-gray-200 transition-colors"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            {url ? (
+                              <a href={url} target="_blank" rel="noreferrer" className="font-display font-semibold text-[14px] pf-c-dark pf-hv-purple transition-colors inline-flex items-start gap-1">
+                                <span className="line-clamp-2">{proj.name}</span>
+                                <span className="text-[10px] text-[#8E8E88] flex-shrink-0 mt-0.5">↗</span>
+                              </a>
+                            ) : (
+                              <span className="font-display font-semibold text-[14px] text-[#0B0B0B] line-clamp-2">{proj.name}</span>
+                            )}
+                          </div>
+                          {!isBlank(proj.description) && (
+                            <p className="text-[11px] text-[#4A4A45] leading-snug line-clamp-3">{proj.description}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                          {proj.tech.length > 0 && (
+                            <span className="font-mono text-[9px] text-[#7B72E9] font-medium truncate">
+                              {proj.tech.slice(0, 2).join(" · ")}
+                            </span>
                           )}
                           {proj.stars != null && (
-                            <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-2 py-0.5 rounded-full flex-shrink-0">
+                            <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">
                               ★ {compact(proj.stars)}
                             </span>
                           )}
                         </div>
-                        {!isBlank(proj.description) && (
-                          <p className="text-[12px] text-[#4A4A45] mt-0.5 leading-relaxed pf-clamp-1">{proj.description}</p>
-                        )}
-                        {proj.tech.length > 0 && (
-                          <div className="mt-0.5 font-mono text-[10px] text-[#7B72E9] font-medium pf-clamp-1">{proj.tech.join(" • ")}</div>
-                        )}
                       </div>
                     );
                   })}
-                </AutoScroll>
+                </div>
               </div>
             )}
 
@@ -960,23 +1001,22 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 5: CALENDLY + SKILL MATRIX ─────────────────────── */}
 
             {calendlyUrl && (
-              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-center justify-between gap-4`}>
+              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
                 <div>
-                  <span className="text-xs font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
-                  <h3 className="text-xl! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1 Sync</h3>
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
+                  <h3 className="text-lg! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1</h3>
                   <p className="text-sm text-[#8E8E88]">
-                    Let&apos;s discuss ideas, projects, or collaborations
-                    {!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}.
+                    Ideas, projects, or collaborations{!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}.
                   </p>
                 </div>
                 <a
                   href={calendlyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3 rounded-2xl font-bold text-sm text-white shrink-0 hover:brightness-110 transition"
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-white shrink-0 hover:brightness-110 transition"
                   style={{ backgroundColor: "#006BFF" }}
                 >
-                  Open Calendly ↗
+                  Calendly ↗
                 </a>
               </div>
             )}
@@ -987,25 +1027,7 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Endorsement quote */}
-            {v.endorsementQuote && (
-              <div className="col-span-12 lg:col-span-6 bg-gray-50 border-2 border-[#7B72E9]/30 rounded-[32px] p-8 tc">
-                <div className="flex items-start gap-3">
-                  <span className="text-[#7B72E9] text-4xl font-serif leading-none select-none">&ldquo;</span>
-                  <p className="text-[13px] text-[#1E1E1E] italic leading-relaxed">{v.endorsementQuote}</p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-[#7B72E9] font-bold tracking-widest uppercase">
-                    {card.endorsement ? "Peer Endorsement" : "Zynd Citation"}
-                  </span>
-                  {card.endorsement?.reviewer_count != null && (
-                    <span className="font-mono text-[10px] text-[#8E8E88]">{card.endorsement.reviewer_count} PEER REVIEWS ON ZYND</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ─ ROW 6: FULL-WIDTH CTA ───────────────────────────────── */}
+            {/* ─ ROW 5A: FULL-WIDTH CTA ───────────────────────────────── */}
             <div className="col-span-12 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
               <div>
                 <span className="text-xs font-mono uppercase tracking-widest text-purple-400 block mb-1">Explore Zynd Intelligence</span>
