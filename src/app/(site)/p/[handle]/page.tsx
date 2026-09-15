@@ -23,14 +23,6 @@ interface PageProps {
   params: Promise<{ handle: string }>;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PERSON-INTENT TILES
-   ───────────────────────────────────────────────────────────────────────────
-   The three bento tiles (who to connect with / love talking about / working
-   on) render ONLY when the card has real data for them. No fabricated
-   fallbacks — an empty array hides the tile.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 /* ─── utils ─────────────────────────────────────────────────────────────── */
 
 function isBlank(s: string | null | undefined): boolean {
@@ -77,7 +69,8 @@ function usernameFromUrl(url: string | null | undefined): string | null {
   return url.replace(/\/+$/, "").split("/").pop() || null;
 }
 
-const HEAT = ["#1e293b", "#9be9a8", "#40c463", "#30a14e", "#216e39"];
+// Purple palette to match the new design's heatmap
+const HEAT = ["#f1f5f9", "#d8b4fe", "#c084fc", "#a855f7", "#7e22ce"];
 
 const VSCROLL_VISIBLE = 1;
 const VSCROLL_SECS_PER_ROW = 3.5;
@@ -95,14 +88,12 @@ const OBSESSION_CARDS: {
   key: "connect_with" | "love_talking_about" | "working_on";
   label: string;
   card: string;
-  corner: string;
   chip: string;
-  foot: string;
   unit: string;
 }[] = [
-  { key: "connect_with", label: "Who to connect with", unit: "PEOPLE", card: "bg-[#7B72E9] text-white", corner: "bento-corner-light", chip: "bg-white/15 border border-white/25 text-white", foot: "text-white/60" },
-  { key: "love_talking_about", label: "Love talking about", unit: "TOPICS", card: "bg-[#9BDCCB] text-[#0B0B0B]", corner: "bento-corner-dark", chip: "bg-white/70 border border-black/10 text-[#0B0B0B]", foot: "text-black/60" },
-  { key: "working_on", label: "Working on", unit: "TRACKS", card: "bg-[#FBC46A] text-[#0B0B0B]", corner: "bento-corner-dark", chip: "bg-white/70 border border-black/10 text-[#0B0B0B]", foot: "text-black/60" },
+  { key: "love_talking_about", label: "Love Talking About", unit: "TOPICS", card: "bg-[#a7f3d0] text-[#064e3b]", chip: "bg-white/60 text-[#064e3b] border border-white/50" },
+  { key: "working_on", label: "Working On", unit: "TRACKS", card: "bg-[#fde68a] text-[#78350f]", chip: "bg-white/60 text-[#78350f] border border-white/50" },
+  { key: "connect_with", label: "Connect With", unit: "PEOPLE", card: "bg-[#7B72E9] text-white", chip: "bg-white/15 text-white border border-white/25" },
 ];
 
 /* ─── brand glyphs ──────────────────────────────────────────────────────── */
@@ -141,7 +132,6 @@ const LINK_LABELS: Record<string, string> = {
   linktree: "Linktree",
 };
 
-/** Brand glyph for one identity link; anything unrecognised gets a globe. */
 function LinkGlyph({ platform, size = 15 }: { platform: string; size?: number }) {
   const key = platform.toLowerCase();
   if (key === "github") return <GithubGlyph size={size} />;
@@ -154,7 +144,7 @@ function linkLabel(platform: string) {
   return LINK_LABELS[platform.toLowerCase()] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
-/* ─── view model: real card data ──────── */
+/* ─── view model ──────────────────────────────────────────────────────────── */
 
 function buildView(card: AgentProfileCard) {
   const { identity } = card;
@@ -182,8 +172,6 @@ function buildView(card: AgentProfileCard) {
       return score(b.excerpt) - score(a.excerpt);
     });
 
-  // Real citation_snippet is preferred; no fabricated quote otherwise — the
-  // endorsement card simply doesn't render when there is nothing real to show.
   const endorsementQuote = card.endorsement?.quote ?? (isBlank(card.citation_snippet) ? null : card.citation_snippet);
 
   return {
@@ -301,10 +289,7 @@ export default async function PersonPage({ params }: PageProps) {
   const nameParts = (identity.name || "").trim().split(/\s+/);
   const nameLines = nameParts.length > 1 ? [nameParts.slice(0, -1).join(" "), nameParts[nameParts.length - 1]] : nameParts;
 
-  // Backend now sets avatar_url deterministically (LinkedIn > X > GitHub), so
-// prefer it; the GitHub-derived hi-res URL is only a fallback for old cards
-// whose avatar_url was never populated.
-const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.github);
+  const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.github);
   const verified = card.review?.status === "human_approved";
   const skills = card.skills.slice().sort((a, b) => b.evidence_count - a.evidence_count);
 
@@ -318,7 +303,6 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
     love_talking_about: card.love_talking_about,
     working_on: card.working_on,
   };
-  // Tiles render only for fields the card actually has — no fabricated data.
   const obsessions = OBSESSION_CARDS.filter((row) => obsessionSources[row.key].length > 0).map((row) => ({
     ...row,
     items: obsessionSources[row.key],
@@ -330,6 +314,21 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
   const githubUrl = safeUrl(identity.links?.github);
   const xUrl = safeUrl(identity.links?.x);
   const calendlyUrl = safeUrl(card.calendly_url);
+
+  const memoryFacts = (card.zynd_memory ?? []) as Array<Record<string, unknown>>;
+  const factText = (fact: Record<string, unknown>): string | null => {
+    for (const key of ["content", "value", "text", "description", "fact", "summary"]) {
+      if (typeof fact[key] === "string" && (fact[key] as string).trim()) return fact[key] as string;
+    }
+    const vals = Object.values(fact).filter((fv) => typeof fv === "string" && (fv as string).trim());
+    return (vals[0] as string) || null;
+  };
+
+  const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
+  const showX = !!(v.x.handle || v.x.followers != null);
+  const showGithub = !!githubHandle;
+  const socialCount = [showLinkedin, showX, showGithub].filter(Boolean).length;
+  const socialColSpan = socialCount === 3 ? "lg:col-span-4" : socialCount === 2 ? "lg:col-span-6" : "lg:col-span-12";
 
   return (
     <>
@@ -347,9 +346,6 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
       />
 
       <style>{`
-        /* globals.css gives every h2 the landing-page display treatment
-           (Chakra Petch, uppercase) with !important, and body carries
-           letter-spacing:-0.05em / line-height:1 — opt out here. */
         .pf-bento { letter-spacing: normal; line-height: 1.5; }
         .pf-bento h2 {
           font-family: 'Space Grotesk', sans-serif !important;
@@ -360,21 +356,12 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
         .pf-bento .font-mono { font-family: 'Geist Mono', monospace !important; }
         .pf-bento .font-display { font-family: 'Space Grotesk', sans-serif !important; }
 
-        /* globals.css also sets a bare "a { color: var(--color-foreground) }"
-           (near-white) as unlayered CSS, which — per the cascade-layers spec —
-           beats ANY Tailwind utility class regardless of specificity, since
-           Tailwind's utilities live inside @layer utilities and unlayered
-           rules always win over layered ones. Result: every text-*/hover:text-*
-           class on an <a> here was silently a no-op. Fix it at the same
-           (unlayered) tier with a more specific selector, then let color come
-           from inline styles or an inherited ancestor instead of Tailwind
-           classes on the anchor itself. */
+        /* globals.css unlayered a { color } beats Tailwind — fix with same-tier selector */
         .pf-bento a { color: inherit; text-decoration: none; }
         .pf-bento a:hover { text-decoration: underline; }
         .pf-bento .pf-c-dark { color: #0B0B0B; }
         .pf-bento .pf-c-muted { color: #8E8E88; }
         .pf-bento .pf-c-slate { color: #94a3b8; }
-        .pf-bento .pf-c-amber { color: #fcd34d; }
         .pf-bento .pf-hv-dark:hover { color: #0B0B0B; }
         .pf-bento .pf-hv-purple:hover { color: #7B72E9; }
         .pf-bento .pf-hv-white:hover { color: #fff; }
@@ -386,30 +373,39 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
         .pf-bento .pf-post-link-2:hover { color: #0B0B0B; }
 
         .pf-bento.zd-canvas, .pf-bento .zd-canvas {
-          background-color: #f2f1f3;
+          background-color: #f4f4f5;
           background-attachment: fixed;
         }
 
-        .pf-bento .bento-corner { position: relative; }
-        .pf-bento .bento-corner::after {
-          content: '';
-          position: absolute;
-          top: 14px;
-          right: 14px;
-          width: 14px;
-          height: 14px;
-          border-top: 2px solid currentColor;
-          border-right: 2px solid currentColor;
-          opacity: 0.35;
-          pointer-events: none;
+        /* tech-corners: bracket decoration (top-left + top-right) */
+        .pf-bento .tc { position: relative; }
+        .pf-bento .tc::before {
+          content: ''; position: absolute;
+          top: 12px; left: 12px; width: 8px; height: 8px;
+          border-top: 1px solid #d4d4d8; border-left: 1px solid #d4d4d8;
         }
-        /* the identity row pins; every row below scrolls up over it */
+        .pf-bento .tc::after {
+          content: ''; position: absolute;
+          top: 12px; right: 12px; width: 8px; height: 8px;
+          border-top: 1px solid #d4d4d8; border-right: 1px solid #d4d4d8;
+        }
+        /* tc-b: bottom corners */
+        .pf-bento .tc-b::before {
+          content: ''; position: absolute;
+          bottom: 12px; left: 12px; width: 8px; height: 8px;
+          border-bottom: 1px solid #d4d4d8; border-left: 1px solid #d4d4d8;
+        }
+        .pf-bento .tc-b::after {
+          content: ''; position: absolute;
+          bottom: 12px; right: 12px; width: 8px; height: 8px;
+          border-bottom: 1px solid #d4d4d8; border-right: 1px solid #d4d4d8;
+        }
+
+        /* zd-pin / zd-slide: scroll-layer stacking */
         @media (min-width: 1024px) {
           .pf-bento .zd-pin { position: sticky; top: 20px; z-index: 0; }
           .pf-bento .zd-slide { position: relative; z-index: 1; }
         }
-        /* --zd-fade drives a top-edge mask, so a row rides in with its leading
-           edge dissolved into whatever is pinned behind it. */
         @property --zd-fade { syntax: "<length>"; inherits: false; initial-value: 0px; }
         .pf-bento .zd-veil {
           --zd-fade: 180px;
@@ -418,20 +414,17 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
           mask-image: linear-gradient(to bottom, transparent 0, #000 var(--zd-fade));
           transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1), --zd-fade .9s cubic-bezier(.16,1,.3,1);
         }
-        .pf-bento .zd-veil[data-on="1"] { --zd-fade: 0px; }
+        .pf-bento .zd-veil[data-on="1"] { --zd-fade: 0px; opacity: 1; transform: none; }
         .pf-bento .zd-veil::after {
           content: ''; position: absolute; inset: -12px 0; pointer-events: none;
           background: linear-gradient(105deg, rgba(255,255,255,.62) 0%, rgba(226,226,218,.34) 44%, rgba(255,255,255,.58) 100%);
           opacity: 1; transition: opacity .7s ease;
         }
-        .pf-bento .zd-veil[data-on="1"] { opacity: 1; transform: none; }
         .pf-bento .zd-veil[data-on="1"]::after { opacity: 0; }
         @media (prefers-reduced-motion: reduce) {
           .pf-bento .zd-veil { opacity: 1; transform: none; }
           .pf-bento .zd-veil::after { display: none; }
         }
-        .pf-bento .bento-corner-light::after { border-color: #ffffff; opacity: 0.45; }
-        .pf-bento .bento-corner-dark::after { border-color: #0B0B0B; opacity: 0.35; }
 
         /* AutoScroll vertical marquee */
         .pf-vscroll { overflow: hidden; position: relative; }
@@ -440,166 +433,147 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
         .pf-vrow-post { height: 104px; }
         .pf-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
         .pf-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-        @media (prefers-reduced-motion: reduce) {
-          .pf-vscroll { overflow-y: auto; }
+        @media (prefers-reduced-motion: reduce) { .pf-vscroll { overflow-y: auto; } }
+
+        /* legacy bento-corner for SkillMatrix component */
+        .pf-bento .bento-corner { position: relative; }
+        .pf-bento .bento-corner::after {
+          content: ''; position: absolute; top: 14px; right: 14px;
+          width: 14px; height: 14px; border-top: 2px solid currentColor; border-right: 2px solid currentColor;
+          opacity: 0.35; pointer-events: none;
         }
+        .pf-bento .bento-corner-light::after { border-color: #ffffff; opacity: 0.45; }
+        .pf-bento .bento-corner-dark::after { border-color: #0B0B0B; opacity: 0.35; }
+
+        /* pf-edit-btn for EditCardButton */
+        .pf-bento .pf-edit-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 6px 14px; border-radius: 999px;
+          background: #f4f4f5; border: 1px solid #E5E5DE;
+          font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 600;
+          color: #0B0B0B; cursor: pointer; transition: background 0.15s, color 0.15s;
+        }
+        .pf-bento .pf-edit-btn:hover { background: #0B0B0B; color: #fff; text-decoration: none; }
       `}</style>
 
       <div className="pf-bento zd-canvas font-sans antialiased w-full min-h-screen flex flex-col selection:bg-[#7B72E9] selection:text-white px-4 sm:px-10 md:px-16 lg:px-24 xl:px-32">
         <DossierShell className="w-full max-w-[1440px] mx-auto py-8 sm:py-12 flex-1">
-          {/* Top Breadcrumb & Share Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-[#E8E8E1]">
-            <div className="flex items-center gap-3 text-xs font-mono">
-              <Link href="/directory" className="flex items-center gap-2 pf-c-dark font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#7B72E9] inline-block"></span>
-                <span>Zynd</span>
-              </Link>
-              <span className="text-[#8E8E88]">/</span>
+
+          {/* ── TOP HEADER ─────────────────────────────────────────────── */}
+          <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 text-sm font-mono">
+            <div className="flex items-center gap-2 text-[#8E8E88]">
+              <span className="w-2 h-2 rounded-full bg-[#7B72E9] inline-block" />
+              <Link href="/directory" className="pf-c-muted pf-hv-dark">Zynd</Link>
+              <span>/</span>
               <Link href="/directory" className="pf-c-muted pf-hv-dark">Directory</Link>
-              <span className="text-[#8E8E88]">/</span>
-              <span className="px-2 py-0.5 rounded-full bg-black/5 text-[#0B0B0B] font-semibold">@{card.handle || card.id}</span>
+              <span>/</span>
+              <span className="font-bold text-[#0B0B0B]">@{card.handle || card.id}</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {v.links.map(([platform, url]) => (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-[#0B0B0B] shadow-sm flex-shrink-0"
+                  title={linkLabel(platform)}
+                >
+                  <LinkGlyph platform={platform} size={16} />
+                </a>
+              ))}
+              {v.links.length > 0 && <span className="w-px h-5 bg-gray-300 mx-0.5 flex-shrink-0" />}
               <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 font-mono text-[11px] font-semibold text-emerald-700">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
                 </span>
                 SYNTHESIS_ACTIVE
               </span>
               <ShareQrGroup url={canonical} />
               <EditCardButton handle={card.handle || handle} />
             </div>
-          </div>
+          </header>
 
-          {/* HERO BENTO GRID (Identity + Telemetry/Stats) */}
-          <div className="flex flex-col lg:flex-row items-start gap-5 mb-5 zd-pin" id="identity">
-            {/* Identity Hero Panel */}
-            <div className="lg:w-5/12 bg-[#7B72E9] text-white rounded-[28px] p-6 relative overflow-hidden bento-corner bento-corner-light flex flex-col shadow-sm">
+          {/* ── MAIN BENTO GRID ────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
+
+            {/* ─ ROW 1: HERO ─────────────────────────────────────────── */}
+
+            {/* Purple Hero Card — col-4 */}
+            <div className="col-span-12 lg:col-span-4 bg-[#7B72E9] text-white rounded-[32px] p-8 flex flex-col justify-between shadow-sm relative overflow-hidden zd-pin">
               {verified && (
-                <div className="absolute top-5 right-5 z-20 inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-[#0B0B0B]/85 backdrop-blur-sm border border-white/20 shadow-lg">
-                  <BadgeCheck size={15} className="text-[#FBC46A]" />
+                <div className="absolute top-5 right-5 z-20 inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-black/25 backdrop-blur-sm border border-white/20">
+                  <BadgeCheck size={14} className="text-[#FBC46A]" />
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">Verified</span>
                 </div>
               )}
-              <div className="flex justify-center pb-4 relative z-10">
-                <div className="w-[148px] h-[148px] rounded-full border-2 border-white/70 flex items-center justify-center p-3">
+              <div>
+                <div className="w-20 h-20 rounded-full border-2 border-white/30 mb-5 overflow-hidden flex items-center justify-center bg-[#8b5cf6]">
                   {avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarUrl} alt={identity.name} className="w-full h-full rounded-full object-cover" />
+                    <img src={avatarUrl} alt={identity.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-[#E9A8F2] flex items-center justify-center">
-                      <span className="font-display text-[42px] font-bold tracking-tight text-[#3A3550]">{initials}</span>
-                    </div>
+                    <span className="font-display text-2xl font-bold text-white">{initials}</span>
                   )}
                 </div>
-              </div>
-
-              <div className="relative z-10">
-                <p className="font-display text-[15px] font-semibold text-white/85 leading-none mb-1">I&apos;m,</p>
-                {/* `!` because globals.css sets a bare, unlayered `h2 { font-size: 4.5rem }`
-                    (plus responsive overrides) that outranks Tailwind's layered utilities. */}
-                <h2 className="font-display text-[40px]! font-bold leading-[1.05]! tracking-tight text-white! text-left">
+                <p className="text-white/70 text-sm mb-1 font-mono">I&apos;m,</p>
+                <h2 className="font-display text-[44px]! font-bold! leading-[1.05]! tracking-tight! text-white! text-left">
                   {nameLines.map((line, i) => (
                     <span key={i}>{line}{i === 0 && nameLines.length > 1 && <br />}</span>
                   ))}
                 </h2>
-              </div>
-
-              <div className="pt-3 relative z-10">
                 {!isBlank(identity.headline) && (
-                  <p className="text-[12.5px] leading-snug text-white/85 font-medium line-clamp-2">
-                    {identity.headline}
-                  </p>
+                  <p className="text-white/90 font-medium mt-2 text-[13px] leading-snug">{identity.headline}</p>
                 )}
-
-                {(card.working_on.length > 0 || card.experience_years != null || card.can_help_with.length > 0 || card.love_talking_about.length > 0) && (
-                  <div className="mt-2.5 flex flex-col gap-1.5">
+                {(card.working_on.length > 0 || card.love_talking_about.length > 0) && (
+                  <div className="mt-4 space-y-1.5 font-mono text-[11px] uppercase tracking-wide">
                     {card.working_on.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Building</span>
-                        {card.working_on.slice(0, 3).map((item) => (
-                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/15 border border-white/25 font-mono text-[10px] text-white font-medium">
-                            {item}
-                          </span>
-                        ))}
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/50 w-24 flex-shrink-0">Building</span>
+                        <span className="bg-black/15 px-2 py-0.5 rounded border border-white/10 text-white text-[10px] truncate">{card.working_on[0]}</span>
                       </div>
                     )}
                     {card.love_talking_about.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Talks about</span>
-                        {card.love_talking_about.slice(0, 3).map((item) => (
-                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/80 font-medium">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {card.can_help_with.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="font-mono text-[9.5px] text-white/50 uppercase tracking-wider">Helps with</span>
-                        {card.can_help_with.slice(0, 2).map((item) => (
-                          <span key={item} className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/80 font-medium">
-                            {item}
-                          </span>
-                        ))}
-                        {card.experience_years != null && (
-                          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono text-[10px] text-white/60">
-                            {card.experience_years}y exp
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/50 w-24 flex-shrink-0">Talks About</span>
+                        <span className="bg-black/15 px-2 py-0.5 rounded border border-white/10 text-white text-[10px] truncate">{card.love_talking_about[0]}</span>
                       </div>
                     )}
                   </div>
                 )}
-
-                <div className="relative mt-2.5 pt-2.5 border-t border-dashed border-white/40 font-mono text-[10.5px] text-white/75">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {!isBlank(identity.location) && <span>{identity.location}</span>}
-                    {syncedAt && <span>Updated {syncedAt}</span>}
-                  </div>
-                  {v.links.length > 0 && (
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {v.links.map(([platform, url]) => (
-                        <a
-                          key={platform}
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={linkLabel(platform)}
-                          title={linkLabel(platform)}
-                          className="w-7 h-7 rounded-full bg-white/15 border border-white/25 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
-                        >
-                          <LinkGlyph platform={platform} />
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
-
-
-              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="mt-8 pt-4 border-t border-white/10 text-xs text-white/70 font-mono">
+                {syncedAt && !isBlank(identity.location) ? (
+                  <span>Updated {syncedAt} · {identity.location}</span>
+                ) : syncedAt ? (
+                  <span>Updated {syncedAt}</span>
+                ) : !isBlank(identity.location) ? (
+                  <span>{identity.location}</span>
+                ) : null}
+              </div>
+              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* Right Column: Telemetry & Stats */}
-            <div className="lg:w-7/12 flex flex-col justify-start gap-5" id="activity">
-              <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Dossier Summary</span>
-                    {verified && (
-                      <span className="font-mono text-[10px] bg-[#FBC46A]/20 text-[#9E6400] font-bold px-2 py-0.5 rounded-full border border-[#FBC46A]/40">ZYND VERIFIED</span>
-                    )}
-                  </div>
-                  {!isBlank(card.summary) && (
-                    <p className="text-[14px] leading-relaxed text-[#2A2A2A] font-normal mb-5">{card.summary}</p>
-                  )}
+            {/* Right column — col-8 */}
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6 zd-pin">
+              {/* Dossier Summary */}
+              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc">
+                <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                  <span>Dossier Summary</span>
+                  {verified && <span className="text-[#0B0B0B] font-bold">Zynd Verified</span>}
                 </div>
+                {!isBlank(card.summary) ? (
+                  <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.summary}</p>
+                ) : !isBlank(card.citation_snippet) ? (
+                  <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.citation_snippet}</p>
+                ) : (
+                  <p className="text-[#8E8E88] text-[14px]">Profile summary not yet synthesized.</p>
+                )}
                 {(card.industries.length > 0 || !isBlank(card.availability)) && (
-                  <div className="pt-4 border-t border-[#F0F0EA] flex flex-wrap gap-1.5 font-mono text-[11px]">
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-1.5 font-mono text-[11px]">
                     {card.industries.map((tag) => (
-                      <span key={tag} className="px-2.5 py-1 rounded-md bg-[#F2F2EC] text-[#0B0B0B] font-medium">{tag}</span>
+                      <span key={tag} className="px-2.5 py-1 rounded-md bg-gray-100 text-[#0B0B0B] font-medium">{tag}</span>
                     ))}
                     {!isBlank(card.availability) && (
                       <span className="px-2.5 py-1 rounded-md bg-[#7B72E9]/10 text-[#7B72E9] font-semibold">Open to {card.availability}</span>
@@ -608,424 +582,487 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 )}
               </div>
 
-              {/* What I'm about — equal-height tiles */}
+              {/* Obsession tiles */}
               {obsessions.length > 0 && (
-                <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                <div
+                  className="grid gap-4"
+                  style={{ gridTemplateColumns: `repeat(${Math.min(obsessions.length, 3)}, minmax(0, 1fr))` }}
+                >
                   {obsessions.map((tile) => (
-                    <div key={tile.key} className={`rounded-[26px] p-5 bento-corner shadow-sm flex flex-col justify-between min-h-[180px] ${tile.card} ${tile.corner}`}>
-                      <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
-                        <span>{tile.label}</span>
+                    <div
+                      key={tile.key}
+                      className={`rounded-[28px] p-5 tc shadow-sm flex flex-col justify-between min-h-[150px] ${tile.card}`}
+                    >
+                      <div className="text-[10px] font-mono uppercase tracking-widest opacity-60 mb-3">
+                        {tile.label} ({tile.items.length} {tile.unit})
                       </div>
-                      <div className="flex flex-wrap gap-1.5 my-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {tile.items.map((item) => (
-                          <span key={item} className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold leading-tight ${tile.chip}`}>{item}</span>
+                          <span
+                            key={item}
+                            className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${tile.chip}`}
+                          >
+                            {item}
+                          </span>
                         ))}
                       </div>
-                      <span className={`font-mono text-[10px] ${tile.foot}`}>{tile.items.length} {tile.unit}</span>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
 
-              {/* Actions row: Book a Call + social platform cards */}
-              {(calendlyUrl || v.links.length > 0) && (
-                <div className="flex flex-wrap gap-3">
-                  {/* Calendly compact card */}
-                  {calendlyUrl && (
-                    <a
-                      href={calendlyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-sm hover:brightness-110 transition-all no-underline"
-                      style={{ backgroundColor: "#006BFF", minWidth: 180 }}
-                    >
-                      {/* Calendly logo */}
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
-                        <img src="/assets/logos/calendly.png" alt="Calendly" width={24} height={24} className="w-6 h-6 object-contain" />
-                      </div>
-                      <div>
-                        <p className="font-mono text-[9px] text-white/60 uppercase tracking-widest mb-0.5">Book a call</p>
-                        <p className="text-white font-semibold text-[14px] leading-tight">Schedule with {identity.name.split(" ")[0]}</p>
-                        <p className="font-mono text-[10px] text-white/60 mt-0.5">via Calendly ↗</p>
-                      </div>
-                    </a>
-                  )}
+            {/* ─ ROW 2: MEMORY + WORK EXPERIENCE ────────────────────── */}
 
-                  {/* Social platform cards — one per link */}
-                  {v.links.map(([platform, url]) => {
-                    const key = platform.toLowerCase();
-                    const isGithub = key === "github";
-                    const isX = key === "x" || key === "twitter";
-                    const isLinkedin = key === "linkedin";
-                    const bg = isLinkedin ? "#0A66C2" : isGithub ? "#24292E" : isX ? "#000000" : "#4B5563";
+            {/* Memory / MCP Sync */}
+            <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col zd-slide">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                  Memory &amp; MCP Sync
+                </span>
+                <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Agentic Context</span>
+              </div>
+              <h3 className="text-xl! font-bold! text-white! mb-3 leading-snug!">Active AI Shared Memory</h3>
+              <p className="text-slate-300 text-sm leading-relaxed mb-5">
+                Extracted from user context layers. AI agents automatically adapt to these parameters when generating code or structuring replies.
+              </p>
+              {memoryFacts.length > 0 ? (
+                <div className="space-y-3 font-mono text-xs flex-1">
+                  {memoryFacts.slice(0, 3).map((fact, i) => {
+                    const text = factText(fact);
+                    if (!text) return null;
                     return (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 px-3.5 py-3 rounded-2xl shadow-sm hover:brightness-125 transition-all no-underline"
-                        style={{ backgroundColor: bg, minWidth: 110 }}
-                      >
-                        <div className="text-white opacity-90 flex-shrink-0">
-                          {isGithub && <GithubGlyph size={20} />}
-                          {isX && <XGlyph size={17} />}
-                          {isLinkedin && <LinkedinGlyph size={18} />}
-                          {!isGithub && !isX && !isLinkedin && (
-                            <Globe style={{ width: 18, height: 18 }} strokeWidth={1.5} />
-                          )}
-                        </div>
-                        <p className="font-mono text-[9px] text-white/55 uppercase tracking-widest whitespace-nowrap">
-                          {isGithub ? "GitHub" : isX ? "X / Twitter" : isLinkedin ? "LinkedIn" : linkLabel(platform)}
-                        </p>
-                      </a>
+                      <div key={i} className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/50">
+                        <span className="text-purple-300 block mb-1">⚡ Context {i + 1}:</span>
+                        <span className="text-slate-300">{text}</span>
+                      </div>
                     );
                   })}
                 </div>
+              ) : (
+                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 font-mono text-xs text-slate-400 flex-1">
+                  No memory context synced yet. Connect Zynd Memory to enable AI-native context sharing.
+                </div>
               )}
             </div>
-          </div>
 
-          {/* THREE-COLUMN DOSSIER BODY */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-5 zd-canvas zd-slide pt-8 lg:items-start">
-            {/* Left — Scale & Community */}
-            <div className="lg:col-span-3 flex flex-col gap-5">
-              <div className="bg-[#0A66C2] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
-                    <LinkedinGlyph size={16} />
-                    <span>LinkedIn</span>
+            {/* Work Experience */}
+            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col zd-slide">
+              <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                <span>Professional Background</span>
+                <span className="text-[#0B0B0B] font-bold">Work Experience</span>
+              </div>
+              {!isBlank(card.affiliations) ? (
+                <div className="space-y-5 flex-1">
+                  <div className="border-l-2 border-[#7B72E9] pl-4">
+                    <div className="flex justify-between items-baseline gap-3">
+                      <h4 className="font-bold text-[#0B0B0B] text-[15px]">
+                        {!isBlank(identity.headline) ? identity.headline : "Professional"}
+                      </h4>
+                      {card.experience_years != null && (
+                        <span className="text-xs font-mono text-[#8E8E88] flex-shrink-0">{card.experience_years}y exp</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#7B72E9] font-mono mt-0.5">{card.affiliations}</p>
+                    {!isBlank(identity.location) && (
+                      <p className="text-xs text-[#8E8E88] mt-1">{identity.location}</p>
+                    )}
                   </div>
-                  {linkedinHandle && linkedinUrl && (
-                    <a href={linkedinUrl} target="_blank" rel="noreferrer" className="font-mono text-[11px] font-semibold text-white/90 hover:text-white transition-colors">
-                      in/{linkedinHandle} ↗
-                    </a>
+                  {v.projects.length > 0 && (
+                    <div className="border-l-2 border-gray-200 pl-4">
+                      <h4 className="font-bold text-[#0B0B0B] text-[14px] mb-2">Notable Projects</h4>
+                      <div className="space-y-1.5">
+                        {v.projects.slice(0, 2).map((proj) => (
+                          <p key={proj.name} className="text-sm text-[#4A4A45] leading-snug">
+                            <span className="font-medium text-[#0B0B0B]">{proj.name}</span>
+                            {!isBlank(proj.description) && (
+                              <span className="text-[#8E8E88]"> — {proj.description}</span>
+                            )}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
+              ) : v.projects.length > 0 ? (
+                <div className="space-y-4 flex-1">
+                  {v.projects.slice(0, 3).map((proj, idx) => (
+                    <div key={proj.name} className={`border-l-2 pl-4 ${idx === 0 ? "border-[#7B72E9]" : "border-gray-200"}`}>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <h4 className="font-bold text-[#0B0B0B] text-[14px]">{proj.name}</h4>
+                        {proj.stars != null && (
+                          <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">★ {compact(proj.stars)}</span>
+                        )}
+                      </div>
+                      {!isBlank(proj.description) && (
+                        <p className="text-sm text-[#4A4A45] mt-0.5 line-clamp-2">{proj.description}</p>
+                      )}
+                      {proj.tech.length > 0 && (
+                        <p className="font-mono text-[10px] text-[#7B72E9] mt-0.5">{proj.tech.slice(0, 3).join(" · ")}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[#8E8E88] font-mono flex-1">No work history synced yet.</p>
+              )}
+            </div>
 
-                {/* Primary: show connections stat if available */}
+            {/* ─ ROW 3: SOCIAL STATS ─────────────────────────────────── */}
+
+            {/* LinkedIn */}
+            {showLinkedin && (
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0A66C2] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between zd-slide`}>
+                <div>
+                  <div className="flex justify-between items-start mb-3 text-xs font-mono">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <LinkedinGlyph size={14} />
+                      LINKEDIN
+                    </span>
+                    {linkedinUrl ? (
+                      <a href={linkedinUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
+                        {linkedinHandle ? `in/${linkedinHandle}` : "Profile"} ↗
+                      </a>
+                    ) : linkedinHandle ? (
+                      <span className="text-white/70">in/{linkedinHandle}</span>
+                    ) : null}
+                  </div>
+                  <div className="my-3">
+                    <h4 className="text-lg font-bold">{identity.name}</h4>
+                    {!isBlank(identity.headline) && (
+                      <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
+                    )}
+                  </div>
+                  {v.endorsementQuote && (
+                    <p className="text-white/85 text-sm leading-relaxed line-clamp-3 italic mb-3">
+                      &ldquo;{v.endorsementQuote}&rdquo;
+                    </p>
+                  )}
+                </div>
                 {v.linkedin.connections != null && (
-                  <div className="flex items-end gap-4">
+                  <div className="grid grid-cols-2 gap-3 text-center border-t border-white/20 pt-4 font-mono">
                     <div>
-                      <span className="font-display text-[28px] font-bold leading-tight"><CountUp value={v.linkedin.connections} /></span>
-                      <p className="font-mono text-[11px] text-white/75">connections</p>
+                      <div className="text-xl font-bold"><CountUp value={v.linkedin.connections} /></div>
+                      <div className="text-[10px] text-white/70 uppercase">Connections</div>
                     </div>
                     {v.linkedin.posts != null && Number(v.linkedin.posts) > 0 && (
                       <div>
-                        <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.linkedin.posts} /></span>
-                        <p className="font-mono text-[11px] text-white/75">posts</p>
+                        <div className="text-xl font-bold"><CountUp value={v.linkedin.posts} /></div>
+                        <div className="text-[10px] text-white/70 uppercase">Posts Shared</div>
                       </div>
                     )}
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* Profile data from scrape — always shown */}
-                <div className="flex flex-col gap-1.5">
-                  {!isBlank(identity.headline) && (
-                    <p className="font-sans text-[13px] font-medium text-white/90 leading-snug line-clamp-2">{identity.headline}</p>
+            {/* X / Twitter */}
+            {showX && (
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0f1419] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between zd-slide`}>
+                <div>
+                  <div className="flex justify-between items-start mb-3 text-xs font-mono">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <XGlyph size={13} />
+                      X / TWITTER
+                    </span>
+                    {xUrl ? (
+                      <a href={xUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
+                        {v.x.handle ?? "Profile"} ↗
+                      </a>
+                    ) : v.x.handle ? (
+                      <span className="text-white/70">{v.x.handle}</span>
+                    ) : null}
+                  </div>
+                  <div className="my-3">
+                    <h4 className="text-lg font-bold">{identity.name}</h4>
+                    {!isBlank(identity.headline) && (
+                      <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
+                    )}
+                  </div>
+                  {card.industries.length > 0 && (
+                    <p className="font-mono text-[10px] text-white/40 mb-3">{card.industries.join(" · ")}</p>
                   )}
-                  {!isBlank(identity.location) && (
-                    <p className="font-mono text-[11px] text-white/65">{identity.location}</p>
+                </div>
+                {(v.x.followers != null || v.x.posts != null || v.x.impressions != null) && (
+                  <div className="grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-4 font-mono">
+                    <div>
+                      <div className="text-lg font-bold">{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</div>
+                      <div className="text-[10px] text-white/50 uppercase">Followers</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{v.x.posts != null ? <CountUp value={v.x.posts} /> : "—"}</div>
+                      <div className="text-[10px] text-white/50 uppercase">Posts</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-amber-400">{v.x.impressions != null ? <CountUp value={v.x.impressions} delay={150} /> : "—"}</div>
+                      <div className="text-[10px] text-white/50 uppercase">Impressions</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GitHub Stats + Heatmap */}
+            {showGithub && (
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between zd-slide`}>
+                <div>
+                  <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                    <span className="flex items-center gap-1.5">
+                      <GithubGlyph size={14} />
+                      GitHub Stats
+                    </span>
+                    {githubUrl ? (
+                      <a href={githubUrl} target="_blank" rel="noreferrer" className="text-[#0B0B0B] font-bold hover:text-[#7B72E9]">
+                        @{githubHandle} ↗
+                      </a>
+                    ) : (
+                      <span className="text-[#0B0B0B] font-bold">@{githubHandle}</span>
+                    )}
+                  </div>
+                  {(v.github.repos != null || v.github.commits != null) && (
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {v.github.repos != null && (
+                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
+                          <div className="text-xl font-extrabold text-[#0B0B0B]"><CountUp value={v.github.repos} /></div>
+                          <div className="text-[10px] font-mono text-[#8E8E88] uppercase">Repos</div>
+                        </div>
+                      )}
+                      {v.github.commits != null && (
+                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
+                          <div className="text-xl font-extrabold text-[#0B0B0B]"><CountUp value={v.github.commits} /></div>
+                          <div className="text-[10px] font-mono text-[#8E8E88] uppercase">Commits</div>
+                        </div>
+                      )}
+                    </div>
                   )}
-                  {card.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {card.skills.slice(0, 3).map((s) => (
-                        <span key={s.name} className="font-mono text-[9px] bg-white/15 rounded px-1.5 py-0.5 text-white/90">{s.name}</span>
+                  {v.github.topLanguages.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {v.github.topLanguages.slice(0, 4).map((lang) => (
+                        <span key={lang} className="px-2 py-0.5 rounded-md bg-gray-100 text-[#0B0B0B] font-mono text-[10px]">{lang}</span>
                       ))}
                     </div>
                   )}
-                </div>
-
-                <span className="font-mono text-[10px] text-white/50">Verified via LinkedIn</span>
-              </div>
-
-              <div className="bg-[#53565A] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
-                    <GithubGlyph size={16} />
-                    <span>GitHub</span>
-                  </div>
-                  {githubUrl ? (
-                    <a href={githubUrl} target="_blank" rel="noreferrer" className="font-mono text-[11px] font-semibold">@{githubHandle} ↗</a>
-                  ) : (
-                    <span className="font-mono text-[11px] font-semibold text-white/90">@{githubHandle}</span>
+                  {v.contributions && v.contributions.levels.length > 0 && (
+                    <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-[#8E8E88] mb-2 uppercase">
+                        <span>Contribution Heatmap</span>
+                        <span>{v.contributions.year}</span>
+                      </div>
+                      <div
+                        className="grid grid-flow-col gap-[2px] overflow-hidden"
+                        style={{ gridTemplateRows: "repeat(7, 8px)", maxWidth: "100%" }}
+                        role="img"
+                        aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
+                      >
+                        {v.contributions.levels.slice(-70).map((lvl, i) => (
+                          <span
+                            key={i}
+                            className="block w-2 h-2 rounded-[2px]"
+                            style={{ backgroundColor: HEAT[lvl] ?? HEAT[0] }}
+                          />
+                        ))}
+                      </div>
+                      {v.contributions.avg_per_day != null && (
+                        <p className="font-mono text-[10px] text-[#8E8E88] mt-1.5">
+                          avg: {v.contributions.avg_per_day} commits/day
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2 my-2">
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.repos ?? "—"} /></span>
-                    <p className="font-mono text-[10px] text-white/75">repos</p>
-                  </div>
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight"><CountUp value={v.github.activeRepos ?? "—"} /></span>
-                    <p className="font-mono text-[10px] text-white/75">active repos</p>
-                  </div>
-                </div>
-                {v.github.topLanguages.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {v.github.topLanguages.slice(0, 4).map((lang) => (
-                      <span key={lang} className="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 font-mono text-[10px] text-white/80">{lang}</span>
-                    ))}
-                  </div>
-                )}
-                <span className="font-mono text-[10px] text-emerald-300 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active Contributor
-                </span>
-              </div>
-
-              <div className="bg-[#0B0B0B] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
-                    <XGlyph size={14} />
-                    <span>X / Twitter</span>
-                  </div>
-                  {xUrl ? (
-                    <a href={xUrl} target="_blank" rel="noreferrer" className="font-mono text-[11px] font-semibold pf-c-amber">{v.x.handle ?? "↗"} ↗</a>
-                  ) : v.x.handle ? (
-                    <span className="font-mono text-[11px] font-semibold text-amber-300">{v.x.handle}</span>
-                  ) : null}
-                </div>
-                <div className="grid grid-cols-3 gap-2 my-2">
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.followers ?? "—"} /></span>
-                    <p className="font-mono text-[10px] text-white/75">followers</p>
-                  </div>
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-white"><CountUp value={v.x.posts ?? "—"} /></span>
-                    <p className="font-mono text-[10px] text-white/75">posts</p>
-                  </div>
-                  <div>
-                    <span className="font-display text-[22px] font-bold leading-tight text-amber-400"><CountUp value={v.x.impressions ?? "—"} delay={150} /></span>
-                    <p className="font-mono text-[10px] text-white/75">impressions</p>
-                  </div>
-                </div>
-                {card.industries.length > 0 && (
-                  <span className="font-mono text-[10px] text-white/60">{card.industries.join(" · ")}</span>
+                {v.github.activeRepos != null && (
+                  <span className="font-mono text-[10px] text-emerald-600 flex items-center gap-1.5 mt-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {v.github.activeRepos} active repos
+                  </span>
                 )}
               </div>
-            </div>
+            )}
 
-            {/* Middle — projects, writing, activity */}
-            <div className="lg:col-span-6 flex flex-col gap-5" id="production">
-              {v.projects.length > 0 && (
-                <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Live in Production</span>
-                    <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{v.projects.length} HIGHLIGHTS</span>
-                  </div>
-                  {(() => {
+            {/* ─ ROW 4: PROJECTS + WRITING ───────────────────────────── */}
+
+            {v.projects.length > 0 && (
+              <div className={`col-span-12 ${v.writing.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc zd-slide`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Live in Production</span>
+                  <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{v.projects.length} HIGHLIGHTS</span>
+                </div>
+                <AutoScroll
+                  rowHeight={PROJECT_ROW_H}
+                  visible={VSCROLL_VISIBLE}
+                  secondsPerRow={VSCROLL_SECS_PER_ROW}
+                >
+                  {v.projects.map((proj) => {
+                    const url = safeUrl(proj.url);
                     return (
-                      <AutoScroll
-                        rowHeight={PROJECT_ROW_H}
-                        visible={VSCROLL_VISIBLE}
-                        secondsPerRow={VSCROLL_SECS_PER_ROW}
-                      >
-                        {v.projects.map((proj) => {
-                          const url = safeUrl(proj.url);
-                          return (
-                            <div key={proj.name} className="pf-vrow pf-vrow-proj py-2 border-b border-[#F0F0EA] last:border-b-0">
-                              <div className="flex items-center justify-between">
-                                {url ? (
-                                  <a href={url} target="_blank" rel="noreferrer" className="font-display font-semibold text-[15px] pf-c-dark pf-hv-purple transition-colors inline-flex items-center gap-1">
-                                    <span className="pf-clamp-1">{proj.name}</span>
-                                    <span className="text-[11px] text-[#8E8E88] flex-shrink-0">↗</span>
-                                  </a>
-                                ) : (
-                                  <span className="font-display font-semibold text-[15px] text-[#0B0B0B] pf-clamp-1">{proj.name}</span>
-                                )}
-                                {proj.stars != null && (
-                                  <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-2 py-0.5 rounded-full flex-shrink-0">
-                                    ★ {compact(proj.stars)}
-                                  </span>
-                                )}
-                              </div>
-                              {!isBlank(proj.description) && (
-                                <p className="text-[12px] text-[#4A4A45] mt-0.5 leading-relaxed pf-clamp-1">{proj.description}</p>
-                              )}
-                              {proj.tech.length > 0 && (
-                                <div className="mt-0.5 font-mono text-[10px] text-[#7B72E9] font-medium pf-clamp-1">{proj.tech.join(" • ")}</div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </AutoScroll>
+                      <div key={proj.name} className="pf-vrow pf-vrow-proj py-2 border-b border-gray-100 last:border-b-0">
+                        <div className="flex items-center justify-between">
+                          {url ? (
+                            <a href={url} target="_blank" rel="noreferrer" className="font-display font-semibold text-[15px] pf-c-dark pf-hv-purple transition-colors inline-flex items-center gap-1">
+                              <span className="pf-clamp-1">{proj.name}</span>
+                              <span className="text-[11px] text-[#8E8E88] flex-shrink-0">↗</span>
+                            </a>
+                          ) : (
+                            <span className="font-display font-semibold text-[15px] text-[#0B0B0B] pf-clamp-1">{proj.name}</span>
+                          )}
+                          {proj.stars != null && (
+                            <span className="font-mono text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-2 py-0.5 rounded-full flex-shrink-0">
+                              ★ {compact(proj.stars)}
+                            </span>
+                          )}
+                        </div>
+                        {!isBlank(proj.description) && (
+                          <p className="text-[12px] text-[#4A4A45] mt-0.5 leading-relaxed pf-clamp-1">{proj.description}</p>
+                        )}
+                        {proj.tech.length > 0 && (
+                          <div className="mt-0.5 font-mono text-[10px] text-[#7B72E9] font-medium pf-clamp-1">{proj.tech.join(" • ")}</div>
+                        )}
+                      </div>
                     );
-                  })()}
-                </div>
-              )}
+                  })}
+                </AutoScroll>
+              </div>
+            )}
 
-              {v.writing.length > 0 && (
-              <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-7 bento-corner bento-corner-dark shadow-sm" id="posts">
+            {v.writing.length > 0 && (
+              <div className={`col-span-12 ${v.projects.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc zd-slide`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
+                  <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-gray-100 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
+                </div>
+                <AutoScroll
+                  rowHeight={POST_ROW_H + POST_GAP}
+                  gap={0}
+                  visible={VSCROLL_VISIBLE}
+                  secondsPerRow={VSCROLL_SECS_PER_ROW}
+                >
+                  {v.writing.slice(0, 10).map((post, idx) => {
+                    const style = POST_STYLES[idx % POST_STYLES.length];
+                    const isX = ["x", "twitter"].includes(post.platform.toLowerCase());
+                    const url = safeUrl(post.url);
+                    return (
+                      <div
+                        key={`${post.platform}-${idx}`}
+                        className={`pf-vrow pf-vrow-post p-3.5 rounded-2xl border transition-all ${style.card}`}
+                        style={{ marginBottom: POST_GAP }}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded font-mono text-[9px] font-semibold flex items-center gap-1 ${style.badge}`}>
+                              {isX ? <XGlyph size={10} /> : <LinkedinGlyph size={10} />}
+                              {isX ? "X" : "LinkedIn"}
+                            </span>
+                            <span className={`font-mono text-[10px] font-medium ${style.meta}`}>{post.posted_at}</span>
+                          </div>
+                          {url && (
+                            <a href={url} target="_blank" rel="noreferrer" className={`font-mono text-xs ${style.link}`}>↗</a>
+                          )}
+                        </div>
+                        <p className={`text-[11.5px] italic leading-snug font-medium pf-clamp-2 ${style.text}`}>
+                          &ldquo;{post.excerpt}&rdquo;
+                        </p>
+                      </div>
+                    );
+                  })}
+                </AutoScroll>
+              </div>
+            )}
+
+            {/* ─ ROW 5: CALENDLY + SKILL MATRIX ─────────────────────── */}
+
+            {calendlyUrl && (
+              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-center justify-between gap-4 zd-slide`}>
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
-                    <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-[#F0F0EA] px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
-                  </div>
-                    {(() => {
-                      const posts = v.writing.slice(0, 10);
-                      return (
-                        <AutoScroll
-                          rowHeight={POST_ROW_H + POST_GAP}
-                          gap={0}
-                          visible={VSCROLL_VISIBLE}
-                          secondsPerRow={VSCROLL_SECS_PER_ROW}
-                        >
-                          {posts.map((post, idx) => {
-                            const style = POST_STYLES[idx % POST_STYLES.length];
-                            const isX = ["x", "twitter"].includes(post.platform.toLowerCase());
-                            const url = safeUrl(post.url);
-                            return (
-                              <div key={`${post.platform}-${idx}`} className={`pf-vrow pf-vrow-post p-3.5 rounded-2xl border transition-all ${style.card}`} style={{ marginBottom: POST_GAP }}>
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] font-semibold flex items-center gap-1 ${style.badge}`}>
-                                      {isX ? <XGlyph size={10} /> : <LinkedinGlyph size={10} />}
-                                      {isX ? "X" : "LinkedIn"}
-                                    </span>
-                                    <span className={`font-mono text-[10px] font-medium ${style.meta}`}>{post.posted_at}</span>
-                                  </div>
-                                  {url && (
-                                    <a href={url} target="_blank" rel="noreferrer" className={`font-mono text-xs ${style.link}`}>↗</a>
-                                  )}
-                                </div>
-                                <p className={`text-[11.5px] italic leading-snug font-medium pf-clamp-2 ${style.text}`}>
-                                  &ldquo;{post.excerpt}&rdquo;
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </AutoScroll>
-                      );
-                    })()}
+                  <span className="text-xs font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
+                  <h3 className="text-xl! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1 Sync</h3>
+                  <p className="text-sm text-[#8E8E88]">
+                    Let&apos;s discuss ideas, projects, or collaborations
+                    {!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}.
+                  </p>
+                </div>
+                <a
+                  href={calendlyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 rounded-2xl font-bold text-sm text-white shrink-0 hover:brightness-110 transition"
+                  style={{ backgroundColor: "#006BFF" }}
+                >
+                  Open Calendly ↗
+                </a>
+              </div>
+            )}
+
+            {skills.length > 0 && (
+              <div className={`col-span-12 ${calendlyUrl ? "lg:col-span-6" : ""} zd-slide`}>
+                <SkillMatrix skills={skills} />
+              </div>
+            )}
+
+            {/* Endorsement quote */}
+            {v.endorsementQuote && (
+              <div className="col-span-12 lg:col-span-6 bg-gray-50 border-2 border-[#7B72E9]/30 rounded-[32px] p-8 tc zd-slide">
+                <div className="flex items-start gap-3">
+                  <span className="text-[#7B72E9] text-4xl font-serif leading-none select-none">&ldquo;</span>
+                  <p className="text-[13px] text-[#1E1E1E] italic leading-relaxed">{v.endorsementQuote}</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-[#7B72E9] font-bold tracking-widest uppercase">
+                    {card.endorsement ? "Peer Endorsement" : "Zynd Citation"}
+                  </span>
+                  {card.endorsement?.reviewer_count != null && (
+                    <span className="font-mono text-[10px] text-[#8E8E88]">{card.endorsement.reviewer_count} PEER REVIEWS ON ZYND</span>
+                  )}
                 </div>
               </div>
-              )}
+            )}
 
-              {v.contributions && v.contributions.levels.length > 0 && (
-              <div className="bg-[#0B0B0B] text-white rounded-[28px] p-7 bento-corner bento-corner-light shadow-sm flex flex-col justify-between" id="activity-graph">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <GithubGlyph size={16} />
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-semibold">GitHub Telemetry</span>
-                  </div>
-                  <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 font-semibold">
-                    {v.github.commits != null ? <><CountUp value={v.github.commits} /> IN {v.contributions.year}</> : v.contributions.year}
-                  </span>
-                </div>
-                <div className="overflow-x-auto pb-1 my-auto">
-                  <div className="flex justify-between min-w-[528px] font-mono text-[10px] text-slate-400 mb-1.5 px-0.5" aria-hidden>
-                    <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
-                  </div>
-                  <div
-                    className="grid grid-flow-col gap-[2px] w-max py-1"
-                    style={{ gridTemplateRows: "repeat(7, 8px)" }}
-                    role="img"
-                    aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
-                  >
-                    {v.contributions.levels.map((lvl, i) => (
-                      <span key={i} className="block w-2 h-2 rounded-[2px]" style={{ backgroundColor: HEAT[lvl] ?? HEAT[0] }} />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3 pt-3 mt-2 border-t border-white/10 text-[11px] font-mono text-slate-400">
-                  <span>avg: {v.contributions.avg_per_day} commits/day</span>
-                  <span className="flex items-center gap-1.5">
-                    <span>Less</span>
-                    {HEAT.map((c) => (
-                      <span key={c} className="inline-block w-2 h-2 rounded-[2px]" style={{ backgroundColor: c }} />
-                    ))}
-                    <span>More</span>
-                  </span>
-                </div>
-              </div>
-              )}
-            </div>
-
-            {/* Right — skill matrix + endorsement */}
-            <div className="lg:col-span-3 flex flex-col gap-5">
-              {skills.length > 0 && <SkillMatrix skills={skills} />}
-
-              {v.endorsementQuote && (
-                <div className="bg-[#F7F7F4] border-2 border-[#7B72E9]/40 rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm relative overflow-hidden">
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#7B72E9] text-4xl font-serif leading-none select-none">&ldquo;</span>
-                    <p className="text-[13px] text-[#1E1E1E] italic leading-relaxed">{v.endorsementQuote}</p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-[#E8E8E1] flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-[#7B72E9] font-bold tracking-widest uppercase">
-                      {card.endorsement ? "Peer Endorsement" : "Zynd Citation"}
-                    </span>
-                    {card.endorsement?.reviewer_count != null && (
-                      <span className="font-mono text-[10px] text-[#8E8E88]">{card.endorsement.reviewer_count} PEER REVIEWS ON ZYND</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* FOOTER / EXPLORE ZYND & VERIFIED BENTO ROW */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-2 pb-5 zd-canvas zd-slide">
-            <div className="md:col-span-8 bg-[#0B0B0B] text-white rounded-[28px] p-7 bento-corner bento-corner-light shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="max-w-md">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-[#FBC46A]"></span>
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-[#FBC46A] font-bold">Explore Zynd Intelligence</span>
-                </div>
-                <h3 className="font-display text-[22px]! font-bold! leading-snug! text-white!">
+            {/* ─ ROW 6: FULL-WIDTH CTA ───────────────────────────────── */}
+            <div className="col-span-12 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6 zd-slide">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-purple-400 block mb-1">Explore Zynd Intelligence</span>
+                <h3 className="text-xl! font-bold! text-white! leading-snug!">
                   Find people with matching expertise across the Zynd directory.
                 </h3>
-                <p className="text-[12px] text-slate-400 mt-1 font-mono">
-                  Powered by Zynd&apos;s semantic search across verified profiles.
-                </p>
+                <p className="text-xs font-mono text-slate-400 mt-1">Powered by Zynd&apos;s semantic search across verified profiles.</p>
               </div>
-              <div className="flex flex-col gap-2 w-full sm:w-auto shrink-0">
+              <div className="flex flex-col gap-2 shrink-0">
                 {skills.length > 0 && (
                   <Link
                     href={`/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}`}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#FBC46A] hover:bg-[#ffcf82] pf-c-dark font-mono text-[12px] font-bold transition-all text-center shadow-md"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-mono text-[12px] font-bold transition-all shadow-md text-[#0B0B0B]"
+                    style={{ backgroundColor: "#FBC46A" }}
                   >
                     <Search size={13} />
                     Find Similar Profiles
                   </Link>
                 )}
-                <Link href="/directory" className="font-mono text-[11px] pf-c-slate pf-hv-white text-center py-1 transition-colors">
+                <Link href="/directory" className="font-mono text-[11px] text-slate-400 text-center py-1 hover:text-white transition-colors">
                   Browse all profiles →
                 </Link>
               </div>
             </div>
 
-            <div className="md:col-span-4 bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 font-display font-semibold text-[14px] text-[#0B0B0B]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7B72E9]"></span>
-                    <span>Zynd Verified</span>
-                  </div>
-                  <span className="font-mono text-[10px] text-[#8E8E88]">AI-Native Directory</span>
-                </div>
-                <p className="text-[11px] font-mono text-[#8E8E88]">Permanent verifiable dossier snapshot</p>
-              </div>
-              <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-[#F7F7F4] border border-[#E8E8E1] mt-3">
-                <span className="font-mono text-[11px] text-[#0B0B0B] font-medium truncate">{permalink}</span>
-                <CopyPermalinkIcon url={canonical} />
-              </div>
-            </div>
-          </div>
+          </div>{/* end grid */}
 
-          {/* Editorial Footer Note */}
-          <div className="mt-12 pt-6 border-t border-[#E5E5DE] zd-canvas zd-slide flex flex-wrap items-center justify-between gap-4 text-[11px] font-mono text-[#8E8E88]">
+          {/* ── EDITORIAL FOOTER ──────────────────────────────────────── */}
+          <footer className="mt-10 pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4 text-[11px] font-mono text-[#8E8E88]">
             <div className="flex items-center gap-2">
               <span className="font-bold text-[#0B0B0B]">ZYND.AI</span>
               <span>•</span>
               <span>Algorithmic Dossier &amp; Synthesis Protocol</span>
             </div>
-            <div className="flex items-center gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200">
+                <span className="text-[#0B0B0B] font-medium">{permalink}</span>
+                <CopyPermalinkIcon url={canonical} />
+              </div>
               <Link href="/directory" className="pf-hv-dark transition-colors">DIRECTORY</Link>
               <Link href="/for-ai" className="pf-hv-dark transition-colors">AGENT_API</Link>
-              <Link href="/create" className="pf-hv-dark transition-colors">CREATE_PROFILE</Link>
+              <Link href="/create" className="pf-hv-dark transition-colors">CREATE</Link>
             </div>
-          </div>
+          </footer>
+
         </DossierShell>
       </div>
       <ProfileChatWidget handle={handle} personName={identity.name} />
