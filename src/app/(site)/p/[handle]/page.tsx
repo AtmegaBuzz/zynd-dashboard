@@ -71,9 +71,9 @@ function usernameFromUrl(url: string | null | undefined): string | null {
 }
 
 // Purple palette to match the new design's heatmap
-const HEAT = ["#f1f5f9", "#d8b4fe", "#c084fc", "#a855f7", "#7e22ce"];
+const HEAT = ["#e2e8f0", "#d8b4fe", "#c084fc", "#a855f7", "#7e22ce"];
 
-const VSCROLL_VISIBLE = 1;
+const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
 const POST_ROW_H = 104;
 const POST_GAP = 12;
@@ -583,20 +583,22 @@ export default async function PersonPage({ params }: PageProps) {
             {/* Right column — col-8 */}
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6 overflow-hidden">
               {/* Dossier Summary */}
-              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc min-h-[200px]">
-                <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                  <span>Dossier Summary</span>
-                  {verified && <span className="text-[#0B0B0B] font-bold">Zynd Verified</span>}
+              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                    <span>Dossier Summary</span>
+                    {verified && <span className="text-[#0B0B0B] font-bold">Zynd Verified</span>}
+                  </div>
+                  {!isBlank(card.summary) ? (
+                    <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.summary}</p>
+                  ) : !isBlank(card.citation_snippet) ? (
+                    <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.citation_snippet}</p>
+                  ) : (
+                    <p className="text-[#8E8E88] text-[14px]">Profile summary not yet synthesized.</p>
+                  )}
                 </div>
-                {!isBlank(card.summary) ? (
-                  <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.summary}</p>
-                ) : !isBlank(card.citation_snippet) ? (
-                  <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.citation_snippet}</p>
-                ) : (
-                  <p className="text-[#8E8E88] text-[14px]">Profile summary not yet synthesized.</p>
-                )}
                 {(card.industries.length > 0 || !isBlank(card.availability)) && (
-                  <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-1.5 font-mono text-[11px]">
+                  <div className="mt-auto pt-4 border-t border-gray-100 flex flex-wrap gap-1.5 font-mono text-[11px]">
                     {card.industries.map((tag) => (
                       <span key={tag} className="px-2.5 py-1 rounded-md bg-gray-100 text-[#0B0B0B] font-medium">{tag}</span>
                     ))}
@@ -882,25 +884,28 @@ export default async function PersonPage({ params }: PageProps) {
                       ))}
                     </div>
                   )}
-                  {v.contributions && v.contributions.levels.length > 0 && (
+                  {v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0 && (
                     <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                       <div className="flex justify-between items-center text-[10px] font-mono text-[#8E8E88] mb-2 uppercase">
                         <span>Contribution Heatmap</span>
                         <span>{v.contributions.year}</span>
                       </div>
                       <div
-                        className="grid grid-flow-col gap-[2px] overflow-hidden"
+                        className="grid grid-flow-col gap-[2px] overflow-hidden h-[68px]"
                         style={{ gridTemplateRows: "repeat(7, 8px)", maxWidth: "100%" }}
                         role="img"
                         aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
                       >
-                        {v.contributions.levels.slice(-70).map((lvl, i) => (
-                          <span
-                            key={i}
-                            className="block w-2 h-2 rounded-[2px]"
-                            style={{ backgroundColor: HEAT[lvl] ?? HEAT[0] }}
-                          />
-                        ))}
+                        {v.contributions.levels.slice(-70).map((lvl, i) => {
+                          const lvlIndex = Math.min(Math.max(lvl || 0, 0), 4);
+                          return (
+                            <span
+                              key={i}
+                              className="block w-2 h-2 rounded-[2px]"
+                              style={{ backgroundColor: HEAT[lvlIndex] }}
+                            />
+                          );
+                        })}
                       </div>
                       {v.contributions.avg_per_day != null && (
                         <p className="font-mono text-[10px] text-[#8E8E88] mt-1.5">
