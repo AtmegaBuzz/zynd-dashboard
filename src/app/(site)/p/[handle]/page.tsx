@@ -676,20 +676,20 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ─ ROW 2: MEMORY + WORK EXPERIENCE ────────────────────── */}
 
-            {/* Memory / MCP Sync */}
-            <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                  Memory &amp; MCP Sync
-                </span>
-                <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Agentic Context</span>
-              </div>
-              <h3 className="text-xl! font-bold! text-white! mb-3 leading-snug!">Active AI Shared Memory</h3>
-              <p className="text-slate-300 text-sm leading-relaxed mb-5">
-                Extracted from user context layers. AI agents automatically adapt to these parameters when generating code or structuring replies.
-              </p>
-              {memoryFacts.length > 0 ? (
+            {/* Memory / MCP Sync OR Professional Snapshot */}
+            {memoryFacts.length > 0 ? (
+              <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                    Memory &amp; MCP Sync
+                  </span>
+                  <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Agentic Context</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 leading-snug">Active AI Shared Memory</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-5">
+                  Extracted from user context layers. AI agents automatically adapt to these parameters when generating code or structuring replies.
+                </p>
                 <div className="space-y-3 font-mono text-xs flex-1">
                   {memoryFacts.slice(0, 3).map((fact, i) => {
                     const text = factText(fact);
@@ -702,12 +702,46 @@ export default async function PersonPage({ params }: PageProps) {
                     );
                   })}
                 </div>
-              ) : (
-                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 font-mono text-xs text-slate-400 flex-1">
-                  No memory context synced yet. Connect Zynd Memory to enable AI-native context sharing.
+              </div>
+            ) : (
+              <div className="col-span-12 lg:col-span-6 bg-gradient-to-br from-[#4F46E5] to-[#7B72E9] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-5 overflow-hidden relative">
+                <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="flex justify-between items-start">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">Professional Snapshot</span>
+                  {card.experience_years != null && (
+                    <span className="font-mono text-[11px] font-bold bg-white/20 px-2.5 py-1 rounded-full shrink-0">
+                      {card.experience_years}Y Experience
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white leading-snug mb-1">
+                    {!isBlank(identity.name) ? identity.name : "Professional Profile"}
+                  </h3>
+                  {!isBlank(identity.headline) && (
+                    <p className="text-white/80 text-sm leading-relaxed">{identity.headline}</p>
+                  )}
+                </div>
+                {card.can_help_with.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 block">Can help with</span>
+                    <div className="flex flex-wrap gap-2">
+                      {card.can_help_with.slice(0, 6).map((item) => (
+                        <span key={item} className="px-2.5 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-medium">
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!isBlank(card.availability) && (
+                  <div className="mt-auto pt-4 border-t border-white/20">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/60 block mb-1">Open to</span>
+                    <span className="text-white font-semibold text-sm">{card.availability}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Work Experience */}
             <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col justify-between">
@@ -809,7 +843,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* LinkedIn */}
             {showLinkedin && (
               <div
-                className="col-span-12 md:col-span-4 lg:col-span-3 self-start bg-[#0A66C2] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
+                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-[#0A66C2] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
                 style={{ height: SOCIAL_CARD_H }}
               >
                 <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
@@ -871,7 +905,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* X / Twitter */}
             {showX && (
               <div
-                className="col-span-12 md:col-span-4 lg:col-span-3 self-start bg-[#0f1419] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
+                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-[#0f1419] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
                 style={{ height: SOCIAL_CARD_H }}
               >
                 <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
@@ -934,7 +968,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* GitHub Stats + Heatmap */}
             {showGithub && (
-              <div className="col-span-12 md:col-span-12 lg:col-span-6 self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between">
+              <div className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
                     <span className="flex items-center gap-1.5" style={{ color: "#0B0B0B" }}>
@@ -1035,10 +1069,10 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 4: WRITING ───────────────────────────── */}
 
             {v.writing.length > 0 && (
-              <div className="col-span-12 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc">
+              <div className="col-span-12 bg-[#0B0B0B] rounded-[32px] p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
-                  <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-gray-100 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
+                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-white/50">Posts &amp; Writing</span>
+                  <span className="font-mono text-[10px] text-white font-semibold bg-white/10 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
                 </div>
                 <AutoScroll
                   rowHeight={POST_ROW_H + POST_GAP}
