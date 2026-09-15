@@ -575,18 +575,6 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                       ))}
                     </div>
                   )}
-                  {calendlyUrl && (
-                    <div className="mt-2.5">
-                      <a
-                        href={calendlyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-[#1E1E1E] border border-white/25 font-mono text-[11px] font-semibold hover:bg-white/90 transition-colors"
-                      >
-                        Schedule a call ↗
-                      </a>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -620,9 +608,9 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 )}
               </div>
 
-              {/* What I'm about + Book a Call */}
-              {(obsessions.length > 0 || calendlyUrl) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+              {/* What I'm about — equal-height tiles */}
+              {obsessions.length > 0 && (
+                <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
                   {obsessions.map((tile) => (
                     <div key={tile.key} className={`rounded-[26px] p-5 bento-corner shadow-sm flex flex-col justify-between min-h-[180px] ${tile.card} ${tile.corner}`}>
                       <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
@@ -636,30 +624,71 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                       <span className={`font-mono text-[10px] ${tile.foot}`}>{tile.items.length} {tile.unit}</span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Actions row: Book a Call + social platform cards */}
+              {(calendlyUrl || v.links.length > 0) && (
+                <div className="flex flex-wrap gap-3">
+                  {/* Calendly compact card */}
                   {calendlyUrl && (
                     <a
                       href={calendlyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px] bg-[#0069FF] text-white no-underline hover:brightness-110 transition-all"
+                      className="flex items-center gap-4 px-5 py-4 rounded-2xl shadow-sm hover:brightness-110 transition-all no-underline"
+                      style={{ backgroundColor: "#006BFF", minWidth: 200 }}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[11px] uppercase tracking-wider font-bold">Book a call</span>
-                        {/* Calendly "C" logo mark */}
-                        <svg width="22" height="22" viewBox="0 0 40 40" fill="none" aria-hidden>
-                          <rect width="40" height="40" rx="10" fill="white" fillOpacity="0.18" />
-                          <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontSize="20" fontWeight="700" fill="white" fontFamily="system-ui,sans-serif">C</text>
+                      {/* Calendly wordmark "C" */}
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden>
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.93V18h-2v-1.07C8.06 16.44 6 14.42 6 12h2c0 2.21 1.79 4 4 4s4-1.79 4-4c0-1.68-.99-3.12-2.43-3.76L12 9.17 10.43 8.24C8.99 7.6 8 6.15 8 4.47 8 2.57 9.57 1 11.47 1c.19 0 .37.01.56.03C13.49 1.22 15 2.69 15 4.47c0 1.67-.99 3.12-2.43 3.76L14 9.17V18h-1v-1.07z"/>
                         </svg>
                       </div>
-                      <div className="flex flex-col gap-1.5 my-2">
-                        <p className="text-[15px] font-semibold text-white leading-snug">Schedule time with {identity.name.split(" ")[0]}</p>
-                        <p className="font-mono text-[10px] text-white/70">via Calendly</p>
+                      <div>
+                        <p className="font-mono text-[9px] text-white/60 uppercase tracking-widest mb-0.5">Book a call</p>
+                        <p className="text-white font-semibold text-[14px] leading-tight">Schedule with {identity.name.split(" ")[0]}</p>
+                        <p className="font-mono text-[10px] text-white/60 mt-0.5">via Calendly ↗</p>
                       </div>
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/80 font-semibold">
-                        Pick a time ↗
-                      </span>
                     </a>
                   )}
+
+                  {/* Social platform cards — one per link */}
+                  {v.links.map(([platform, url]) => {
+                    const key = platform.toLowerCase();
+                    const isGithub = key === "github";
+                    const isX = key === "x" || key === "twitter";
+                    const isLinkedin = key === "linkedin";
+                    const bg = isLinkedin ? "#0A66C2" : isGithub ? "#24292E" : isX ? "#000000" : "#4B5563";
+                    const handle = url.replace(/\/+$/, "").split("/").pop() ?? platform;
+                    return (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-5 py-4 rounded-2xl shadow-sm hover:brightness-125 transition-all no-underline"
+                        style={{ backgroundColor: bg, minWidth: 160 }}
+                      >
+                        <div className="text-white opacity-90 flex-shrink-0">
+                          {isGithub && <GithubGlyph size={28} />}
+                          {isX && <XGlyph size={24} />}
+                          {isLinkedin && <LinkedinGlyph size={26} />}
+                          {!isGithub && !isX && !isLinkedin && (
+                            <Globe style={{ width: 26, height: 26 }} strokeWidth={1.5} />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-mono text-[9px] text-white/55 uppercase tracking-widest mb-0.5">
+                            {isGithub ? "GitHub" : isX ? "X / Twitter" : isLinkedin ? "LinkedIn" : linkLabel(platform)}
+                          </p>
+                          <p className="text-white font-semibold text-[13px] leading-tight truncate max-w-[120px]">
+                            {isX && !handle.startsWith("@") ? `@${handle}` : handle}
+                          </p>
+                        </div>
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>
