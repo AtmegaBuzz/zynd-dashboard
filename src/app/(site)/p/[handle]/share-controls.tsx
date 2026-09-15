@@ -1,19 +1,55 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Check, Copy, Link2, QrCode } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Check, Copy, Download, Link2, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 /** Share + QR as a single segmented pill button. */
 export function ShareQrGroup({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const onShare = useCallback(async () => {
     await writeClipboard(url);
     setCopied(true);
     setQrOpen(false);
     setTimeout(() => setCopied(false), 2000);
+  }, [url]);
+
+  const onDownloadQr = useCallback(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const blob = new Blob([new XMLSerializer().serializeToString(clone)], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const imgUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(imgUrl);
+      canvas.toBlob((png) => {
+        if (!png) return;
+        const a = document.createElement("a");
+        const pngUrl = URL.createObjectURL(png);
+        const handle = url.split("/").filter(Boolean).pop() || "profile";
+        a.href = pngUrl;
+        a.download = `zynd-${handle}-qr.png`;
+        a.click();
+        URL.revokeObjectURL(pngUrl);
+      }, "image/png");
+    };
+    img.src = imgUrl;
   }, [url]);
 
   return (
@@ -59,7 +95,7 @@ export function ShareQrGroup({ url }: { url: string }) {
           <div className="fixed inset-0 z-40" onClick={() => setQrOpen(false)} aria-hidden />
           <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-[#E5E5DE] rounded-2xl shadow-xl p-4 flex flex-col items-center gap-2.5">
             <div className="rounded-xl overflow-hidden border border-[#F0F0EA] p-2.5 bg-white leading-none">
-              <QRCodeSVG value={url} size={136} fgColor="#0B0B0B" bgColor="#ffffff" level="M" marginSize={0} />
+              <QRCodeSVG ref={svgRef} value={url} size={136} fgColor="#0B0B0B" bgColor="#ffffff" level="M" marginSize={0} />
             </div>
             <span className="font-mono text-[10px] text-[#8E8E88] break-all max-w-[170px] text-center leading-snug">
               {url.replace(/^https?:\/\//, "")}
@@ -67,6 +103,14 @@ export function ShareQrGroup({ url }: { url: string }) {
             <span className="font-mono text-[9px] uppercase tracking-widest text-[#7B72E9] font-bold">
               Scan to view profile
             </span>
+            <button
+              type="button"
+              onClick={onDownloadQr}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black text-white hover:bg-[#333] transition-colors font-mono text-[10px] font-semibold mt-0.5"
+            >
+              <Download size={12} />
+              Download QR
+            </button>
           </div>
         </>
       )}
