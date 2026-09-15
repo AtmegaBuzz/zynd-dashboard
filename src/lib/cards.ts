@@ -108,6 +108,8 @@ export interface AgentProfileCard {
   contribution_stats?: ContributionStats | null;
   endorsement?: Endorsement | null;
   calendly_url?: string | null;
+  /** Public findability facts from the ZYND memory layer, stored by the backend cron. */
+  zynd_memory?: Array<Record<string, unknown>> | null;
 }
 
 export interface AgentSearchResult {
@@ -194,6 +196,42 @@ export async function searchAgents(
     return (await res.json()) as AgentSearchResponse;
   } catch {
     return { query: {}, searchable_attributes: [], results: [] };
+  }
+}
+
+export async function getMyCard(
+  token: string,
+): Promise<{ card: AgentProfileCard; handle: string } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/cards/mine`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { card: AgentProfileCard; handle: string };
+  } catch {
+    return null;
+  }
+}
+
+export async function updateCard(
+  handle: string,
+  card: AgentProfileCard,
+  token: string,
+): Promise<AgentProfileCard | null> {
+  try {
+    const res = await fetch(`${API_BASE}/cards/by-handle/${encodeURIComponent(handle)}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(card),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as AgentProfileCard;
+  } catch {
+    return null;
   }
 }
 
