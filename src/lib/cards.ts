@@ -108,6 +108,18 @@ export interface AgentProfileCard {
   contribution_stats?: ContributionStats | null;
   endorsement?: Endorsement | null;
   calendly_url?: string | null;
+  /** Structured LinkedIn work history extracted at scrape time. */
+  work_experience?: Array<{
+    title: string;
+    company: string;
+    company_logo?: string;
+    employment_type?: string;
+    start_date?: string;
+    end_date?: string;
+    duration?: string;
+    location?: string;
+    description?: string;
+  }> | null;
   /** Public findability facts from the ZYND memory layer, stored by the backend cron. */
   zynd_memory?: Array<Record<string, unknown>> | null;
 }

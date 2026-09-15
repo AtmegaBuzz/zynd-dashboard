@@ -18,6 +18,7 @@ import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
+import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 
 interface PageProps {
@@ -71,7 +72,7 @@ function usernameFromUrl(url: string | null | undefined): string | null {
 }
 
 // Green palette to match GitHub's real contribution heatmap
-const HEAT = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"];
+
 
 const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
@@ -259,7 +260,7 @@ function buildView(card: AgentProfileCard) {
       year: 2026,
       total: getHashNumber(card.handle || card.id, 120, 380),
       avg_per_day: 0.8,
-      levels: Array.from({ length: 70 }, (_, i) => {
+      levels: Array.from({ length: 364 }, (_, i) => {
         // Generate a deterministic, realistic random layout per user handle
         const seedVal = getHashNumber((card.handle || card.id) + i, 1, 100);
         if (seedVal < 65) return 0;
@@ -744,98 +745,85 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {/* Work Experience */}
-            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                  <span>Professional Background</span>
-                  <span className="text-[#0B0B0B] font-bold">Work Experience</span>
-                </div>
+            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc flex flex-col">
+              <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                <span>Work Experience</span>
+                {card.experience_years != null && (
+                  <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/10 px-2 py-0.5 rounded-md">
+                    {card.experience_years}Y Exp
+                  </span>
+                )}
+              </div>
 
-                <div className="space-y-6 text-left">
-                  {/* Timeline block */}
-                  <div className="relative border-l-2 border-[#7B72E9] pl-5 ml-1 space-y-1">
-                    {/* Glowing timeline dot */}
-                    <div className="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-[#7B72E9] ring-4 ring-[#7B72E9]/20" />
-                    <div className="flex justify-between items-baseline gap-3">
-                      <h4 className="font-bold text-[#0B0B0B] text-base leading-snug">
-                        {!isBlank(identity.headline) ? identity.headline : "Professional Builder"}
-                      </h4>
-                      {card.experience_years != null && (
-                        <span className="text-xs font-mono text-[#7B72E9] bg-[#7B72E9]/10 px-2 py-0.5 rounded-md font-bold flex-shrink-0">
-                          {card.experience_years}Y Exp
-                        </span>
-                      )}
+              {(card.work_experience ?? []).length > 0 ? (
+                <div className="flex-1 space-y-0 divide-y divide-gray-100 overflow-y-auto max-h-[400px] pr-1">
+                  {(card.work_experience ?? []).slice(0, 8).map((job, i) => (
+                    <div key={i} className="flex gap-3.5 py-4 first:pt-0">
+                      {/* Company initial avatar */}
+                      <div className="shrink-0 w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center overflow-hidden">
+                        {job.company_logo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={job.company_logo} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[11px] font-bold text-slate-500 select-none">
+                            {(job.company || job.title || "?").charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-[#0B0B0B] text-[13.5px] leading-snug">
+                          {job.title}
+                        </div>
+                        <div className="text-[12px] text-slate-700 font-medium mt-0.5">
+                          {job.company}
+                          {job.employment_type && (
+                            <span className="text-slate-400 font-normal"> · {job.employment_type}</span>
+                          )}
+                        </div>
+                        <div className="text-[11px] font-mono text-[#8E8E88] mt-0.5">
+                          {[job.start_date, job.end_date].filter(Boolean).join(" – ")}
+                          {job.duration && <span> · {job.duration}</span>}
+                        </div>
+                        {!isBlank(job.location ?? "") && (
+                          <div className="text-[11px] text-slate-400 mt-0.5">{job.location}</div>
+                        )}
+                        {!isBlank(job.description ?? "") && (
+                          <p className="text-[11.5px] text-slate-500 leading-relaxed mt-1.5 line-clamp-2">
+                            {job.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                /* Fallback when no structured experience data yet */
+                <div className="flex-1 flex flex-col justify-between">
+                  <div className="relative border-l-2 border-[#7B72E9] pl-5 ml-1 space-y-1">
+                    <div className="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-[#7B72E9] ring-4 ring-[#7B72E9]/20" />
+                    <h4 className="font-bold text-[#0B0B0B] text-base leading-snug">
+                      {!isBlank(identity.headline) ? identity.headline : "Professional"}
+                    </h4>
                     {!isBlank(card.affiliations) && (
-                      <p className="text-sm font-semibold text-slate-600 font-sans mt-1">{card.affiliations}</p>
+                      <p className="text-sm font-semibold text-slate-600 mt-1">{card.affiliations}</p>
                     )}
                     {!isBlank(identity.location) && (
                       <p className="text-xs text-[#8E8E88] font-mono mt-0.5 uppercase tracking-wider">{identity.location}</p>
                     )}
                   </div>
-
-                  {/* Domain Verticals Module */}
                   {card.industries.length > 0 && (
-                    <div className="pt-4 border-t border-gray-100">
-                      <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#8E8E88] block mb-2.5">
-                        Domain Verticals
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {card.industries.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60 text-[#0B0B0B] text-xs font-semibold font-sans hover:bg-slate-100 hover:border-slate-300 transition-colors"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {card.industries.map((tag) => (
+                        <span key={tag} className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60 text-[#0B0B0B] text-xs font-semibold">
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   )}
-
-                  {/* Synced platforms metadata block */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#8E8E88] block mb-2.5">
-                      Verified Identity Sources
-                    </span>
-                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                        <span className="text-slate-500">LinkedIn Sync</span>
-                        <span className={card.linkedin_stats ? "text-emerald-600 font-bold" : "text-slate-400"}>
-                          {card.linkedin_stats ? "● Active" : "Pending"}
-                        </span>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                        <span className="text-slate-500">GitHub Sync</span>
-                        <span className={card.github_stats ? "text-emerald-600 font-bold" : "text-slate-400"}>
-                          {card.github_stats ? "● Active" : "Pending"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="mt-4 text-xs text-slate-400 font-mono">LinkedIn not yet synced — experience will appear here after connecting.</p>
                 </div>
-              </div>
-
-              {/* Engagement Status Module (Anchored at the bottom) */}
-              <div className="mt-8 pt-5 border-t border-gray-100">
-                <div className="p-4 bg-emerald-50/40 border border-emerald-100/60 rounded-2xl flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <div className="min-w-0 text-left">
-                      <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-emerald-700 block mb-0.5">Engagement Status</span>
-                      <p className="text-[13px] text-emerald-800 font-semibold truncate leading-tight">
-                        {!isBlank(card.availability) ? `Open to ${card.availability}` : "Open to Collaborations & Projects"}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 px-2 py-1 rounded-md shrink-0 uppercase tracking-wider">
-                    Ready
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* ─ ROW 3: SOCIAL STATS ─────────────────────────────────── */}
@@ -1007,54 +995,12 @@ export default async function PersonPage({ params }: PageProps) {
                     </div>
                   )}
                   {v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0 && (
-                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                      <div className="flex justify-between items-center text-[10px] font-mono text-[#8E8E88] mb-3 uppercase tracking-wider">
-                        <span>Contribution Heatmap</span>
-                        <span>{v.contributions.year}</span>
-                      </div>
-                      
-                      <div className="flex items-start">
-                        {/* Day labels */}
-                        <div className="flex flex-col justify-between text-[8px] font-mono text-slate-400 pr-2 h-[68px] pt-[2px] select-none uppercase">
-                          <span>Mon</span>
-                          <span>Wed</span>
-                          <span>Fri</span>
-                        </div>
-                        
-                        {/* Heatmap grid */}
-                        <div
-                          className="grid grid-flow-col gap-[2.5px] overflow-hidden h-[68px] flex-1"
-                          style={{ gridTemplateRows: "repeat(7, 8px)" }}
-                          role="img"
-                          aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
-                        >
-                          {v.contributions.levels.slice(-182).map((lvl, i) => {
-                            const lvlIndex = Math.min(Math.max(lvl || 0, 0), 4);
-                            return (
-                              <span
-                                key={i}
-                                className="block w-2 h-2 rounded-[1.5px]"
-                                style={{ backgroundColor: HEAT[lvlIndex] }}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Legend and stats footer */}
-                      <div className="flex justify-between items-center text-[9px] font-mono text-[#8E8E88] mt-3 border-t border-gray-200/50 pt-2.5">
-                        <span>
-                          {v.contributions.avg_per_day != null ? `Avg: ${v.contributions.avg_per_day} commits/day` : ""}
-                        </span>
-                        <div className="flex items-center gap-1 select-none">
-                          <span>Less</span>
-                          {HEAT.map((color) => (
-                            <span key={color} className="w-2.5 h-2.5 rounded-[1.5px]" style={{ backgroundColor: color }} />
-                          ))}
-                          <span>More</span>
-                        </div>
-                      </div>
-                    </div>
+                    <ContributionHeatmap
+                      levels={v.contributions.levels}
+                      year={v.contributions.year}
+                      total={v.contributions.total}
+                      avgPerDay={v.contributions.avg_per_day}
+                    />
                   )}
                 </div>
                 {v.github.activeRepos != null && (
