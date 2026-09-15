@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Calendar, Globe, Search } from "lucide-react";
+import { BadgeCheck, Calendar, Globe, Search, Sparkles } from "lucide-react";
 
 import {
   fetchCardByHandle,
@@ -1160,27 +1160,46 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {/* ─ ROW 5A: FULL-WIDTH CTA ───────────────────────────────── */}
-            <div className="col-span-12 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
-              <div>
-                <span className="text-xs font-mono uppercase tracking-widest text-purple-400 block mb-1">Explore Zynd Intelligence</span>
-                <h3 className="text-xl! font-bold! text-white! leading-snug!">
-                  Find people with matching expertise across the Zynd directory.
-                </h3>
-                <p className="text-xs font-mono text-slate-400 mt-1">Powered by Zynd&apos;s semantic search across verified profiles.</p>
+            <div className="col-span-12 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white rounded-[32px] p-8 sm:p-10 shadow-lg border border-indigo-500/15 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden group/cta hover:border-indigo-500/25 transition-all duration-300">
+              
+              {/* Backlight glow effect */}
+              <div className="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover/cta:bg-indigo-500/15 transition-all duration-300" />
+              <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="flex items-start gap-4 flex-1 relative z-10">
+                {/* Glowing AI Sparkle icon */}
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center text-indigo-300 shrink-0 shadow-inner">
+                  <Sparkles size={22} className="stroke-[2.2] animate-pulse" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent font-mono uppercase tracking-widest text-[11px] font-bold block mb-2">
+                    Explore Zynd Intelligence
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight mb-2 max-w-[520px]">
+                    Find people with matching expertise across the Zynd directory.
+                  </h3>
+                  <p className="text-[12px] font-mono text-slate-400">
+                    Powered by Zynd&apos;s semantic search across verified profiles.
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col gap-2 shrink-0">
+              
+              <div className="flex flex-col gap-3.5 shrink-0 w-full md:w-auto relative z-10 text-center md:text-left">
                 {skills.length > 0 && (
                   <Link
                     href={`/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}`}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-mono text-[12px] font-bold transition-all shadow-md text-[#0B0B0B]"
-                    style={{ backgroundColor: "#FBC46A" }}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-mono text-[11px] font-bold bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 hover:shadow-lg hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-slate-950 uppercase tracking-wider shadow-md shrink-0 select-none"
                   >
-                    <Search size={13} />
+                    <Search size={13} strokeWidth={2.5} />
                     Find Similar Profiles
                   </Link>
                 )}
-                <Link href="/directory" className="font-mono text-[11px] text-slate-400 text-center py-1 hover:text-white transition-colors">
-                  Browse all profiles →
+                <Link 
+                  href="/directory" 
+                  className="group/link font-mono text-[11px] text-slate-400 hover:text-white transition-colors py-1 flex items-center justify-center gap-1 inline-block"
+                >
+                  Browse all profiles 
+                  <span className="group-hover/link:translate-x-0.5 transition-transform duration-150">→</span>
                 </Link>
               </div>
             </div>
