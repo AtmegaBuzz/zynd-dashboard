@@ -568,7 +568,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* Right column — col-8 */}
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
               {/* Dossier Summary */}
-              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc">
+              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc min-h-[200px]">
                 <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
                   <span>Dossier Summary</span>
                   {verified && <span className="text-[#0B0B0B] font-bold">Zynd Verified</span>}
