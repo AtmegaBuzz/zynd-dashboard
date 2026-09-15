@@ -147,6 +147,19 @@ function linkLabel(platform: string) {
   return LINK_LABELS[platform.toLowerCase()] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
+const GRADIENTS = [
+  "linear-gradient(135deg, #3B82F6, #1D4ED8)", // blue
+  "linear-gradient(135deg, #10B981, #047857)", // emerald
+  "linear-gradient(135deg, #8B5CF6, #6D28D9)", // purple
+  "linear-gradient(135deg, #EC4899, #BE185D)", // pink
+  "linear-gradient(135deg, #F59E0B, #B45309)", // amber
+];
+function getGradient(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
+}
+
 const LEVEL_META: Record<string, { label: string; color: string; bar: string; glow: string; bars: number }> = {
   expert: { label: "Expert", color: "#D97706", bar: "#F59E0B", glow: "rgba(245,158,11,.4)", bars: 3 },
   advanced: { label: "Advanced", color: "#5448D4", bar: "#7B72E9", glow: "rgba(123,114,233,.35)", bars: 2 },
@@ -986,38 +999,63 @@ export default async function PersonPage({ params }: PageProps) {
                     <div className="space-y-3">
                       {v.projects.slice(0, 4).map((proj) => {
                         const url = safeUrl(proj.url);
+                        const initial = proj.name.charAt(0).toUpperCase();
+                        const gradient = getGradient(proj.name);
                         return (
                           <div
                             key={proj.name}
-                            className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl transition cursor-pointer border border-transparent hover:border-gray-200"
+                            className="group flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-200/80 hover:shadow-sm"
                           >
-                            <div>
-                              <div className="flex items-center gap-2 mb-0.5">
-                                {url ? (
-                                  <a href={url} target="_blank" rel="noreferrer" className="font-bold text-sm text-gray-900 hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1">
-                                    {proj.name}
-                                  </a>
-                                ) : (
-                                  <span className="font-bold text-sm text-gray-900">{proj.name}</span>
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                              {/* Sleek colorful project icon */}
+                              <div
+                                style={{ background: gradient }}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0 select-none"
+                              >
+                                {initial}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  {url ? (
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="font-bold text-[14px] text-slate-900 group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
+                                    >
+                                      {proj.name}
+                                    </a>
+                                  ) : (
+                                    <span className="font-bold text-[14px] text-slate-900 leading-snug truncate">{proj.name}</span>
+                                  )}
+                                  {proj.stars != null && proj.stars > 0 && (
+                                    <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-100 text-amber-700 font-mono text-[10px] font-bold inline-flex items-center gap-1 shadow-inner shrink-0">
+                                      ★ {compact(proj.stars)}
+                                    </span>
+                                  )}
+                                </div>
+                                {!isBlank(proj.description) && (
+                                  <p className="text-[12px] text-slate-500 font-sans leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
                                 )}
-                                {proj.stars != null && (
-                                  <span className="text-[10px] text-[#9E6400] font-bold bg-[#FBC46A]/25 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                    ★ {compact(proj.stars)}
-                                  </span>
+                                {proj.tech.length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                    {proj.tech.slice(0, 3).map((t) => (
+                                      <span
+                                        key={t}
+                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/5 border border-[#7B72E9]/10 text-[#7B72E9] font-mono text-[9px] font-semibold uppercase tracking-wider"
+                                      >
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
-                              {!isBlank(proj.description) && (
-                                <p className="text-xs text-gray-500 font-mono line-clamp-1">{proj.description}</p>
-                              )}
-                              {proj.tech.length > 0 && (
-                                <div className="flex gap-1.5 mt-1">
-                                  {proj.tech.slice(0, 3).map((t) => (
-                                    <span key={t} className="text-[9px] text-[#7B72E9] font-mono">{t}</span>
-                                  ))}
-                                </div>
-                              )}
                             </div>
-                            {url && <span className="text-gray-400">↗</span>}
+                            {url && (
+                              <span className="text-slate-300 group-hover:text-[#7B72E9] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-lg font-bold pr-1 select-none">
+                                ↗
+                              </span>
+                            )}
                           </div>
                         );
                       })}
