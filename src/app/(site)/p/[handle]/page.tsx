@@ -566,7 +566,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* Right column — col-8 */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6 overflow-hidden">
               {/* Dossier Summary */}
               <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc min-h-[200px]">
                 <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
