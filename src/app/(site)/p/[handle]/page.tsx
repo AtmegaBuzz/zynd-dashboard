@@ -13,7 +13,7 @@ import {
 import { pageMetadata } from "@/lib/seo";
 import { DossierShell } from "./dossier-shell";
 import { SkillMatrix } from "./skill-matrix";
-import { ShareButton, CopyPermalinkIcon, QrButton } from "./share-controls";
+import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
@@ -467,14 +467,13 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 </span>
                 SYNTHESIS_ACTIVE
               </span>
-              <ShareButton url={canonical} />
-              <QrButton url={canonical} />
+              <ShareQrGroup url={canonical} />
               <EditCardButton handle={card.handle || handle} />
             </div>
           </div>
 
           {/* HERO BENTO GRID (Identity + Telemetry/Stats) */}
-          <div className="flex flex-col lg:flex-row items-stretch gap-5 mb-5 zd-pin" id="identity">
+          <div className="flex flex-col lg:flex-row items-start gap-5 mb-5 zd-pin" id="identity">
             {/* Identity Hero Panel */}
             <div className="lg:w-5/12 bg-[#7B72E9] text-white rounded-[28px] p-6 relative overflow-hidden bento-corner bento-corner-light flex flex-col shadow-sm">
               {verified && (
@@ -596,7 +595,7 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
             </div>
 
             {/* Right Column: Telemetry & Stats */}
-            <div className="lg:w-7/12 flex flex-col justify-between gap-5" id="activity">
+            <div className="lg:w-7/12 flex flex-col justify-start gap-5" id="activity">
               <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -621,8 +620,8 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 )}
               </div>
 
-              {/* What I'm about */}
-              {obsessions.length > 0 && (
+              {/* What I'm about + Book a Call */}
+              {(obsessions.length > 0 || calendlyUrl) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
                   {obsessions.map((tile) => (
                     <div key={tile.key} className={`rounded-[26px] p-5 bento-corner shadow-sm flex flex-col justify-between min-h-[180px] ${tile.card} ${tile.corner}`}>
@@ -637,6 +636,30 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                       <span className={`font-mono text-[10px] ${tile.foot}`}>{tile.items.length} {tile.unit}</span>
                     </div>
                   ))}
+                  {calendlyUrl && (
+                    <a
+                      href={calendlyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px] bg-[#0069FF] text-white no-underline hover:brightness-110 transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[11px] uppercase tracking-wider font-bold">Book a call</span>
+                        {/* Calendly "C" logo mark */}
+                        <svg width="22" height="22" viewBox="0 0 40 40" fill="none" aria-hidden>
+                          <rect width="40" height="40" rx="10" fill="white" fillOpacity="0.18" />
+                          <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontSize="20" fontWeight="700" fill="white" fontFamily="system-ui,sans-serif">C</text>
+                        </svg>
+                      </div>
+                      <div className="flex flex-col gap-1.5 my-2">
+                        <p className="text-[15px] font-semibold text-white leading-snug">Schedule time with {identity.name.split(" ")[0]}</p>
+                        <p className="font-mono text-[10px] text-white/70">via Calendly</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/80 font-semibold">
+                        Pick a time ↗
+                      </span>
+                    </a>
+                  )}
                 </div>
               )}
             </div>

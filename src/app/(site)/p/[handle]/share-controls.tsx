@@ -4,6 +4,76 @@ import { useCallback, useState } from "react";
 import { Check, Copy, Link2, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
+/** Share + QR as a single segmented pill button. */
+export function ShareQrGroup({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+
+  const onShare = useCallback(async () => {
+    await writeClipboard(url);
+    setCopied(true);
+    setQrOpen(false);
+    setTimeout(() => setCopied(false), 2000);
+  }, [url]);
+
+  return (
+    <div className="relative flex items-stretch">
+      {/* Grouped pill */}
+      <div className="inline-flex items-stretch rounded-full border border-[#DCDCD7] bg-white shadow-sm overflow-hidden">
+        {/* Share half */}
+        <button
+          type="button"
+          onClick={onShare}
+          style={{ color: copied ? undefined : "#0B0B0B" }}
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-mono font-medium transition-all group
+            ${copied ? "bg-emerald-500 text-white" : "hover:bg-black hover:text-white"}`}
+        >
+          {copied
+            ? <Check size={14} />
+            : <Link2 size={14} className="text-[#8E8E88] group-hover:text-white transition-colors" />
+          }
+          <span>{copied ? "Copied!" : "Share"}</span>
+        </button>
+
+        {/* Divider */}
+        <span className="w-px bg-[#DCDCD7] self-stretch" />
+
+        {/* QR half */}
+        <button
+          type="button"
+          onClick={() => { setQrOpen(v => !v); setCopied(false); }}
+          aria-expanded={qrOpen}
+          aria-label="Show QR code"
+          style={{ color: qrOpen ? undefined : "#0B0B0B" }}
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-mono font-medium transition-all group
+            ${qrOpen ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}
+        >
+          <QrCode size={14} className={`transition-colors ${qrOpen ? "text-white" : "text-[#8E8E88] group-hover:text-white"}`} />
+          <span>QR</span>
+        </button>
+      </div>
+
+      {/* QR popover */}
+      {qrOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setQrOpen(false)} aria-hidden />
+          <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-[#E5E5DE] rounded-2xl shadow-xl p-4 flex flex-col items-center gap-2.5">
+            <div className="rounded-xl overflow-hidden border border-[#F0F0EA] p-2.5 bg-white leading-none">
+              <QRCodeSVG value={url} size={136} fgColor="#0B0B0B" bgColor="#ffffff" level="M" marginSize={0} />
+            </div>
+            <span className="font-mono text-[10px] text-[#8E8E88] break-all max-w-[170px] text-center leading-snug">
+              {url.replace(/^https?:\/\//, "")}
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#7B72E9] font-bold">
+              Scan to view profile
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 async function writeClipboard(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
