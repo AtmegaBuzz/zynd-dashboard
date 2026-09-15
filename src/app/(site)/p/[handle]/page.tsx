@@ -6,12 +6,13 @@ import { BadgeCheck, Globe, Search } from "lucide-react";
 import {
   fetchCardByHandle,
   cardCanonicalUrl,
+  getMyCard,
   type AgentProfileCard,
   type ContributionStats,
   type Project,
 } from "@/lib/cards";
+import { createClient } from "@/lib/supabase/server";
 import { pageMetadata } from "@/lib/seo";
-import { DossierShell } from "./dossier-shell";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
@@ -324,6 +325,19 @@ export default async function PersonPage({ params }: PageProps) {
     return (vals[0] as string) || null;
   };
 
+  // Only show Edit button to the profile's owner — never to other viewers.
+  let isOwner = false;
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const myCard = await getMyCard(session.access_token);
+      isOwner = !!(myCard && myCard.handle === handle);
+    }
+  } catch {
+    // Auth check is best-effort; failing silently is safe since we just hide the button
+  }
+
   const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
   const showX = !!(v.x.handle || v.x.followers != null);
   const showGithub = !!githubHandle;
@@ -401,30 +415,6 @@ export default async function PersonPage({ params }: PageProps) {
           border-bottom: 1px solid #d4d4d8; border-right: 1px solid #d4d4d8;
         }
 
-        /* zd-pin / zd-slide: scroll-layer stacking */
-        @media (min-width: 1024px) {
-          .pf-bento .zd-pin { position: sticky; top: 20px; z-index: 0; }
-          .pf-bento .zd-slide { position: relative; z-index: 1; }
-        }
-        @property --zd-fade { syntax: "<length>"; inherits: false; initial-value: 0px; }
-        .pf-bento .zd-veil {
-          --zd-fade: 180px;
-          opacity: .4; transform: translateY(24px) scale(.99);
-          -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--zd-fade));
-          mask-image: linear-gradient(to bottom, transparent 0, #000 var(--zd-fade));
-          transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1), --zd-fade .9s cubic-bezier(.16,1,.3,1);
-        }
-        .pf-bento .zd-veil[data-on="1"] { --zd-fade: 0px; opacity: 1; transform: none; }
-        .pf-bento .zd-veil::after {
-          content: ''; position: absolute; inset: -12px 0; pointer-events: none;
-          background: linear-gradient(105deg, rgba(255,255,255,.62) 0%, rgba(226,226,218,.34) 44%, rgba(255,255,255,.58) 100%);
-          opacity: 1; transition: opacity .7s ease;
-        }
-        .pf-bento .zd-veil[data-on="1"]::after { opacity: 0; }
-        @media (prefers-reduced-motion: reduce) {
-          .pf-bento .zd-veil { opacity: 1; transform: none; }
-          .pf-bento .zd-veil::after { display: none; }
-        }
 
         /* AutoScroll vertical marquee */
         .pf-vscroll { overflow: hidden; position: relative; }
@@ -457,41 +447,39 @@ export default async function PersonPage({ params }: PageProps) {
       `}</style>
 
       <div className="pf-bento zd-canvas font-sans antialiased w-full min-h-screen flex flex-col selection:bg-[#7B72E9] selection:text-white px-4 sm:px-10 md:px-16 lg:px-24 xl:px-32">
-        <DossierShell className="w-full max-w-[1440px] mx-auto py-8 sm:py-12 flex-1">
+        <main className="w-full max-w-[1440px] mx-auto py-8 sm:py-12 flex-1">
 
           {/* ── TOP HEADER ─────────────────────────────────────────────── */}
-          <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 text-sm font-mono">
-            <div className="flex items-center gap-2 text-[#8E8E88]">
-              <span className="w-2 h-2 rounded-full bg-[#7B72E9] inline-block" />
+          <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-3 font-mono">
+            <div className="flex items-center gap-2 text-[12px] text-[#8E8E88]">
+              <span className="w-2 h-2 rounded-full bg-[#7B72E9] inline-block flex-shrink-0" />
               <Link href="/directory" className="pf-c-muted pf-hv-dark">Zynd</Link>
               <span>/</span>
               <Link href="/directory" className="pf-c-muted pf-hv-dark">Directory</Link>
               <span>/</span>
-              <span className="font-bold text-[#0B0B0B]">@{card.handle || card.id}</span>
+              <span className="font-semibold text-[#0B0B0B]">@{card.handle || card.id}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {v.links.map(([platform, url]) => (
                 <a
                   key={platform}
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-[#0B0B0B] shadow-sm flex-shrink-0"
+                  className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition shadow-sm flex-shrink-0"
+                  style={{ color: "#0B0B0B" }}
                   title={linkLabel(platform)}
                 >
-                  <LinkGlyph platform={platform} size={16} />
+                  <LinkGlyph platform={platform} size={15} />
                 </a>
               ))}
-              {v.links.length > 0 && <span className="w-px h-5 bg-gray-300 mx-0.5 flex-shrink-0" />}
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 font-mono text-[11px] font-semibold text-emerald-700">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
-                </span>
+              {v.links.length > 0 && <span className="w-px h-5 bg-gray-300 flex-shrink-0" />}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                 SYNTHESIS_ACTIVE
               </span>
               <ShareQrGroup url={canonical} />
-              <EditCardButton handle={card.handle || handle} />
+              {isOwner && <EditCardButton handle={card.handle || handle} />}
             </div>
           </header>
 
@@ -501,7 +489,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 1: HERO ─────────────────────────────────────────── */}
 
             {/* Purple Hero Card — col-4 */}
-            <div className="col-span-12 lg:col-span-4 bg-[#7B72E9] text-white rounded-[32px] p-8 flex flex-col justify-between shadow-sm relative overflow-hidden zd-pin">
+            <div className="col-span-12 lg:col-span-4 bg-[#7B72E9] text-white rounded-[32px] p-8 flex flex-col justify-between shadow-sm relative overflow-hidden">
               {verified && (
                 <div className="absolute top-5 right-5 z-20 inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-black/25 backdrop-blur-sm border border-white/20">
                   <BadgeCheck size={14} className="text-[#FBC46A]" />
@@ -556,7 +544,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* Right column — col-8 */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6 zd-pin">
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
               {/* Dossier Summary */}
               <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc">
                 <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
@@ -615,7 +603,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 2: MEMORY + WORK EXPERIENCE ────────────────────── */}
 
             {/* Memory / MCP Sync */}
-            <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col zd-slide">
+            <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
@@ -648,7 +636,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* Work Experience */}
-            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col zd-slide">
+            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col">
               <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
                 <span>Professional Background</span>
                 <span className="text-[#0B0B0B] font-bold">Work Experience</span>
@@ -713,10 +701,10 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* LinkedIn */}
             {showLinkedin && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0A66C2] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between zd-slide`}>
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0A66C2] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between`}>
                 <div>
                   <div className="flex justify-between items-start mb-3 text-xs font-mono">
-                    <span className="flex items-center gap-1.5 font-bold">
+                    <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
                       <LinkedinGlyph size={14} />
                       LINKEDIN
                     </span>
@@ -759,10 +747,10 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* X / Twitter */}
             {showX && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0f1419] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between zd-slide`}>
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-[#0f1419] text-white rounded-[32px] p-6 shadow-sm flex flex-col justify-between`}>
                 <div>
                   <div className="flex justify-between items-start mb-3 text-xs font-mono">
-                    <span className="flex items-center gap-1.5 font-bold">
+                    <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
                       <XGlyph size={13} />
                       X / TWITTER
                     </span>
@@ -805,10 +793,10 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* GitHub Stats + Heatmap */}
             {showGithub && (
-              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between zd-slide`}>
+              <div className={`col-span-12 md:col-span-6 ${socialColSpan} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between`}>
                 <div>
                   <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5" style={{ color: "#0B0B0B" }}>
                       <GithubGlyph size={14} />
                       GitHub Stats
                     </span>
@@ -883,7 +871,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 4: PROJECTS + WRITING ───────────────────────────── */}
 
             {v.projects.length > 0 && (
-              <div className={`col-span-12 ${v.writing.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc zd-slide`}>
+              <div className={`col-span-12 ${v.writing.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc`}>
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Live in Production</span>
                   <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{v.projects.length} HIGHLIGHTS</span>
@@ -926,7 +914,7 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {v.writing.length > 0 && (
-              <div className={`col-span-12 ${v.projects.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc zd-slide`}>
+              <div className={`col-span-12 ${v.projects.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc`}>
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Posts &amp; Writing</span>
                   <span className="font-mono text-[10px] text-[#0B0B0B] font-semibold bg-gray-100 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
@@ -972,7 +960,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 5: CALENDLY + SKILL MATRIX ─────────────────────── */}
 
             {calendlyUrl && (
-              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-center justify-between gap-4 zd-slide`}>
+              <div className={`col-span-12 ${skills.length > 0 ? "lg:col-span-6" : ""} bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-center justify-between gap-4`}>
                 <div>
                   <span className="text-xs font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
                   <h3 className="text-xl! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1 Sync</h3>
@@ -994,14 +982,14 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {skills.length > 0 && (
-              <div className={`col-span-12 ${calendlyUrl ? "lg:col-span-6" : ""} zd-slide`}>
+              <div className={`col-span-12 ${calendlyUrl ? "lg:col-span-6" : ""}`}>
                 <SkillMatrix skills={skills} />
               </div>
             )}
 
             {/* Endorsement quote */}
             {v.endorsementQuote && (
-              <div className="col-span-12 lg:col-span-6 bg-gray-50 border-2 border-[#7B72E9]/30 rounded-[32px] p-8 tc zd-slide">
+              <div className="col-span-12 lg:col-span-6 bg-gray-50 border-2 border-[#7B72E9]/30 rounded-[32px] p-8 tc">
                 <div className="flex items-start gap-3">
                   <span className="text-[#7B72E9] text-4xl font-serif leading-none select-none">&ldquo;</span>
                   <p className="text-[13px] text-[#1E1E1E] italic leading-relaxed">{v.endorsementQuote}</p>
@@ -1018,7 +1006,7 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {/* ─ ROW 6: FULL-WIDTH CTA ───────────────────────────────── */}
-            <div className="col-span-12 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6 zd-slide">
+            <div className="col-span-12 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
               <div>
                 <span className="text-xs font-mono uppercase tracking-widest text-purple-400 block mb-1">Explore Zynd Intelligence</span>
                 <h3 className="text-xl! font-bold! text-white! leading-snug!">
@@ -1063,7 +1051,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
           </footer>
 
-        </DossierShell>
+        </main>
       </div>
       <ProfileChatWidget handle={handle} personName={identity.name} />
     </>
