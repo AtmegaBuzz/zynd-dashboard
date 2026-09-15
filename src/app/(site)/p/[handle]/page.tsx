@@ -639,11 +639,9 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                       className="flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-sm hover:brightness-110 transition-all no-underline"
                       style={{ backgroundColor: "#006BFF", minWidth: 180 }}
                     >
-                      {/* Calendly wordmark "C" */}
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden>
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.93V18h-2v-1.07C8.06 16.44 6 14.42 6 12h2c0 2.21 1.79 4 4 4s4-1.79 4-4c0-1.68-.99-3.12-2.43-3.76L12 9.17 10.43 8.24C8.99 7.6 8 6.15 8 4.47 8 2.57 9.57 1 11.47 1c.19 0 .37.01.56.03C13.49 1.22 15 2.69 15 4.47c0 1.67-.99 3.12-2.43 3.76L14 9.17V18h-1v-1.07z"/>
-                        </svg>
+                      {/* Calendly logo */}
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
+                        <img src="/assets/logos/calendly.png" alt="Calendly" width={24} height={24} className="w-6 h-6 object-contain" />
                       </div>
                       <div>
                         <p className="font-mono text-[9px] text-white/60 uppercase tracking-widest mb-0.5">Book a call</p>
