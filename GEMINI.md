@@ -36,3 +36,8 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
+
+## Profile Summary & Content Guidelines
+
+- **Dynamic Bento Scaling:** When synthesizing or generating summaries for new profiles, ensure the text length is sufficiently rich and comprehensive (around 120–180 words). This ensures the content spans end-to-end and cleanly matches the vertical height of the stretched side cards, leaving no empty space.
+- **Contribution Graph:** The contribution heatmap colors use the official, recognizable GitHub Green palette (`#ebedf0`, `#9be9a8`, `#40c463`, `#30a14e`, `#216e39`). Maintain this exact visual signature to represent GitHub active history cleanly.

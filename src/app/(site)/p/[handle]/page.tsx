@@ -70,8 +70,8 @@ function usernameFromUrl(url: string | null | undefined): string | null {
   return url.replace(/\/+$/, "").split("/").pop() || null;
 }
 
-// Purple palette to match the new design's heatmap
-const HEAT = ["#e2e8f0", "#d8b4fe", "#c084fc", "#a855f7", "#7e22ce"];
+// Green palette to match GitHub's real contribution heatmap
+const HEAT = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"];
 
 const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
