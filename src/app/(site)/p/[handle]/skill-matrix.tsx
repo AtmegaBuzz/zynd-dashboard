@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, Code2 } from "lucide-react";
 
 /** Skills shown before the "see all" toggle. */
-const SKILLS_PREVIEW = 3;
+const SKILLS_PREVIEW = 5;
 
 /** `bars` fills the 3-segment gauge; `glow` is the lit-segment halo. */
 const LEVEL_META: Record<string, { label: string; color: string; bar: string; glow: string; bars: number }> = {
