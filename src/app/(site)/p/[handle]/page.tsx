@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Globe, Search } from "lucide-react";
+import { BadgeCheck, Calendar, Globe, Search } from "lucide-react";
 
 import {
   fetchCardByHandle,
@@ -1134,22 +1134,27 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 6: CALENDLY (if present) ─────────────────────────── */}
 
             {calendlyUrl && (
-              <div className="col-span-12 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-blue-600 block mb-1">Scheduling</span>
-                  <h3 className="text-lg! font-bold! text-[#0B0B0B]! leading-snug! mb-1">Book a 1:1</h3>
-                  <p className="text-sm text-[#8E8E88]">
-                    Ideas, projects, or collaborations{!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}.
-                  </p>
+              <div className="col-span-12 bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/15 rounded-[32px] p-6 sm:p-8 shadow-sm border border-blue-100/50 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:shadow-md transition-all duration-300">
+                <div className="flex items-start gap-4 flex-1">
+                  {/* Glowing scheduling icon */}
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-200/40 flex items-center justify-center text-blue-600 shrink-0 shadow-inner select-none">
+                    <Calendar size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-blue-600 block mb-1.5">Scheduling</span>
+                    <h3 className="text-xl! font-bold! text-slate-900! leading-snug! mb-1">Book a 1:1 Session</h3>
+                    <p className="text-[13px] text-slate-500 font-sans leading-relaxed">
+                      Ideas, projects, or collaborations{!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}. Find a slot to sync live.
+                    </p>
+                  </div>
                 </div>
                 <a
                   href={calendlyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-white shrink-0 hover:brightness-110 transition"
-                  style={{ backgroundColor: "#006BFF" }}
+                  className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full font-bold text-sm text-white shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-500/5 select-none"
                 >
-                  Calendly ↗
+                  Schedule Meet ↗
                 </a>
               </div>
             )}
