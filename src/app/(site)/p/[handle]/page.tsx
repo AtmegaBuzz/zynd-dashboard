@@ -705,42 +705,58 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
               </div>
             ) : (
-              <div className="col-span-12 lg:col-span-6 bg-gradient-to-br from-[#4F46E5] to-[#7B72E9] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-5 overflow-hidden relative">
-                <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">Professional Snapshot</span>
-                  {card.experience_years != null && (
-                    <span className="font-mono text-[11px] font-bold bg-white/20 px-2.5 py-1 rounded-full shrink-0">
-                      {card.experience_years}Y Experience
-                    </span>
-                  )}
+              /* AI Discoverability Fact — shown when no MCP memory is connected */
+              <div className="col-span-12 lg:col-span-6 bg-[#0f1729] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-6">
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">AI Discoverability Fact</span>
+                  <span className="font-mono text-[10px] bg-white/10 border border-white/15 px-2.5 py-1 rounded-md text-white/70">Zynd Index</span>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white leading-snug mb-1">
-                    {!isBlank(identity.name) ? identity.name : "Professional Profile"}
-                  </h3>
-                  {!isBlank(identity.headline) && (
-                    <p className="text-white/80 text-sm leading-relaxed">{identity.headline}</p>
-                  )}
-                </div>
-                {card.can_help_with.length > 0 && (
+
+                {/* Code block */}
+                <div className="bg-[#060d1f] rounded-2xl p-5 font-mono text-[12.5px] leading-[1.9] border border-white/5 flex-1">
+                  <div className="text-[#4b5563]">{"// Structured discovery profile"}</div>
                   <div>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 block">Can help with</span>
-                    <div className="flex flex-wrap gap-2">
-                      {card.can_help_with.slice(0, 6).map((item) => (
-                        <span key={item} className="px-2.5 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-medium">
-                          {item}
+                    <span className="text-[#67e8f9]">entity</span>
+                    <span className="text-white/40">{": "}</span>
+                    <span className="text-[#86efac]">&ldquo;{!isBlank(identity.name) ? identity.name : "Professional"}&rdquo;</span>
+                  </div>
+                  {(card.industries.length > 0 || !isBlank(identity.headline)) && (
+                    <div>
+                      <span className="text-[#67e8f9]">specialization</span>
+                      <span className="text-white/40">{": "}</span>
+                      <span className="text-[#86efac]">
+                        &ldquo;{card.industries.length > 0 ? card.industries.slice(0, 2).join(" & ") : identity.headline}&rdquo;
+                      </span>
+                    </div>
+                  )}
+                  {skills.length > 0 && (
+                    <div>
+                      <span className="text-[#67e8f9]">primary_tech</span>
+                      <span className="text-white/40">{": ["}</span>
+                      {skills.slice(0, 3).map((s, i) => (
+                        <span key={s.name}>
+                          <span className="text-[#fcd34d]">&ldquo;{s.name}&rdquo;</span>
+                          {i < Math.min(skills.length, 3) - 1 && <span className="text-white/40">, </span>}
                         </span>
                       ))}
+                      <span className="text-white/40">{"]"}</span>
                     </div>
-                  </div>
-                )}
-                {!isBlank(card.availability) && (
-                  <div className="mt-auto pt-4 border-t border-white/20">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/60 block mb-1">Open to</span>
-                    <span className="text-white font-semibold text-sm">{card.availability}</span>
-                  </div>
-                )}
+                  )}
+                  {!isBlank(card.availability) && (
+                    <div>
+                      <span className="text-[#67e8f9]">availability</span>
+                      <span className="text-white/40">{": "}</span>
+                      <span className="text-[#86efac]">&ldquo;{card.availability}&rdquo;</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <p className="text-[12px] text-white/50 leading-relaxed">
+                  Structured for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend{" "}
+                  {!isBlank(identity.name) ? identity.name.split(" ")[0] : "this person"} for specialized queries.
+                </p>
               </div>
             )}
 
@@ -1015,10 +1031,10 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 4: WRITING ───────────────────────────── */}
 
             {v.writing.length > 0 && (
-              <div className="col-span-12 bg-[#0B0B0B] rounded-[32px] p-6 shadow-sm">
+              <div className="col-span-12 bg-[#F5F3FF] rounded-[32px] p-6 shadow-sm border border-[#7B72E9]/10">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-white/50">Posts &amp; Writing</span>
-                  <span className="font-mono text-[10px] text-white font-semibold bg-white/10 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
+                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#6d5acd]">Posts &amp; Writing</span>
+                  <span className="font-mono text-[10px] text-[#7B72E9] font-semibold bg-[#7B72E9]/10 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
                 </div>
                 <AutoScroll
                   rowHeight={POST_ROW_H + POST_GAP}
@@ -1061,13 +1077,13 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 5: LIVE IN PRODUCTION & SKILL MATRIX (BENTO ROW) ── */}
 
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div className="col-span-12 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 tc tc-b">
-                
+              <div className="col-span-12 bg-[#0f1729] rounded-[32px] p-6 sm:p-8 shadow-sm flex flex-col md:flex-row gap-6">
+
                 {v.projects.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-gray-200 bg-gray-50/40 p-5">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-500">
+                  <div className="flex-1 rounded-[24px] border border-white/8 bg-white/5 p-5">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-white/40">
                       <span>Live in Production</span>
-                      <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
+                      <span className="text-white/70 font-bold bg-white/10 px-2 py-0.5 rounded">
                         {v.projects.length} {v.projects.length === 1 ? 'Highlight' : 'Highlights'}
                       </span>
                     </div>
@@ -1077,13 +1093,10 @@ export default async function PersonPage({ params }: PageProps) {
                         return (
                           <div
                             key={proj.name}
-                            className="group flex items-center justify-between p-3.5 bg-white border border-gray-200/80 hover:border-gray-300 rounded-2xl transition-all hover:bg-gray-50 hover:shadow-sm"
+                            className="group flex items-center justify-between p-3.5 bg-white/5 border border-white/8 hover:border-white/20 rounded-2xl transition-all hover:bg-white/10"
                           >
                             <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                              {/* Sleek GitHub icon */}
-                              <div
-                                className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 shrink-0 select-none group-hover:bg-white group-hover:border-slate-300 transition-colors duration-200"
-                              >
+                              <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/10 flex items-center justify-center text-white/70 shrink-0 select-none group-hover:bg-white/15 transition-colors duration-200">
                                 <GithubGlyph size={18} />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -1093,28 +1106,28 @@ export default async function PersonPage({ params }: PageProps) {
                                       href={url}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="font-bold text-[14px] pf-c-dark group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
+                                      className="font-bold text-[14px] text-white group-hover:text-[#a78bfa] transition-colors inline-flex items-center gap-1 leading-snug truncate"
                                     >
                                       {proj.name}
                                     </a>
                                   ) : (
-                                    <span className="font-bold text-[14px] pf-c-dark leading-snug truncate">{proj.name}</span>
+                                    <span className="font-bold text-[14px] text-white leading-snug truncate">{proj.name}</span>
                                   )}
                                   {proj.stars != null && proj.stars > 0 && (
-                                    <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-100 text-amber-700 font-mono text-[10px] font-bold inline-flex items-center gap-1 shadow-inner shrink-0">
+                                    <span className="px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/20 text-amber-300 font-mono text-[10px] font-bold inline-flex items-center gap-1 shrink-0">
                                       ★ {compact(proj.stars)}
                                     </span>
                                   )}
                                 </div>
                                 {!isBlank(proj.description) && (
-                                  <p className="text-[12px] text-slate-600 font-sans leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
+                                  <p className="text-[12px] text-white/50 leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
                                 )}
                                 {proj.tech.length > 0 && (
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                     {proj.tech.slice(0, 3).map((t) => (
                                       <span
                                         key={t}
-                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/5 border border-[#7B72E9]/10 text-[#7B72E9] font-mono text-[9px] font-semibold uppercase tracking-wider"
+                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/20 border border-[#7B72E9]/30 text-[#a78bfa] font-mono text-[9px] font-semibold uppercase tracking-wider"
                                       >
                                         {t}
                                       </span>
@@ -1124,7 +1137,7 @@ export default async function PersonPage({ params }: PageProps) {
                               </div>
                             </div>
                             {url && (
-                              <span className="text-slate-300 group-hover:text-[#7B72E9] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-lg font-bold pr-1 select-none">
+                              <span className="text-white/20 group-hover:text-[#a78bfa] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-lg font-bold pr-1 select-none">
                                 ↗
                               </span>
                             )}
@@ -1136,14 +1149,14 @@ export default async function PersonPage({ params }: PageProps) {
                 )}
 
                 {v.projects.length > 0 && skills.length > 0 && (
-                  <div className="w-px bg-gray-200 hidden md:block" />
+                  <div className="w-px bg-white/10 hidden md:block" />
                 )}
 
                 {skills.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-gray-200 bg-gray-50/40 p-5">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-500">
+                  <div className="flex-1 rounded-[24px] border border-white/8 bg-white/5 p-5">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-white/40">
                       <span>Skill Matrix</span>
-                      <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
+                      <span className="text-white/70 font-bold bg-white/10 px-2 py-0.5 rounded">
                         {skills.length} Tracked
                       </span>
                     </div>
@@ -1151,8 +1164,7 @@ export default async function PersonPage({ params }: PageProps) {
                       {skills.slice(0, 6).map((skill) => {
                         const meta = levelMeta(skill.level);
                         const accent = skillAccent(skill.name);
-                        
-                        // Abbreviation for prefix
+
                         let short = skill.name.slice(0, 2).toUpperCase();
                         if (skill.name.toLowerCase().includes("golang") || skill.name.toLowerCase().includes("go")) short = "Go";
                         else if (skill.name.toLowerCase().includes("typescript")) short = "TS";
@@ -1160,18 +1172,18 @@ export default async function PersonPage({ params }: PageProps) {
                         else if (skill.name.toLowerCase().includes("python")) short = "Py";
                         else if (skill.name.toLowerCase().includes("rust")) short = "Rs";
 
-                        const isExpert = skill.level.toLowerCase() === 'expert';
-                        const isAdvanced = skill.level.toLowerCase() === 'advanced';
-                        const isMid = skill.level.toLowerCase() === 'intermediate' || skill.level.toLowerCase() === 'mid';
-                        const blocks = isExpert ? '■■■■' : isAdvanced ? '■■■□' : isMid ? '■■□□' : '■□□□';
+                        const isExpert = skill.level.toLowerCase() === "expert";
+                        const isAdvanced = skill.level.toLowerCase() === "advanced";
+                        const isMid = skill.level.toLowerCase() === "intermediate" || skill.level.toLowerCase() === "mid";
+                        const blocks = isExpert ? "■■■■" : isAdvanced ? "■■■□" : isMid ? "■■□□" : "■□□□";
 
                         return (
-                          <div key={skill.name} className="flex justify-between items-center bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100">
+                          <div key={skill.name} className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl border border-white/8">
                             <span className="flex items-center gap-2">
                               <span style={{ color: accent }} className="font-bold">{short}</span>
-                              <span className="text-gray-900 font-medium font-sans">{skill.name}</span>
+                              <span className="text-white/80 font-medium font-sans">{skill.name}</span>
                             </span>
-                            <span className="text-gray-400 text-xs">
+                            <span className="text-white/30 text-xs">
                               {meta.label} <span style={{ color: meta.bar }} className="ml-1 tracking-wider">{blocks}</span>
                             </span>
                           </div>
