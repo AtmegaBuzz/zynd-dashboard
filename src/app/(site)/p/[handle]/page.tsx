@@ -243,10 +243,10 @@ function buildView(card: AgentProfileCard) {
       posts: card.linkedin_stats?.posts ?? null,
     },
     github: {
-      repos: card.github_stats?.total_repos ?? getHashNumber(card.handle || card.id, 15, 65),
-      activeRepos: card.github_stats?.active_repos ?? getHashNumber(card.handle || card.id, 3, 9),
-      topLanguages: card.github_stats?.top_languages?.length ? card.github_stats.top_languages : ["TypeScript", "JavaScript", "Python", "HTML", "Solidity"],
-      commits: card.github_stats?.total_commits ?? getHashNumber(card.handle || card.id, 120, 380),
+      repos: card.github_stats?.total_repos ?? null,
+      activeRepos: card.github_stats?.active_repos ?? null,
+      topLanguages: card.github_stats?.top_languages ?? [],
+      commits: card.github_stats?.total_commits ?? null,
     },
     x: {
       handle:
@@ -256,20 +256,7 @@ function buildView(card: AgentProfileCard) {
       posts: card.x_stats?.posts ?? null,
       impressions: card.x_stats?.impressions ?? null,
     },
-    contributions: card.contribution_stats ?? {
-      year: 2026,
-      total: getHashNumber(card.handle || card.id, 120, 380),
-      avg_per_day: 0.8,
-      levels: Array.from({ length: 364 }, (_, i) => {
-        // Generate a deterministic, realistic random layout per user handle
-        const seedVal = getHashNumber((card.handle || card.id) + i, 1, 100);
-        if (seedVal < 65) return 0;
-        if (seedVal < 82) return 1;
-        if (seedVal < 92) return 2;
-        if (seedVal < 97) return 3;
-        return 4;
-      }),
-    },
+    contributions: card.contribution_stats ?? null,
   };
 }
 
@@ -410,7 +397,7 @@ export default async function PersonPage({ params }: PageProps) {
 
   const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
   const showX = !!(v.x.handle || v.x.followers != null);
-  const showGithub = !!githubHandle;
+  const showGithub = !!(identity.links?.github || card.github_stats || card.contribution_stats);
 
   return (
     <>
@@ -1077,27 +1064,27 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 5: LIVE IN PRODUCTION & SKILL MATRIX (BENTO ROW) ── */}
 
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div className="col-span-12 bg-[#0f1729] rounded-[32px] p-6 sm:p-8 shadow-sm flex flex-col md:flex-row gap-6">
+              <div className="col-span-12 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
 
                 {v.projects.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-white/8 bg-white/5 p-5">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-white/40">
-                      <span>Live in Production</span>
-                      <span className="text-white/70 font-bold bg-white/10 px-2 py-0.5 rounded">
+                  <div className="flex-1 rounded-[24px] border border-gray-100 bg-gray-50/60 p-5">
+                    <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                      <span className="text-[#0B0B0B] font-bold">Live in Production</span>
+                      <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/8 px-2 py-0.5 rounded border border-[#7B72E9]/15">
                         {v.projects.length} {v.projects.length === 1 ? 'Highlight' : 'Highlights'}
                       </span>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {v.projects.slice(0, 4).map((proj) => {
                         const url = safeUrl(proj.url);
                         return (
                           <div
                             key={proj.name}
-                            className="group flex items-center justify-between p-3.5 bg-white/5 border border-white/8 hover:border-white/20 rounded-2xl transition-all hover:bg-white/10"
+                            className="group flex items-center justify-between p-3.5 bg-white border border-gray-100 hover:border-[#7B72E9]/25 rounded-2xl transition-all hover:shadow-sm"
                           >
                             <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                              <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/10 flex items-center justify-center text-white/70 shrink-0 select-none group-hover:bg-white/15 transition-colors duration-200">
-                                <GithubGlyph size={18} />
+                              <div className="w-9 h-9 rounded-xl border border-gray-100 bg-gray-100 flex items-center justify-center text-[#8E8E88] shrink-0 select-none group-hover:bg-[#7B72E9]/8 group-hover:border-[#7B72E9]/20 group-hover:text-[#7B72E9] transition-colors duration-200">
+                                <GithubGlyph size={16} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 mb-0.5">
@@ -1106,28 +1093,28 @@ export default async function PersonPage({ params }: PageProps) {
                                       href={url}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="font-bold text-[14px] text-white group-hover:text-[#a78bfa] transition-colors inline-flex items-center gap-1 leading-snug truncate"
+                                      className="font-bold text-[13.5px] text-[#0B0B0B] group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
                                     >
                                       {proj.name}
                                     </a>
                                   ) : (
-                                    <span className="font-bold text-[14px] text-white leading-snug truncate">{proj.name}</span>
+                                    <span className="font-bold text-[13.5px] text-[#0B0B0B] leading-snug truncate">{proj.name}</span>
                                   )}
                                   {proj.stars != null && proj.stars > 0 && (
-                                    <span className="px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/20 text-amber-300 font-mono text-[10px] font-bold inline-flex items-center gap-1 shrink-0">
+                                    <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/60 text-amber-600 font-mono text-[10px] font-bold inline-flex items-center gap-1 shrink-0">
                                       ★ {compact(proj.stars)}
                                     </span>
                                   )}
                                 </div>
                                 {!isBlank(proj.description) && (
-                                  <p className="text-[12px] text-white/50 leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
+                                  <p className="text-[11.5px] text-[#8E8E88] leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
                                 )}
                                 {proj.tech.length > 0 && (
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                     {proj.tech.slice(0, 3).map((t) => (
                                       <span
                                         key={t}
-                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/20 border border-[#7B72E9]/30 text-[#a78bfa] font-mono text-[9px] font-semibold uppercase tracking-wider"
+                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/8 border border-[#7B72E9]/15 text-[#7B72E9] font-mono text-[9px] font-semibold uppercase tracking-wider"
                                       >
                                         {t}
                                       </span>
@@ -1137,7 +1124,7 @@ export default async function PersonPage({ params }: PageProps) {
                               </div>
                             </div>
                             {url && (
-                              <span className="text-white/20 group-hover:text-[#a78bfa] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-lg font-bold pr-1 select-none">
+                              <span className="text-gray-300 group-hover:text-[#7B72E9] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-base font-bold pr-1 select-none">
                                 ↗
                               </span>
                             )}
@@ -1149,14 +1136,14 @@ export default async function PersonPage({ params }: PageProps) {
                 )}
 
                 {v.projects.length > 0 && skills.length > 0 && (
-                  <div className="w-px bg-white/10 hidden md:block" />
+                  <div className="w-px bg-gray-100 hidden md:block" />
                 )}
 
                 {skills.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-white/8 bg-white/5 p-5">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-white/40">
-                      <span>Skill Matrix</span>
-                      <span className="text-white/70 font-bold bg-white/10 px-2 py-0.5 rounded">
+                  <div className="flex-1 rounded-[24px] border border-gray-100 bg-gray-50/60 p-5">
+                    <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                      <span className="text-[#0B0B0B] font-bold">Skill Matrix</span>
+                      <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/8 px-2 py-0.5 rounded border border-[#7B72E9]/15">
                         {skills.length} Tracked
                       </span>
                     </div>
@@ -1178,12 +1165,12 @@ export default async function PersonPage({ params }: PageProps) {
                         const blocks = isExpert ? "■■■■" : isAdvanced ? "■■■□" : isMid ? "■■□□" : "■□□□";
 
                         return (
-                          <div key={skill.name} className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl border border-white/8">
+                          <div key={skill.name} className="flex justify-between items-center bg-white px-4 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
                             <span className="flex items-center gap-2">
-                              <span style={{ color: accent }} className="font-bold">{short}</span>
-                              <span className="text-white/80 font-medium font-sans">{skill.name}</span>
+                              <span style={{ color: accent }} className="font-bold text-xs">{short}</span>
+                              <span className="text-[#0B0B0B] font-medium font-sans text-[13px]">{skill.name}</span>
                             </span>
-                            <span className="text-white/30 text-xs">
+                            <span className="text-[#8E8E88] text-xs">
                               {meta.label} <span style={{ color: meta.bar }} className="ml-1 tracking-wider">{blocks}</span>
                             </span>
                           </div>
