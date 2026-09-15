@@ -973,33 +973,53 @@ export default async function PersonPage({ params }: PageProps) {
                     </div>
                   )}
                   {v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0 && (
-                    <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                      <div className="flex justify-between items-center text-[10px] font-mono text-[#8E8E88] mb-2 uppercase">
+                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-[#8E8E88] mb-3 uppercase tracking-wider">
                         <span>Contribution Heatmap</span>
                         <span>{v.contributions.year}</span>
                       </div>
-                      <div
-                        className="grid grid-flow-col gap-[2px] overflow-hidden h-[68px]"
-                        style={{ gridTemplateRows: "repeat(7, 8px)", maxWidth: "100%" }}
-                        role="img"
-                        aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
-                      >
-                        {v.contributions.levels.slice(-70).map((lvl, i) => {
-                          const lvlIndex = Math.min(Math.max(lvl || 0, 0), 4);
-                          return (
-                            <span
-                              key={i}
-                              className="block w-2 h-2 rounded-[2px]"
-                              style={{ backgroundColor: HEAT[lvlIndex] }}
-                            />
-                          );
-                        })}
+                      
+                      <div className="flex items-start">
+                        {/* Day labels */}
+                        <div className="flex flex-col justify-between text-[8px] font-mono text-slate-400 pr-2 h-[68px] pt-[2px] select-none uppercase">
+                          <span>Mon</span>
+                          <span>Wed</span>
+                          <span>Fri</span>
+                        </div>
+                        
+                        {/* Heatmap grid */}
+                        <div
+                          className="grid grid-flow-col gap-[2.5px] overflow-hidden h-[68px] flex-1"
+                          style={{ gridTemplateRows: "repeat(7, 8px)" }}
+                          role="img"
+                          aria-label={`${v.contributions.total} contributions in ${v.contributions.year}`}
+                        >
+                          {v.contributions.levels.slice(-182).map((lvl, i) => {
+                            const lvlIndex = Math.min(Math.max(lvl || 0, 0), 4);
+                            return (
+                              <span
+                                key={i}
+                                className="block w-2 h-2 rounded-[1.5px]"
+                                style={{ backgroundColor: HEAT[lvlIndex] }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                      {v.contributions.avg_per_day != null && (
-                        <p className="font-mono text-[10px] text-[#8E8E88] mt-1.5">
-                          avg: {v.contributions.avg_per_day} commits/day
-                        </p>
-                      )}
+
+                      {/* Legend and stats footer */}
+                      <div className="flex justify-between items-center text-[9px] font-mono text-[#8E8E88] mt-3 border-t border-gray-200/50 pt-2.5">
+                        <span>
+                          {v.contributions.avg_per_day != null ? `Avg: ${v.contributions.avg_per_day} commits/day` : ""}
+                        </span>
+                        <div className="flex items-center gap-1 select-none">
+                          <span>Less</span>
+                          {HEAT.map((color) => (
+                            <span key={color} className="w-2.5 h-2.5 rounded-[1.5px]" style={{ backgroundColor: color }} />
+                          ))}
+                          <span>More</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1074,20 +1094,17 @@ export default async function PersonPage({ params }: PageProps) {
                     <div className="space-y-3">
                       {v.projects.slice(0, 4).map((proj) => {
                         const url = safeUrl(proj.url);
-                        const initial = proj.name.charAt(0).toUpperCase();
-                        const gradient = getGradient(proj.name);
                         return (
                           <div
                             key={proj.name}
-                            className="group flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-200/80 hover:shadow-sm"
+                            className="group flex items-center justify-between p-3.5 bg-white border border-gray-200/80 hover:border-gray-300 rounded-2xl transition-all hover:bg-gray-50 hover:shadow-sm"
                           >
                             <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                              {/* Sleek colorful project icon */}
+                              {/* Sleek GitHub icon */}
                               <div
-                                style={{ background: gradient }}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0 select-none"
+                                className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 shrink-0 select-none group-hover:bg-white group-hover:border-slate-300 transition-colors duration-200"
                               >
-                                {initial}
+                                <GithubGlyph size={18} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 mb-0.5">
@@ -1216,35 +1233,31 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {/* ─ ROW 5A: FULL-WIDTH CTA ───────────────────────────────── */}
-            <div className="col-span-12 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white rounded-[32px] p-8 sm:p-10 shadow-lg border border-indigo-500/15 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden group/cta hover:border-indigo-500/25 transition-all duration-300">
+            <div className="col-span-12 bg-slate-50 rounded-[32px] p-8 sm:p-10 shadow-sm border border-slate-200/70 flex flex-col md:flex-row justify-between items-center gap-8 hover:shadow-md hover:border-slate-300 transition-all duration-300">
               
-              {/* Backlight glow effect */}
-              <div className="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover/cta:bg-indigo-500/15 transition-all duration-300" />
-              <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="flex items-start gap-4 flex-1 relative z-10">
-                {/* Glowing AI Sparkle icon */}
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center text-indigo-300 shrink-0 shadow-inner">
-                  <Sparkles size={22} className="stroke-[2.2] animate-pulse" />
+              <div className="flex items-start gap-4 flex-1">
+                {/* Clean SaaS Search icon */}
+                <div className="w-12 h-12 rounded-2xl bg-slate-200/50 border border-slate-300/30 flex items-center justify-center text-slate-600 shrink-0 shadow-inner">
+                  <Search size={22} className="stroke-[2.2]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent font-mono uppercase tracking-widest text-[11px] font-bold block mb-2">
+                  <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-slate-500 block mb-1.5">
                     Explore Zynd Intelligence
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight mb-2 max-w-[520px]">
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight tracking-tight mb-2 max-w-[520px]">
                     Find people with matching expertise across the Zynd directory.
                   </h3>
-                  <p className="text-[12px] font-mono text-slate-400">
+                  <p className="text-[13px] text-slate-500 font-sans leading-relaxed">
                     Powered by Zynd&apos;s semantic search across verified profiles.
                   </p>
                 </div>
               </div>
               
-              <div className="flex flex-col gap-3.5 shrink-0 w-full md:w-auto relative z-10 text-center md:text-left">
+              <div className="flex flex-col gap-3.5 shrink-0 w-full md:w-auto text-center md:text-left">
                 {skills.length > 0 && (
                   <Link
                     href={`/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}`}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-mono text-[11px] font-bold bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 hover:shadow-lg hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-slate-950 uppercase tracking-wider shadow-md shrink-0 select-none"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-mono text-[11px] font-bold bg-slate-900 hover:bg-slate-800 active:scale-[0.98] transition-all duration-150 text-white uppercase tracking-wider shadow-sm shrink-0 select-none"
                   >
                     <Search size={13} strokeWidth={2.5} />
                     Find Similar Profiles
@@ -1252,7 +1265,7 @@ export default async function PersonPage({ params }: PageProps) {
                 )}
                 <Link 
                   href="/directory" 
-                  className="group/link font-mono text-[11px] text-slate-400 hover:text-white transition-colors py-1 flex items-center justify-center gap-1 inline-block"
+                  className="group/link font-mono text-[11px] text-slate-500 hover:text-slate-900 transition-colors py-1 flex items-center justify-center gap-1 inline-block"
                 >
                   Browse all profiles 
                   <span className="group-hover/link:translate-x-0.5 transition-transform duration-150">→</span>
