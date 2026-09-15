@@ -710,42 +710,98 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* Work Experience */}
-            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col">
-              <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                <span>Professional Background</span>
-                <span className="text-[#0B0B0B] font-bold">Work Experience</span>
-              </div>
-              {!isBlank(card.affiliations) ? (
-                <div className="space-y-5 flex-1">
-                  <div className="border-l-2 border-[#7B72E9] pl-4">
+            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 tc flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
+                  <span>Professional Background</span>
+                  <span className="text-[#0B0B0B] font-bold">Work Experience</span>
+                </div>
+
+                <div className="space-y-6 text-left">
+                  {/* Timeline block */}
+                  <div className="relative border-l-2 border-[#7B72E9] pl-5 ml-1 space-y-1">
+                    {/* Glowing timeline dot */}
+                    <div className="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-[#7B72E9] ring-4 ring-[#7B72E9]/20" />
                     <div className="flex justify-between items-baseline gap-3">
-                      <h4 className="font-bold text-[#0B0B0B] text-[15px]">
-                        {!isBlank(identity.headline) ? identity.headline : "Professional"}
+                      <h4 className="font-bold text-[#0B0B0B] text-base leading-snug">
+                        {!isBlank(identity.headline) ? identity.headline : "Professional Builder"}
                       </h4>
                       {card.experience_years != null && (
-                        <span className="text-xs font-mono text-[#8E8E88] flex-shrink-0">{card.experience_years}y exp</span>
+                        <span className="text-xs font-mono text-[#7B72E9] bg-[#7B72E9]/10 px-2 py-0.5 rounded-md font-bold flex-shrink-0">
+                          {card.experience_years}Y Exp
+                        </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#7B72E9] font-mono mt-0.5">{card.affiliations}</p>
+                    {!isBlank(card.affiliations) && (
+                      <p className="text-sm font-semibold text-slate-600 font-sans mt-1">{card.affiliations}</p>
+                    )}
                     {!isBlank(identity.location) && (
-                      <p className="text-xs text-[#8E8E88] mt-1">{identity.location}</p>
+                      <p className="text-xs text-[#8E8E88] font-mono mt-0.5 uppercase tracking-wider">{identity.location}</p>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="flex-1">
-                  <p className="text-sm text-[#8E8E88] font-mono mb-3">No LinkedIn work experience synced yet.</p>
-                  <div className="border-l-2 border-gray-200 pl-4">
-                    <h4 className="font-bold text-[#0B0B0B] text-[14px] mb-1">Current role</h4>
-                    <p className="text-sm text-[#4A4A45]">
-                      {!isBlank(identity.headline) ? identity.headline : "Profile headline"}
-                      {card.experience_years != null && (
-                        <span className="ml-2 text-xs font-mono text-[#8E8E88]">({card.experience_years}y exp)</span>
-                      )}
-                    </p>
+
+                  {/* Domain Verticals Module */}
+                  {card.industries.length > 0 && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#8E8E88] block mb-2.5">
+                        Domain Verticals
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {card.industries.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60 text-[#0B0B0B] text-xs font-semibold font-sans hover:bg-slate-100 hover:border-slate-300 transition-colors"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Synced platforms metadata block */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#8E8E88] block mb-2.5">
+                      Verified Identity Sources
+                    </span>
+                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                        <span className="text-slate-500">LinkedIn Sync</span>
+                        <span className={card.linkedin_stats ? "text-emerald-600 font-bold" : "text-slate-400"}>
+                          {card.linkedin_stats ? "● Active" : "Pending"}
+                        </span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                        <span className="text-slate-500">GitHub Sync</span>
+                        <span className={card.github_stats ? "text-emerald-600 font-bold" : "text-slate-400"}>
+                          {card.github_stats ? "● Active" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Engagement Status Module (Anchored at the bottom) */}
+              <div className="mt-8 pt-5 border-t border-gray-100">
+                <div className="p-4 bg-emerald-50/40 border border-emerald-100/60 rounded-2xl flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <div className="min-w-0 text-left">
+                      <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-emerald-700 block mb-0.5">Engagement Status</span>
+                      <p className="text-[13px] text-emerald-800 font-semibold truncate leading-tight">
+                        {!isBlank(card.availability) ? `Open to ${card.availability}` : "Open to Collaborations & Projects"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 px-2 py-1 rounded-md shrink-0 uppercase tracking-wider">
+                    Ready
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* ─ ROW 3: SOCIAL STATS ─────────────────────────────────── */}
@@ -1008,8 +1064,8 @@ export default async function PersonPage({ params }: PageProps) {
               <div className="col-span-12 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 tc tc-b">
                 
                 {v.projects.length > 0 && (
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-400">
+                  <div className="flex-1 rounded-[24px] border border-gray-200 bg-gray-50/40 p-5">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-500">
                       <span>Live in Production</span>
                       <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
                         {v.projects.length} {v.projects.length === 1 ? 'Highlight' : 'Highlights'}
@@ -1040,12 +1096,12 @@ export default async function PersonPage({ params }: PageProps) {
                                       href={url}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="font-bold text-[14px] text-slate-900 group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
+                                      className="font-bold text-[14px] pf-c-dark group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
                                     >
                                       {proj.name}
                                     </a>
                                   ) : (
-                                    <span className="font-bold text-[14px] text-slate-900 leading-snug truncate">{proj.name}</span>
+                                    <span className="font-bold text-[14px] pf-c-dark leading-snug truncate">{proj.name}</span>
                                   )}
                                   {proj.stars != null && proj.stars > 0 && (
                                     <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-100 text-amber-700 font-mono text-[10px] font-bold inline-flex items-center gap-1 shadow-inner shrink-0">
@@ -1054,7 +1110,7 @@ export default async function PersonPage({ params }: PageProps) {
                                   )}
                                 </div>
                                 {!isBlank(proj.description) && (
-                                  <p className="text-[12px] text-slate-500 font-sans leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
+                                  <p className="text-[12px] text-slate-600 font-sans leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
                                 )}
                                 {proj.tech.length > 0 && (
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -1087,8 +1143,8 @@ export default async function PersonPage({ params }: PageProps) {
                 )}
 
                 {skills.length > 0 && (
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-400">
+                  <div className="flex-1 rounded-[24px] border border-gray-200 bg-gray-50/40 p-5">
+                    <div className="flex justify-between items-center mb-6 text-xs font-mono uppercase tracking-widest text-gray-500">
                       <span>Skill Matrix</span>
                       <span className="text-gray-900 font-bold bg-gray-100 px-2 py-0.5 rounded">
                         {skills.length} Tracked
