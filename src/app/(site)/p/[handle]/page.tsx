@@ -636,8 +636,8 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                       href={calendlyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 px-5 py-4 rounded-2xl shadow-sm hover:brightness-110 transition-all no-underline"
-                      style={{ backgroundColor: "#006BFF", minWidth: 200 }}
+                      className="flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-sm hover:brightness-110 transition-all no-underline"
+                      style={{ backgroundColor: "#006BFF", minWidth: 180 }}
                     >
                       {/* Calendly wordmark "C" */}
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
@@ -660,32 +660,26 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                     const isX = key === "x" || key === "twitter";
                     const isLinkedin = key === "linkedin";
                     const bg = isLinkedin ? "#0A66C2" : isGithub ? "#24292E" : isX ? "#000000" : "#4B5563";
-                    const handle = url.replace(/\/+$/, "").split("/").pop() ?? platform;
                     return (
                       <a
                         key={platform}
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-5 py-4 rounded-2xl shadow-sm hover:brightness-125 transition-all no-underline"
-                        style={{ backgroundColor: bg, minWidth: 160 }}
+                        className="flex items-center gap-2.5 px-3.5 py-3 rounded-2xl shadow-sm hover:brightness-125 transition-all no-underline"
+                        style={{ backgroundColor: bg, minWidth: 110 }}
                       >
                         <div className="text-white opacity-90 flex-shrink-0">
-                          {isGithub && <GithubGlyph size={28} />}
-                          {isX && <XGlyph size={24} />}
-                          {isLinkedin && <LinkedinGlyph size={26} />}
+                          {isGithub && <GithubGlyph size={20} />}
+                          {isX && <XGlyph size={17} />}
+                          {isLinkedin && <LinkedinGlyph size={18} />}
                           {!isGithub && !isX && !isLinkedin && (
-                            <Globe style={{ width: 26, height: 26 }} strokeWidth={1.5} />
+                            <Globe style={{ width: 18, height: 18 }} strokeWidth={1.5} />
                           )}
                         </div>
-                        <div>
-                          <p className="font-mono text-[9px] text-white/55 uppercase tracking-widest mb-0.5">
-                            {isGithub ? "GitHub" : isX ? "X / Twitter" : isLinkedin ? "LinkedIn" : linkLabel(platform)}
-                          </p>
-                          <p className="text-white font-semibold text-[13px] leading-tight truncate max-w-[120px]">
-                            {isX && !handle.startsWith("@") ? `@${handle}` : handle}
-                          </p>
-                        </div>
+                        <p className="font-mono text-[9px] text-white/55 uppercase tracking-widest whitespace-nowrap">
+                          {isGithub ? "GitHub" : isX ? "X / Twitter" : isLinkedin ? "LinkedIn" : linkLabel(platform)}
+                        </p>
                       </a>
                     );
                   })}
