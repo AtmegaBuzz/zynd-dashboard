@@ -687,7 +687,7 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
           </div>
 
           {/* THREE-COLUMN DOSSIER BODY */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-5 zd-canvas zd-slide pt-8 lg:items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-5 zd-canvas zd-slide pt-8 lg:items-stretch">
             {/* Left — Scale & Community */}
             <div className="lg:col-span-3 flex flex-col gap-5">
               <div className="bg-[#0A66C2] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col gap-3">
@@ -773,7 +773,7 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
                 </span>
               </div>
 
-              <div className="bg-[#0B0B0B] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px]">
+              <div className="bg-[#0B0B0B] text-white rounded-[26px] p-5 bento-corner bento-corner-light shadow-sm flex flex-col justify-between min-h-[180px] flex-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider font-bold">
                     <XGlyph size={14} />
@@ -946,7 +946,7 @@ const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.g
               {skills.length > 0 && <SkillMatrix skills={skills} />}
 
               {v.endorsementQuote && (
-                <div className="bg-[#F7F7F4] border-2 border-[#7B72E9]/40 rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm relative overflow-hidden">
+                <div className="bg-[#F7F7F4] border-2 border-[#7B72E9]/40 rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm relative overflow-hidden flex flex-col justify-between flex-1">
                   <div className="flex items-start gap-3">
                     <span className="text-[#7B72E9] text-4xl font-serif leading-none select-none">&ldquo;</span>
                     <p className="text-[13px] text-[#1E1E1E] italic leading-relaxed">{v.endorsementQuote}</p>
