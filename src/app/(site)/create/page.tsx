@@ -541,6 +541,9 @@ function CreateProfilePageContent() {
         });
         if (res.status === 403) throw new Error("You don't own this card.");
         if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
+        // Re-sync the memory layer so edited answers (working on, can help
+        // with…) flow onto the profile's "currently" section right away.
+        getToken().then(t => { if (t) syncMemoryOnClaim(t, editHandle); });
         router.push(`/p/${editHandle}`);
         return;
       }
@@ -605,7 +608,9 @@ function CreateProfilePageContent() {
   }, [authenticated, published]);
 
   // Seed the memory layer from the claimed card, then pull the snapshot onto
-  // the card so the public profile shows "key points" immediately.
+  // the card so the public profile shows what the person is currently up to.
+  // working_on → "Currently building", can_help_with → "Expert in",
+  // love_talking_about → "Learning", skills as expertise fallback.
   async function syncMemoryOnClaim(supabaseToken: string, handle: string) {
     try {
       const ex = await fetch(`${ZYND_API}/token/exchange`, {
@@ -616,17 +621,23 @@ function CreateProfilePageContent() {
       const { token: zyndToken } = await ex.json();
       if (!zyndToken) return;
       const declarations: { predicate: string; value: string }[] = [];
-      for (const s of (card?.skills ?? []).slice(0, 5)) {
-        const name = s.name?.trim();
-        if (name) declarations.push({ predicate: "has_expertise_in", value: name });
-      }
+      const push = (predicate: string, values: string[] | undefined, cap = 5) => {
+        for (const v of (values ?? []).slice(0, cap)) {
+          const t = v.trim();
+          if (t && t.length <= 120) declarations.push({ predicate, value: t });
+        }
+      };
+      push("is_building", card?.working_on);
+      push("has_expertise_in", card?.can_help_with);
+      push("is_learning", card?.love_talking_about);
+      if (!(card?.can_help_with ?? []).length) push("has_expertise_in", card?.skills.map((s) => s.name));
       const location = card?.identity?.location?.trim();
       if (location) declarations.push({ predicate: "is_located_in", value: location });
       if (declarations.length) {
         await fetch(`${ZYND_API}/me/findability/declare-batch`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${zyndToken}` },
-          body: JSON.stringify({ declarations }),
+          body: JSON.stringify({ declarations: declarations.slice(0, 50) }),
         }).catch(() => { /* non-fatal */ });
       }
     } catch { /* non-fatal — memory is best-effort on claim */ }

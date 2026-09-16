@@ -375,13 +375,67 @@ export default async function PersonPage({ params }: PageProps) {
   const calendlyUrl = safeUrl(card.calendly_url);
 
   const memoryFacts = (card.zynd_memory ?? []) as Array<Record<string, unknown>>;
-  const factText = (fact: Record<string, unknown>): string | null => {
-    for (const key of ["content", "value", "text", "description", "fact", "summary"]) {
-      if (typeof fact[key] === "string" && (fact[key] as string).trim()) return fact[key] as string;
-    }
-    const vals = Object.values(fact).filter((fv) => typeof fv === "string" && (fv as string).trim());
-    return (vals[0] as string) || null;
+
+  // Predicate → human language. The memory layer stores facts as
+  // {predicate, object, source, confidence, approved_at} — the predicate is
+  // the meaning, the object is the value.
+  const MEMORY_GROUPS: Record<string, { label: string; icon: string }> = {
+    is_building: { label: "Currently building", icon: "⚙️" },
+    is_learning: { label: "Learning", icon: "📚" },
+    is_seeking: { label: "Seeking", icon: "🤝" },
+    open_to: { label: "Open to", icon: "🤝" },
+    has_expertise_in: { label: "Expert in", icon: "🧠" },
+    is_affiliated_with: { label: "Works at", icon: "🏢" },
+    is_located_in: { label: "Based in", icon: "📍" },
   };
+  const GROUP_ORDER = ["is_building", "is_learning", "is_seeking", "open_to", "has_expertise_in", "is_affiliated_with", "is_located_in"];
+  const ENUM_LABELS: Record<string, string> = {
+    co_founder: "a co-founder", technical_feedback: "technical feedback",
+    early_users: "early users", mentoring: "mentoring", being_mentored: "being mentored",
+    peer_review: "peer reviews", collaboration: "collaboration", investment: "investment",
+    community: "community", coffee_chat: "coffee chats", mentoring_others: "mentoring others",
+    early_user_testing: "early user testing",
+  };
+
+  const memoryGroups = (() => {
+    const facts = memoryFacts
+      .map((f) => ({
+        predicate: String(f.predicate ?? ""),
+        object: String(f.object ?? "").trim(),
+        source: String(f.source ?? ""),
+        confidence: typeof f.confidence === "number" ? f.confidence : 0,
+        approved_at: typeof f.approved_at === "string" ? f.approved_at : "",
+      }))
+      .filter((f) => f.predicate && f.object);
+    const seen = new Set<string>();
+    const byPredicate = new Map<string, { text: string; inferred: boolean; confidence: number; approved_at: string }[]>();
+    for (const f of facts) {
+      const meta = MEMORY_GROUPS[f.predicate];
+      if (!meta) continue;
+      const dedupeKey = `${f.predicate}|${f.object.toLowerCase()}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      const list = byPredicate.get(f.predicate) ?? [];
+      const rawText = ENUM_LABELS[f.object] ?? f.object;
+      const text = f.predicate === "is_building" ? rawText.replace(/^building\s+/i, "") : rawText;
+      list.push({ text, inferred: f.source === "inferred", confidence: f.confidence, approved_at: f.approved_at });
+      byPredicate.set(f.predicate, list);
+    }
+    return GROUP_ORDER
+      .filter((p) => byPredicate.has(p))
+      .map((p) => {
+        const meta = MEMORY_GROUPS[p];
+        const items = byPredicate.get(p)!;
+        // Activity groups: newest first. Expertise: highest confidence first.
+        const sorted = p === "has_expertise_in"
+          ? [...items].sort((a, b) => b.confidence - a.confidence)
+          : [...items].sort((a, b) => b.approved_at.localeCompare(a.approved_at));
+        return { key: p, label: meta.label, icon: meta.icon, items: sorted };
+      });
+  })();
+  const memoryVisible = memoryGroups.reduce((n, g) => n + Math.min(g.items.length, 4), 0);
+  const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
+  const firstName = identity.name?.split(" ")[0] || "They";
 
   // Only show Edit button to the profile's owner — never to other viewers.
   let isOwner = false;
@@ -667,31 +721,53 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ─ ROW 2: MEMORY + WORK EXPERIENCE ────────────────────── */}
 
             {/* Memory / MCP Sync OR Professional Snapshot */}
-            {memoryFacts.length > 0 ? (
+            {memoryGroups.length > 0 ? (
               <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    Memory &amp; MCP Sync
+                    Zynd Memory · Live
                   </span>
-                  <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Agentic Context</span>
+                  <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Synced from agents</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 leading-snug">Active AI Shared Memory</h3>
-                <p className="text-slate-300 text-sm leading-relaxed mb-5">
-                  Extracted from user context layers. AI agents automatically adapt to these parameters when generating code or structuring replies.
+                <h3 className="text-xl font-bold text-white mb-2 leading-snug">What {firstName}&apos;s working on</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                  Live context from {firstName}&apos;s Zynd memory — extracted from their coding agents and chats, not a résumé.
                 </p>
-                <div className="space-y-3 font-mono text-xs flex-1">
-                  {memoryFacts.slice(0, 3).map((fact, i) => {
-                    const text = factText(fact);
-                    if (!text) return null;
-                    return (
-                      <div key={i} className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/50">
-                        <span className="text-purple-300 block mb-1">⚡ Context {i + 1}:</span>
-                        <span className="text-slate-300">{text}</span>
+                <div className="space-y-5 flex-1">
+                  {memoryGroups.map((g) => (
+                    <div key={g.key}>
+                      <div className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-2">
+                        {g.icon} {g.label}
                       </div>
-                    );
-                  })}
+                      <div className="flex flex-wrap gap-1.5">
+                        {g.items.slice(0, 4).map((item, i) => (
+                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-[13px] text-slate-200">
+                            {item.text}
+                            {item.inferred && (
+                              <span className="text-[9px] font-mono uppercase tracking-wide text-purple-300/80 bg-slate-900/60 px-1.5 py-0.5 rounded" title="Noticed by AI from their activity">
+                                AI
+                              </span>
+                            )}
+                          </span>
+                        ))}
+                        {g.items.length > 4 && (
+                          <span className="px-3 py-1.5 rounded-full text-[13px] text-slate-400">+{g.items.length - 4}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                {memoryTotal > memoryVisible && (
+                  <p className="text-[11px] text-slate-500 font-mono mt-5">
+                    +{memoryTotal - memoryVisible} more · synced from the Zynd memory layer
+                  </p>
+                )}
+                {isOwner && (
+                  <a href="/dashboard/findable" className="text-[12px] text-purple-400 hover:text-purple-300 mt-2 font-medium">
+                    Keep it fresh — approve new key points →
+                  </a>
+                )}
               </div>
             ) : (
               /* AI Discoverability Fact — shown when no MCP memory is connected */
