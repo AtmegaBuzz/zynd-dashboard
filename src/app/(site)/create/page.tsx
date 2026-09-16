@@ -569,9 +569,17 @@ function CreateProfilePageContent() {
       });
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
       const publishedCard = await res.json();
+      const publishedHandle = publishedCard.handle || publishedCard.id;
+      // Persist handle in localStorage so the creator can edit/claim without
+      // signing in first — even after navigating to /p/[handle] directly.
+      try {
+        const stored: string[] = JSON.parse(localStorage.getItem("zynd_my_handles") || "[]");
+        if (!stored.includes(publishedHandle)) stored.push(publishedHandle);
+        localStorage.setItem("zynd_my_handles", JSON.stringify(stored));
+      } catch { /* non-fatal */ }
       // Stay on the page — show the "you're live" claim screen instead of
       // redirecting away. Sign-in is offered there, not required before.
-      setPublished(publishedCard.handle || publishedCard.id);
+      setPublished(publishedHandle);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to publish");
       setPhase("error");

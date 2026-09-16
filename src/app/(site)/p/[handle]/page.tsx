@@ -16,6 +16,7 @@ import { pageMetadata } from "@/lib/seo";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
+import { UnclaimedCardActions } from "./unclaimed-card-actions";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
 import { ContributionHeatmap } from "./contribution-heatmap";
@@ -521,6 +522,7 @@ export default async function PersonPage({ params }: PageProps) {
               </span>
               <ShareQrGroup url={canonical} />
               {isOwner && <EditCardButton handle={card.handle || handle} />}
+              {!isOwner && <UnclaimedCardActions handle={card.handle || handle} />}
             </div>
           </header>
 
