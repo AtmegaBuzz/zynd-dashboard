@@ -760,7 +760,19 @@ export default async function PersonPage({ params }: PageProps) {
 
               {(card.work_experience ?? []).length > 0 ? (
                 <div className="flex-1 space-y-0 divide-y divide-gray-100 overflow-y-auto max-h-[400px] pr-1">
-                  {(card.work_experience ?? []).slice(0, 8).map((job, i) => (
+                  {(card.work_experience ?? [])
+                    .slice()
+                    .sort((a, b) => {
+                      // Current roles (end_date === "Present") always first
+                      const aPresent = (a.end_date ?? "").toLowerCase() === "present";
+                      const bPresent = (b.end_date ?? "").toLowerCase() === "present";
+                      if (aPresent !== bPresent) return aPresent ? -1 : 1;
+                      // Then newest start_date first
+                      const aStart = a.start_date ?? "";
+                      const bStart = b.start_date ?? "";
+                      return bStart.localeCompare(aStart);
+                    })
+                    .slice(0, 8).map((job, i) => (
                     <div key={i} className="flex gap-3.5 py-4 first:pt-0">
                       {/* Company initial avatar */}
                       <div className="shrink-0 w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center overflow-hidden">
@@ -775,8 +787,16 @@ export default async function PersonPage({ params }: PageProps) {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-[#0B0B0B] text-[13.5px] leading-snug">
-                          {job.title}
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-[#0B0B0B] text-[13.5px] leading-snug">
+                            {job.title}
+                          </div>
+                          {(job.end_date ?? "").toLowerCase() === "present" && (
+                            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-emerald-50 text-emerald-600 border border-emerald-200/60 uppercase tracking-wide">
+                              <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
+                              Now
+                            </span>
+                          )}
                         </div>
                         <div className="text-[12px] text-slate-700 font-medium mt-0.5">
                           {job.company}
