@@ -27,17 +27,29 @@ export const getServerAuth = cache(async (): Promise<ServerAuth> => {
     return { user: null, developer: null, needsOnboarding: false };
   }
 
-  const devKey = await prisma.developerKey.findUnique({
-    where: { userId: user.id },
-    select: {
-      developerId: true,
-      publicKey: true,
-      name: true,
-      username: true,
-      role: true,
-      country: true,
-    },
-  });
+  let devKey: {
+    developerId: string;
+    publicKey: string;
+    name: string | null;
+    username: string | null;
+    role: string | null;
+    country: string | null;
+  } | null = null;
+  try {
+    devKey = await prisma.developerKey.findUnique({
+      where: { userId: user.id },
+      select: {
+        developerId: true,
+        publicKey: true,
+        name: true,
+        username: true,
+        role: true,
+        country: true,
+      },
+    });
+  } catch (err) {
+    console.error("[getServerAuth] prisma query failed:", err);
+  }
 
   const developer: DeveloperInfo | null = devKey
     ? {
