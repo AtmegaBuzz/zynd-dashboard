@@ -268,6 +268,12 @@ export default async function SiteLayout({
         <Script id="schema-faq" type="application/ld+json" strategy="beforeInteractive">
           {JSON.stringify(faqSchema)}
         </Script>
+        {/* Synchronous inline script — clears Webflow's localStorage editor flag
+            before zynd-ui.js runs. Prevents the deprecated editor popup appearing
+            for any browser that previously visited as a Webflow editor.
+            Plain <script> (not Next Script) so it runs synchronously pre-hydration
+            without triggering App Router's beforeInteractive restriction. */}
+        <script dangerouslySetInnerHTML={{ __html: `try{localStorage.removeItem("WebflowEditor")}catch(e){}` }} />
       </head>
       <body suppressHydrationWarning>
         <div className="zm-page-bg"></div>
@@ -296,12 +302,6 @@ export default async function SiteLayout({
         <Providers initialAuth={{ user, developer }}>{children}</Providers>
         {/* Loaded after React hydration so Webflow JS doesn't mutate <html>
             (adding w-mod-ix etc.) before hydration and trigger React #418. */}
-        {/* Clears Webflow's localStorage editor flag before zynd-ui.js runs.
-            Without this, any browser that previously visited the site as a
-            Webflow editor would auto-load the deprecated editor on every page. */}
-        <Script id="wf-editor-guard" strategy="beforeInteractive">{`
-          try { localStorage.removeItem("WebflowEditor"); } catch(e) {}
-        `}</Script>
         <Script src="/assets/js/jquery.min.js" strategy="afterInteractive" />
         <Script src="/assets/js/zynd-ui.js" strategy="afterInteractive" />
       </body>
