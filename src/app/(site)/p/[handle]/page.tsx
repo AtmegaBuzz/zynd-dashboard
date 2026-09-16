@@ -433,7 +433,6 @@ export default async function PersonPage({ params }: PageProps) {
         return { key: p, label: meta.label, icon: meta.icon, items: sorted };
       });
   })();
-  const memoryVisible = memoryGroups.reduce((n, g) => n + Math.min(g.items.length, 4), 0);
   const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
   const firstName = identity.name?.split(" ")[0] || "They";
 
@@ -718,60 +717,10 @@ export default async function PersonPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* ─ ROW 2: MEMORY + WORK EXPERIENCE ────────────────────── */}
+            {/* ─ ROW 2: AI DISCOVERABILITY + WORK EXPERIENCE ────────────────────── */}
 
-            {/* Memory / MCP Sync OR Professional Snapshot */}
-            {memoryGroups.length > 0 ? (
-              <div className="col-span-12 lg:col-span-6 bg-slate-900 text-white rounded-[32px] p-8 shadow-sm flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-xs font-mono uppercase tracking-widest text-purple-400 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    Zynd Memory · Live
-                  </span>
-                  <span className="text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded-md text-slate-400">Synced from agents</span>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2 leading-snug">What {firstName}&apos;s working on</h3>
-                <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                  Live context from {firstName}&apos;s Zynd memory — extracted from their coding agents and chats, not a résumé.
-                </p>
-                <div className="space-y-5 flex-1">
-                  {memoryGroups.map((g) => (
-                    <div key={g.key}>
-                      <div className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-2">
-                        {g.icon} {g.label}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {g.items.slice(0, 4).map((item, i) => (
-                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-[13px] text-slate-200">
-                            {item.text}
-                            {item.inferred && (
-                              <span className="text-[9px] font-mono uppercase tracking-wide text-purple-300/80 bg-slate-900/60 px-1.5 py-0.5 rounded" title="Noticed by AI from their activity">
-                                AI
-                              </span>
-                            )}
-                          </span>
-                        ))}
-                        {g.items.length > 4 && (
-                          <span className="px-3 py-1.5 rounded-full text-[13px] text-slate-400">+{g.items.length - 4}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {memoryTotal > memoryVisible && (
-                  <p className="text-[11px] text-slate-500 font-mono mt-5">
-                    +{memoryTotal - memoryVisible} more · synced from the Zynd memory layer
-                  </p>
-                )}
-                {isOwner && (
-                  <a href="/dashboard/findable" className="text-[12px] text-purple-400 hover:text-purple-300 mt-2 font-medium">
-                    Keep it fresh — approve new key points →
-                  </a>
-                )}
-              </div>
-            ) : (
-              /* AI Discoverability Fact — shown when no MCP memory is connected */
-              <div className="col-span-12 lg:col-span-6 bg-[#0f1729] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-6">
+            {/* AI Discoverability Fact */}
+            <div className="col-span-12 lg:col-span-6 bg-[#0f1729] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                   <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">AI Discoverability Fact</span>
@@ -823,7 +772,6 @@ export default async function PersonPage({ params }: PageProps) {
                   {!isBlank(identity.name) ? identity.name.split(" ")[0] : "this person"} for specialized queries.
                 </p>
               </div>
-            )}
 
             {/* Work Experience */}
             <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc flex flex-col">
@@ -1052,6 +1000,58 @@ export default async function PersonPage({ params }: PageProps) {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Zynd Memory — same size/structure as the LinkedIn & X cards */}
+            {memoryGroups.length > 0 && (
+              <div
+                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-slate-900 text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
+                style={{ height: SOCIAL_CARD_H }}
+              >
+                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
+                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
+                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                    ZYND MEMORY
+                  </span>
+                  {isOwner ? (
+                    <a href="/dashboard/findable" className="text-white/70 hover:text-white">
+                      Keep fresh ↗
+                    </a>
+                  ) : (
+                    <span className="text-white/40 uppercase tracking-wider">Live</span>
+                  )}
+                </div>
+                <div className="flex-shrink-0 mb-3">
+                  <h4 className="text-lg font-bold">What {firstName}&apos;s working on</h4>
+                  <p className="text-xs text-white/80 mt-0.5 line-clamp-1">Synced from their coding agents</p>
+                </div>
+                <div className="flex-1 min-h-0 -mx-1 px-1 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                  {memoryGroups.map((g) => (
+                    <div key={g.key} className="mb-3 last:mb-0">
+                      <div className="text-[9px] font-mono uppercase tracking-widest text-white/40 mb-1.5">
+                        {g.icon} {g.label}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {g.items.slice(0, 4).map((item, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/10 text-[11.5px] text-white/90">
+                            {item.text}
+                            {item.inferred && (
+                              <span className="text-[8px] font-mono uppercase tracking-wide text-purple-300/80">ai</span>
+                            )}
+                          </span>
+                        ))}
+                        {g.items.length > 4 && (
+                          <span className="text-[11px] text-white/40 self-center">+{g.items.length - 4}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-shrink-0 flex justify-between border-t border-white/10 pt-3 mt-3 font-mono text-[10px] text-white/40 uppercase tracking-wider">
+                  <span>{memoryTotal} key points</span>
+                  <span>Zynd</span>
+                </div>
               </div>
             )}
 
