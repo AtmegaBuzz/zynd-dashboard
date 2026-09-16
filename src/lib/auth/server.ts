@@ -55,7 +55,7 @@ export const getServerAuth = cache(async (): Promise<ServerAuth> => {
     ? {
         developer_id: devKey.developerId,
         public_key: devKey.publicKey,
-        name: devKey.name,
+        name: devKey.name ?? "",
         username: devKey.username ?? undefined,
         role: devKey.role ?? undefined,
         country: devKey.country ?? undefined,
