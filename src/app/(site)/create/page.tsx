@@ -705,14 +705,14 @@ function CreateProfilePageContent() {
       if (error) throw error;
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
       if (data?.publicUrl) {
-        updateCard({ identity: { ...card!, identity: card!.identity, avatar_url: data.publicUrl } });
+        updateCard({ identity: { ...card!.identity, avatar_url: data.publicUrl } });
         setShowPhotoInput(false);
         setPhotoUrlInput("");
       }
     } catch {
       // Fallback: use object URL (works for preview, lost on reload)
       const url = URL.createObjectURL(file);
-      updateCard({ identity: { ...card!, identity: card!.identity, avatar_url: url } });
+      updateCard({ identity: { ...card!.identity, avatar_url: url } });
       setShowPhotoInput(false);
     } finally {
       setPhotoUploading(false);
