@@ -346,6 +346,19 @@ function CreateProfilePageContent() {
   // post-publish "claim your card" screen.
   const [published, setPublished] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Custom URL handle (review screen)
+  const [customHandle, setCustomHandle] = useState("");
+  const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
+  const [handleChecking, setHandleChecking] = useState(false);
+  const handleCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Add more sources (review screen re-extract)
+  const [addMoreUrls, setAddMoreUrls] = useState<string[]>([]);
+  const [addMoreInput, setAddMoreInput] = useState("");
+  const [addMoreResume, setAddMoreResume] = useState<File | null>(null);
+  const addMoreFileRef = useRef<HTMLInputElement>(null);
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
   const pendingCardRef = useRef<AgentProfileCard | null>(null);
   const questionIndexRef = useRef(0);
   const jobDoneRef = useRef(false);
@@ -545,6 +558,7 @@ function CreateProfilePageContent() {
           card: publishableCard(card, excluded),
           user_answers: userAnswers,
           owner_email: user?.email ?? null,
+          custom_handle: customHandle.length >= 2 ? customHandle : undefined,
         }),
       });
       if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
@@ -618,6 +632,53 @@ function CreateProfilePageContent() {
 
   function updateCard(patch: Partial<AgentProfileCard>) {
     setCard(prev => prev ? { ...prev, ...patch } : prev);
+  }
+
+  function onCustomHandleChange(val: string) {
+    const slug = val.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+    setCustomHandle(slug);
+    setHandleAvailable(null);
+    if (handleCheckRef.current) clearTimeout(handleCheckRef.current);
+    if (slug.length < 2) return;
+    setHandleChecking(true);
+    handleCheckRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${CARDS_API}/cards/handle-available/${encodeURIComponent(slug)}`);
+        const data = await res.json();
+        setHandleAvailable(data.available ?? false);
+      } catch { /* non-fatal */ }
+      setHandleChecking(false);
+    }, 400);
+  }
+
+  async function reExtract() {
+    const allUrls = [...new Set([...urls, ...addMoreUrls])];
+    if (allUrls.length === 0 && !addMoreResume && !resume) return;
+    // Skip questions — answers already collected from first pass
+    questionIndexRef.current = QUESTIONS.length;
+    setQuestionIndex(QUESTIONS.length);
+    jobDoneRef.current = false;
+    setJobDone(false);
+    pendingCardRef.current = null;
+    setUrls(allUrls);
+    setAddMoreUrls([]);
+    setAddMoreInput("");
+    setError(null);
+    setPhase("working");
+    const form = new FormData();
+    allUrls.forEach(u => form.append("url", u));
+    const resumeFile = addMoreResume || resume;
+    if (resumeFile) form.append("resume", resumeFile);
+    try {
+      const res = await fetch(`${CARDS_API}/onboard/start`, { method: "POST", body: form });
+      if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
+      const data = await res.json();
+      setJobId(data.job_id);
+      pollRef.current = setInterval(() => pollJob(data.job_id), 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Re-extract failed");
+      setPhase("error");
+    }
   }
 
   // ── panel copy shifts with the phase; the panel itself never moves ──
@@ -793,7 +854,9 @@ function CreateProfilePageContent() {
                 <div style={{ height: "1px", background: "rgba(255,255,255,.28)" }} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
                   <span style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel }}>Publishes at</span>
-                  <span style={{ font: `500 12px/1 ${MONO}`, color: "#fff", background: "rgba(255,255,255,.16)", borderRadius: "8px", padding: "7px 10px" }}>zynd.ai/p/you</span>
+                  <span style={{ font: `500 12px/1 ${MONO}`, color: "#fff", background: "rgba(255,255,255,.16)", borderRadius: "8px", padding: "7px 10px" }}>
+                    zynd.ai/p/{customHandle.length >= 2 ? customHandle : "you"}
+                  </span>
                 </div>
                 <div style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel2 }}>after your review</div>
               </div>
@@ -1207,6 +1270,36 @@ function CreateProfilePageContent() {
                       <TextField label="Name" value={card.identity.name} onChange={v => updateCard({ identity: { ...card.identity, name: v } })} />
                       <TextField label="Headline" value={card.identity.headline} onChange={v => updateCard({ identity: { ...card.identity, headline: v } })} />
                       <TextField label="Location" value={card.identity.location} placeholder="e.g. San Francisco, CA" onChange={v => updateCard({ identity: { ...card.identity, location: v } })} />
+                      {!editHandle && (
+                        <div>
+                          <div style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted, marginBottom: "9px" }}>
+                            Profile URL <span style={{ font: `400 10px/1 ${SANS}`, textTransform: "none", letterSpacing: 0, color: T.faint }}>— optional, set your custom slug</span>
+                          </div>
+                          <div style={{ position: "relative" }}>
+                            <div style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", font: `400 14px/1 ${MONO}`, color: T.faint, pointerEvents: "none", whiteSpace: "nowrap" }}>
+                              zynd.ai/p/
+                            </div>
+                            <input
+                              type="text"
+                              value={customHandle}
+                              onChange={e => onCustomHandleChange(e.target.value)}
+                              placeholder="your-handle"
+                              className="zc-field"
+                              style={{
+                                width: "100%", padding: "13px 15px 13px 98px",
+                                fontSize: "15px", fontFamily: MONO,
+                                border: `1px solid ${customHandle.length >= 2 ? (handleChecking ? T.border : handleAvailable === false ? "#C2401F" : handleAvailable === true ? "#16A34A" : T.border) : T.border}`,
+                                borderRadius: "14px", background: T.surface, color: T.ink, outline: "none", boxSizing: "border-box",
+                              }}
+                            />
+                            {customHandle.length >= 2 && (
+                              <span style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", font: `400 12px/1 ${SANS}`, color: handleChecking ? T.faint : handleAvailable === false ? "#C2401F" : handleAvailable === true ? "#16A34A" : T.faint }}>
+                                {handleChecking ? "checking…" : handleAvailable === false ? "taken" : handleAvailable === true ? "available ✓" : ""}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1299,6 +1392,75 @@ function CreateProfilePageContent() {
                       </div>
                     );
                   })()}
+
+                  {/* ── Add more sources ── */}
+                  {!editHandle && (
+                    <div className="zc-card" style={{ padding: "22px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted }}>Add more sources</span>
+                        <span style={{ font: `400 12px/1 ${SANS}`, color: T.faint }}>re-extract with additional profiles</span>
+                      </div>
+
+                      {addMoreUrls.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                          {addMoreUrls.map(url => (
+                            <div key={url} style={{ display: "flex", alignItems: "center", gap: "8px", background: T.accent, borderRadius: "999px", padding: "7px 12px" }}>
+                              <span style={{ font: `500 11px/1 ${MONO}`, color: "#fff" }}>{shortenUrl(url)}</span>
+                              <button type="button" onClick={() => setAddMoreUrls(p => p.filter(u => u !== url))}
+                                style={{ font: `400 13px/1 ${SANS}`, color: "rgba(255,255,255,.7)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "10px 14px" }}>
+                          <input
+                            ref={addMoreInputRef}
+                            type="text"
+                            value={addMoreInput}
+                            onChange={e => setAddMoreInput(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                const v = addMoreInput.trim();
+                                if (v) {
+                                  const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+                                  if (!addMoreUrls.includes(withProto) && !urls.includes(withProto)) setAddMoreUrls(p => [...p, withProto]);
+                                  setAddMoreInput("");
+                                }
+                              }
+                            }}
+                            placeholder="linkedin.com/in/you or github.com/you"
+                            style={{ flex: 1, border: "none", outline: "none", background: "transparent", font: `400 13px/1 ${MONO}`, color: T.ink }}
+                          />
+                        </div>
+                        <button type="button" onClick={() => addMoreFileRef.current?.click()}
+                          style={{ background: addMoreResume ? T.accent : T.surface, color: addMoreResume ? "#fff" : T.soft, border: `1px solid ${addMoreResume ? T.accent : T.border}`, borderRadius: "12px", padding: "10px 14px", font: `500 12px/1 ${SANS}`, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+                          {addMoreResume ? `✓ ${addMoreResume.name.slice(0, 14)}…` : "↑ Resume"}
+                        </button>
+                        <input ref={addMoreFileRef} type="file" accept=".pdf,.docx,application/pdf" onChange={e => setAddMoreResume(e.target.files?.[0] ?? null)} style={{ display: "none" }} />
+                      </div>
+
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        {QUICK_ADD.map(({ kind, domain }) => (
+                          <button key={kind} type="button" className="zc-quick"
+                            onClick={() => { setAddMoreInput(domain); addMoreInputRef.current?.focus(); }}
+                            style={{ display: "flex", alignItems: "center", gap: "7px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "7px 13px", cursor: "pointer", font: `500 12px/1 ${SANS}`, color: T.ink }}>
+                            <KindSquare kind={kind} size={11} />
+                            {CHIP[kind].label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {(addMoreUrls.length > 0 || addMoreResume) && (
+                        <button type="button" onClick={reExtract}
+                          style={{ background: T.ink, color: "#fff", border: "none", borderRadius: "12px", padding: "12px 20px", font: `600 13px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", width: "fit-content", letterSpacing: "-.01em" }}>
+                          Re-extract with these sources <span style={{ font: `400 14px/1 ${SANS}` }}>↺</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <div className="zc-ctarow">
                     <button type="button" onClick={publish} className="zc-cta"
