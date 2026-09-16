@@ -256,18 +256,10 @@ export default async function SiteLayout({
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap"
           rel="stylesheet"
         />
-        <Script id="schema-organization" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(organizationSchema)}
-        </Script>
-        <Script id="schema-software" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(softwareApplicationSchema)}
-        </Script>
-        <Script id="schema-website" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(webSiteSchema)}
-        </Script>
-        <Script id="schema-faq" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(faqSchema)}
-        </Script>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
         {/* Synchronous inline script — clears Webflow's localStorage editor flag
             before zynd-ui.js runs. Prevents the deprecated editor popup appearing
             for any browser that previously visited as a Webflow editor.
