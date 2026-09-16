@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 import { CARDS_API } from "@/lib/cards";
 import type { AgentProfileCard, OnboardStatus, Project, WritingSample } from "@/lib/cards";
 
+// Memory layer (api.zynd.ai) — same host the /connect and /findable pages use.
+const ZYND_API = process.env.NEXT_PUBLIC_ZYND_API_URL || "https://api.zynd.ai";
+
 // ─── tokens (from the Zynd Create Profile design) ────────────────────────────
 const T = {
   page:     "#E6E6E3",
@@ -305,6 +308,10 @@ function CreateProfilePageContent() {
     document.cookie = "zynd_next=/create; path=/; samesite=lax";
     createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
   };
+  const loginWithLinkedin = () => {
+    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    createClient().auth.signInWithOAuth({ provider: "linkedin_oidc", options: { redirectTo: loginRedirect } });
+  };
 
   const [phase, setPhase] = useState<Phase>("form");
   const [jobId, setJobId] = useState<string | null>(null);
@@ -553,7 +560,8 @@ function CreateProfilePageContent() {
 
   // Claim the freshly published card when a signed-in user created it —
   // and when they sign in from the claim screen (backend sets owner_email
-  // on the first authenticated PATCH).
+  // on the first authenticated PATCH). Claiming also seeds the memory layer:
+  // exchange → declare key points from the card → snapshot onto the card.
   useEffect(() => {
     if (!authenticated || !published || !card) return;
     getToken().then(token => {
@@ -563,9 +571,42 @@ function CreateProfilePageContent() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(publishableCard(card, excluded)),
       }).catch(() => { /* non-fatal — card is live either way */ });
+      syncMemoryOnClaim(token, published);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, published]);
+
+  // Seed the memory layer from the claimed card, then pull the snapshot onto
+  // the card so the public profile shows "key points" immediately.
+  async function syncMemoryOnClaim(supabaseToken: string, handle: string) {
+    try {
+      const ex = await fetch(`${ZYND_API}/token/exchange`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseToken}` },
+      });
+      if (!ex.ok) return;
+      const { token: zyndToken } = await ex.json();
+      if (!zyndToken) return;
+      const declarations: { predicate: string; value: string }[] = [];
+      for (const s of (card?.skills ?? []).slice(0, 5)) {
+        const name = s.name?.trim();
+        if (name) declarations.push({ predicate: "has_expertise_in", value: name });
+      }
+      const location = card?.identity?.location?.trim();
+      if (location) declarations.push({ predicate: "is_located_in", value: location });
+      if (declarations.length) {
+        await fetch(`${ZYND_API}/me/findability/declare-batch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${zyndToken}` },
+          body: JSON.stringify({ declarations }),
+        }).catch(() => { /* non-fatal */ });
+      }
+    } catch { /* non-fatal — memory is best-effort on claim */ }
+    await fetch(`${CARDS_API}/cards/by-handle/${encodeURIComponent(handle)}/refresh-memory`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${supabaseToken}` },
+    }).catch(() => { /* non-fatal */ });
+  }
 
   function toggleExcluded(key: string) {
     setExcluded(prev => {
@@ -801,6 +842,11 @@ function CreateProfilePageContent() {
                             <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.faint }}>Claim it</span>
                             <div style={{ height: "1px", background: T.border, flex: 1 }} />
                           </div>
+                          <button type="button" onClick={loginWithLinkedin}
+                            style={{ width: "100%", background: T.accent, color: "#fff", border: "none", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
+                            Claim with LinkedIn
+                          </button>
                           <button type="button" onClick={login}
                             style={{ width: "100%", background: T.ink, color: "#fff", border: "none", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", letterSpacing: "-.01em" }}>
                             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#fff" fillOpacity=".9"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#fff" fillOpacity=".7"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#fff" fillOpacity=".5"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#fff" fillOpacity=".3"/></svg>
@@ -812,7 +858,8 @@ function CreateProfilePageContent() {
                             Sign in with GitHub
                           </button>
                           <p style={{ font: `400 12px/1.5 ${SANS}`, color: T.faint, margin: 0, textAlign: "center" }}>
-                            Signing in returns you here and links the card to your account.
+                            Claim with LinkedIn to also sync your memory key points — they show on your profile card.
+                            Any sign-in returns you here and links the card to your account.
                           </p>
                         </>
                       )}
