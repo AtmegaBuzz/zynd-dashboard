@@ -965,7 +965,7 @@ function CreateProfilePageContent() {
                         </>
                       )}
                       {authenticated && (
-                        <a href={`/create?edit=${published}`}
+                        <a href={`/p/${published}/edit`}
                           style={{ background: T.surface, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", width: "100%", boxSizing: "border-box" }}>
                           Edit my card <span>→</span>
                         </a>
@@ -988,7 +988,7 @@ function CreateProfilePageContent() {
                     </p>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "360px" }}>
-                    <a href={`/create?edit=${existingHandle}`}
+                    <a href={`/p/${existingHandle}/edit`}
                       style={{ background: T.accent, color: "#fff", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em" }}>
                       Edit my card <span style={{ font: `400 16px/1 ${SANS}` }}>→</span>
                     </a>
