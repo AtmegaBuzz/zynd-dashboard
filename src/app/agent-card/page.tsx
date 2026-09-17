@@ -63,10 +63,10 @@ export default function AgentCardPage() {
 <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#080909]/90 border-b border-white/[0.08]" data-purpose="top-navigation">
 <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
 {/* Brand Logo */}
-<Link aria-label="Zynd Home" className="flex items-center gap-2.5 group" href="/">
-<span className="w-2.5 h-2.5 rounded-full bg-[#7b72e9] shadow-[0_0_12px_#7b72e9] transition-transform group-hover:scale-125"></span>
-<span className="font-display text-2xl sm:text-3xl tracking-wider text-white font-normal">ZYND</span>
-<span className="hidden sm:inline-block text-[10px] font-mono text-[#7d7d77] tracking-widest pl-2 border-l border-white/10">LIVING IDENTITY</span>
+<Link aria-label="Zynd Home" className="flex items-center gap-3 group" href="/">
+<img src="/assets/zynd-logo.png" alt="Zynd" className="h-9 sm:h-10 w-auto opacity-90 group-hover:opacity-100 transition-opacity" style={{filter: "brightness(0) invert(1)"}} />
+<span className="text-2xl font-bold text-white tracking-wide opacity-90 group-hover:opacity-100 transition-opacity">Zynd</span>
+<span className="hidden sm:inline-block text-[10px] font-mono text-white/60 tracking-widest pl-3 border-l border-white/20">LIVING IDENTITY</span>
 </Link>
 {/* Navigation links */}
 <nav className="hidden md:flex items-center gap-7 text-xs font-mono text-[#8a8a84]">
@@ -577,7 +577,7 @@ export default function AgentCardPage() {
 </div>
 </section>
 {/* ========================================================================= */}
-{/* SECTION 08 — DUAL INTERFACE (HUMAN <*/} AGENT) --&gt;
+{/* SECTION 08 — DUAL INTERFACE (HUMAN <-> AGENT) */}
   {/* ========================================================================= */}
 <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8" data-purpose="dual-interface" id="dual-view">
 <div className="space-y-10">
@@ -918,8 +918,8 @@ export default function AgentCardPage() {
 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
 <div className="space-y-2">
 <div className="flex items-center gap-2.5">
-<span className="w-2.5 h-2.5 rounded-full bg-[#7b72e9]"></span>
-<span className="font-display text-2xl tracking-wider text-white">ZYND</span>
+<img src="/assets/zynd-logo.png" alt="Zynd" className="h-6 w-auto opacity-70" style={{filter: "brightness(0) invert(1)"}} />
+<span className="text-sm font-semibold text-white opacity-70">Zynd</span>
 </div>
 <p className="text-xs text-[#7d7d77] font-mono max-w-md">
           The living professional identity for technical builders and AI agents. Synthesizing digital footprints into sovereign, discoverable assets.
