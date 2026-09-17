@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Calendar, Globe, Search, Sparkles } from "lucide-react";
+import { BadgeCheck, Calendar, Clock, Globe, Search, Sparkles, Video } from "lucide-react";
 
 import {
   fetchCardByHandle,
+  fetchGithubExtras,
   cardCanonicalUrl,
   getMyCard,
   type AgentProfileCard,
@@ -68,13 +69,30 @@ function usernameFromUrl(url: string | null | undefined): string | null {
   return url.replace(/\/+$/, "").split("/").pop() || null;
 }
 
+function displayExcerpt(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const stripped = raw.replace(/<[^>]*>/g, " ");
+  const decoded = stripped
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)));
+  return decoded
+    .replace(/https?:\/\/t\.co\/\S+/gi, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
 const POST_ROW_H = 104;
 const POST_GAP = 12;
 const SOCIAL_CARD_H = 340;
-const SOCIAL_POST_ROW_H = 84;
-const SOCIAL_POST_VISIBLE = 2;
 
 const POST_STYLES = [
   { card: "bg-[#111827] text-white border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-0" },
@@ -188,7 +206,8 @@ function buildView(card: AgentProfileCard) {
 
   const skillKeywords = new Set(card.skills.map((s) => s.name.toLowerCase()));
   const writing = card.writing_samples
-    .map((s) => ({ ...s, metrics: s.metrics ?? [] }))
+    .map((s) => ({ ...s, excerpt: displayExcerpt(s.excerpt), metrics: s.metrics ?? [] }))
+    .filter((s) => s.excerpt.length > 0)
     .sort((a, b) => {
       const score = (text: string) => {
         const t = text.toLowerCase();
@@ -234,8 +253,7 @@ function buildView(card: AgentProfileCard) {
       activeRepos: card.github_stats?.active_repos ?? null,
       topLanguages: card.github_stats?.top_languages ?? [],
       commits: card.github_stats?.total_commits ?? null,
-      stars: null as number | null,
-      followers: null as number | null,
+      followers: card.github_stats?.followers ?? null,
     },
     x: {
       handle:
@@ -356,6 +374,8 @@ export default async function PersonPage({ params }: PageProps) {
   const linkedinUrl = safeUrl(identity.links?.linkedin);
   const githubHandle = usernameFromUrl(identity.links?.github) || card.handle || "profile";
   const githubUrl = safeUrl(identity.links?.github);
+  const ghLogin = usernameFromUrl(identity.links?.github);
+  const ghExtras = ghLogin ? await fetchGithubExtras(ghLogin) : null;
   const xUrl = safeUrl(identity.links?.x);
   const calendlyUrl = safeUrl(card.calendly_url);
 
@@ -431,11 +451,22 @@ export default async function PersonPage({ params }: PageProps) {
 
   const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
   const showX = !!(v.x.handle || v.x.followers != null);
-  const showGithub = !!(identity.links?.github || card.github_stats || card.contribution_stats);
-  const hasContributions = !!(v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0);
-
-  // Social cards: 4 cards when calendlyUrl exists → 3-col each; else 3 cards → 4-col each
-  const socialColSpan = calendlyUrl ? 3 : 4;
+  const showGithub = !!(identity.links?.github || card.github_stats || card.contribution_stats || ghExtras?.contributions);
+  const contributions = (v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0)
+    ? v.contributions
+    : ghExtras?.contributions ?? null;
+  const hasContributions = !!(contributions && contributions.levels.length > 0);
+  const ghFollowers = v.github.followers ?? ghExtras?.followers ?? null;
+  const ghFollowing = ghExtras?.following ?? null;
+  const ghBio = ghExtras?.bio;
+  const ghContribTotal = contributions?.total ?? (typeof v.github.commits === "number" ? v.github.commits : null);
+  const linkedinAvatar = safeUrl(card.linkedin_stats?.avatar) ?? avatarUrl;
+  const xAvatar = safeUrl(card.x_stats?.avatar) ?? avatarUrl;
+  const xImpressions = v.x.impressions != null && String(v.x.impressions).trim() !== "—" ? v.x.impressions : null;
+  const showMemory = memoryTotal > 0;
+  const socialSlots = [showLinkedin, showX, showMemory, !!calendlyUrl].filter(Boolean).length;
+  const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
+  const todayIdx = new Date().getDay();
 
   /* ── shared card style ─────────────────────────────────── */
   const card_ = "bg-white border border-[#e2e8f0] rounded-[20px] p-5 flex flex-col justify-between";
@@ -464,9 +495,12 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-page a:hover { text-decoration: underline; }
         /* AutoScroll */
         .pf-vscroll { overflow: hidden; position: relative; }
-        .pf-vrow { display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
+        .pf-vrow { display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; overflow: hidden; }
         .pf-vrow-post { height: 104px; }
         .pf-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .pf-quote-reel { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+        .pf-quote-text { margin: 0; flex: 1; min-height: 0; overflow: hidden; white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; font-weight: 500; font-style: normal; letter-spacing: 0.01em; word-break: break-word; overflow-wrap: break-word; max-height: calc(1.55em * 6); }
+        .pf-quote-count { margin-top: 8px; font-size: 0.58rem; letter-spacing: 0.08em; opacity: 0.55; }
         @media (prefers-reduced-motion: reduce) { .pf-vscroll { overflow-y: auto; } }
         /* bracket corners */
         .tc { position: relative; }
@@ -477,6 +511,10 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-edit-btn:hover { background:#0B0B0B; color:#fff; text-decoration:none; }
         .bento-corner { position:relative; }
         .bento-corner::after { content:''; position:absolute; top:14px; right:14px; width:14px; height:14px; border-top:2px solid currentColor; border-right:2px solid currentColor; opacity:.35; pointer-events:none; }
+        .pf-book-card { position: relative; overflow: hidden; }
+        .pf-book-card::before { content:''; position:absolute; width:220px; height:220px; right:-60px; top:-70px; background:radial-gradient(circle, rgba(255,255,255,0.22), transparent 68%); pointer-events:none; }
+        .pf-book-cta { transition: background .15s, transform .15s, box-shadow .15s; }
+        .pf-book-cta:hover { background:#f8fafc !important; text-decoration:none !important; transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,0.18); }
       `}</style>
 
       <div className="pf-page" style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}>
@@ -688,12 +726,16 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             </div>
 
+            {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
+            {socialSlots > 0 && (
+            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${socialSlots}, minmax(0, 1fr))`, gap: 16 }}>
+
             {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
               <div
-                style={{ gridColumn: `span ${socialColSpan}`, background: "#0066c8", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
+                style={{ background: "#0A66C2", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
               >
-                <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><LinkedinGlyph size={12} /> LINKEDIN</span>
                   {linkedinUrl ? (
                     <a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -703,30 +745,40 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>in/{linkedinHandle}</span>
                   ) : null}
                 </div>
-                <div style={{ fontSize: "1.15rem", fontWeight: 800, marginBottom: 2 }}>{identity.name}</div>
-                {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "0.75rem", fontWeight: 600, opacity: 0.8, marginBottom: 12 }}>{identity.headline}</div>
-                )}
-                <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-                  {v.linkedinScrollItems.length > 0 ? (
-                    <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
-                      {v.linkedinScrollItems.map((text, i) => (
-                        <div key={i} className="pf-vrow" style={{ height: SOCIAL_POST_ROW_H }}>
-                          <p style={{ fontSize: "0.75rem", fontStyle: "italic", lineHeight: 1.5, opacity: 0.9 }}>&ldquo;{text}&rdquo;</p>
-                        </div>
-                      ))}
-                    </AutoScroll>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                  {linkedinAvatar ? (
+                    <img src={linkedinAvatar} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
                   ) : (
-                    <p style={{ fontSize: "0.75rem", opacity: 0.7, fontStyle: "italic" }}>No posts synced yet.</p>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
                   )}
-                </div>
-                {v.linkedin.connections != null && (
-                  <div className="pf-mono flex justify-between pt-3 mt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.2)", fontSize: "0.65rem", opacity: 0.8 }}>
-                    <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>CONNECTIONS</div>
-                    {v.linkedin.posts != null && Number(v.linkedin.posts) > 0 && (
-                      <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.posts} /></strong>POSTS</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
+                    {!isBlank(identity.headline) && (
+                      <div className="pf-clamp-2" style={{ fontSize: "0.72rem", opacity: 0.8, marginTop: 4, fontWeight: 600 }}>{identity.headline}</div>
                     )}
                   </div>
+                </div>
+                {linkedinHandle && (
+                  <div className="pf-mono" style={{ marginTop: 14, fontSize: "0.68rem", opacity: 0.75 }}>in/{linkedinHandle}</div>
+                )}
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
+                  {v.linkedin.connections != null && (
+                    <div>
+                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>CONNECTIONS</span>
+                    </div>
+                  )}
+                  {v.linkedin.posts != null && Number(v.linkedin.posts) > 0 && (
+                    <div>
+                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.posts} /></strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>POSTS</span>
+                    </div>
+                  )}
+                </div>
+                {linkedinUrl && (
+                  <a href={linkedinUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.14)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                    View LinkedIn profile →
+                  </a>
                 )}
               </div>
             )}
@@ -734,9 +786,9 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: X / TWITTER ── */}
             {showX && (
               <div
-                style={{ gridColumn: `span ${socialColSpan}`, background: "#090a0f", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
+                style={{ background: "#090a0f", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
               >
-                <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><XGlyph size={11} /> X / TWITTER</span>
                   {xUrl ? (
                     <a href={xUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -746,35 +798,50 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>{v.x.handle}</span>
                   ) : null}
                 </div>
-                <div style={{ fontSize: "1.15rem", fontWeight: 800, marginBottom: 2 }}>{identity.name}</div>
-                {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "0.75rem", fontWeight: 600, opacity: 0.8, marginBottom: 12 }}>{identity.headline}</div>
-                )}
-                <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-                  {v.xScrollItems.length > 0 ? (
-                    <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
-                      {v.xScrollItems.map((text, i) => (
-                        <div key={i} className="pf-vrow" style={{ height: SOCIAL_POST_ROW_H }}>
-                          <p style={{ fontSize: "0.75rem", fontStyle: "italic", lineHeight: 1.5, opacity: 0.9 }}>&ldquo;{text}&rdquo;</p>
-                        </div>
-                      ))}
-                    </AutoScroll>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                  {xAvatar ? (
+                    <img src={xAvatar} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
                   ) : (
-                    <p style={{ fontSize: "0.75rem", opacity: 0.7, fontStyle: "italic" }}>No posts synced yet.</p>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
+                    {v.x.handle && (
+                      <div className="pf-mono" style={{ fontSize: "0.72rem", opacity: 0.65, marginTop: 4 }}>{v.x.handle}</div>
+                    )}
+                    {!isBlank(identity.headline) && (
+                      <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.75, marginTop: 4 }}>{identity.headline}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                  <div>
+                    <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>
+                    <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>FOLLOWERS</span>
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.posts != null ? <CountUp value={v.x.posts} /> : "—"}</strong>
+                    <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>POSTS</span>
+                  </div>
+                  {xImpressions != null && (
+                    <div>
+                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={xImpressions} /></strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>IMPRESSIONS</span>
+                    </div>
                   )}
                 </div>
-                <div className="pf-mono flex justify-between pt-3 mt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.1)", fontSize: "0.65rem", opacity: 0.7 }}>
-                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>FOLLOWERS</div>
-                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>{v.x.posts != null ? <CountUp value={v.x.posts} /> : "—"}</strong>POSTS</div>
-                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>—</strong>IMPRESSIONS</div>
-                </div>
+                {xUrl && (
+                  <a href={xUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.08)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                    View X profile →
+                  </a>
+                )}
               </div>
             )}
 
             {/* ── SOCIAL: ZYND MEMORY ── */}
-            {memoryTotal > 0 && (
+            {showMemory && (
               <div
-                style={{ gridColumn: `span ${socialColSpan}`, background: "#0f172a", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
+                style={{ background: "#0f172a", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
               >
                 <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span>● ZYND MEMORY</span>
@@ -807,103 +874,163 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── BOOK A CALL (only when calendlyUrl exists) ── */}
             {calendlyUrl && (
               <div
-                style={{ gridColumn: `span ${socialColSpan}`, background: "linear-gradient(145deg, #1a56db, #1e40af)", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", height: SOCIAL_CARD_H }}
+                className="pf-book-card"
+                style={{ background: "linear-gradient(160deg, #2563eb 0%, #1d4ed8 48%, #1e3a8a 100%)", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, minWidth: 0 }}
               >
-                <div>
-                  <div className="pf-mono mb-3" style={{ fontSize: "0.65rem", fontWeight: 700, opacity: 0.8, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Calendar size={11} /> BOOK A CALL
+                <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", position: "relative" }}>
+                  <span className="flex items-center gap-1.5"><Calendar size={12} /> BOOK A CALL</span>
+                  <span style={{ background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, padding: "3px 8px", fontSize: "0.58rem" }}>OPEN</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16, position: "relative" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Calendar size={20} />
                   </div>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: 6 }}>Schedule time with {firstName}</div>
-                  <div style={{ fontSize: "0.78rem", opacity: 0.8, lineHeight: 1.5, marginBottom: 16 }}>
-                    Book a 20-minute intro call to discuss collaboration, projects, or opportunities.
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>Meet {firstName}</div>
+                    <div style={{ fontSize: "0.72rem", opacity: 0.8, marginTop: 2 }}>20-min intro · collab, projects, ideas</div>
                   </div>
                 </div>
+
+                <div style={{ display: "flex", gap: 6, marginTop: 14, position: "relative" }}>
+                  <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
+                    <Clock size={10} /> 20 MIN
+                  </span>
+                  <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
+                    <Video size={10} /> VIDEO
+                  </span>
+                  <span className="pf-mono" style={{ background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>1:1</span>
+                </div>
+
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 16, position: "relative" }}>
+                  {weekLabels.map((d, i) => (
+                    <div
+                      key={`${d}-${i}`}
+                      style={{
+                        textAlign: "center",
+                        fontSize: "0.58rem",
+                        fontWeight: 700,
+                        padding: "7px 0",
+                        borderRadius: 8,
+                        background: i === todayIdx ? "#fff" : "rgba(255,255,255,0.1)",
+                        color: i === todayIdx ? "#1d4ed8" : "rgba(255,255,255,0.85)",
+                      }}
+                    >
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
                 <a
                   href={calendlyUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 18px", borderRadius: 99, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", fontSize: "0.75rem", fontWeight: 700, color: "#fff", cursor: "pointer", textDecoration: "none" }}
+                  className="pf-book-cta pf-mono"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: "auto", padding: "11px 16px", borderRadius: 12, background: "#fff", fontSize: "0.72rem", fontWeight: 800, color: "#1e3a8a", cursor: "pointer", textDecoration: "none", letterSpacing: "0.04em" }}
                 >
-                  📅 Book 20m Intro →
+                  Book intro call
+                  <span aria-hidden>→</span>
                 </a>
               </div>
             )}
 
-            {/* ── GITHUB STATS (4 col when heatmap exists, else 6 col) ── */}
-            {showGithub && (
-              <div className={`${card_} tc`} style={{ gridColumn: `span ${hasContributions ? 4 : 6}` }}>
-                <div>
-                  <div className={`${label_} pf-mono`}>
-                    <span className="flex items-center gap-1.5"><GithubGlyph size={13} />GITHUB STATS</span>
-                    {githubUrl ? (
-                      <a href={githubUrl} target="_blank" rel="noreferrer" className="hover:underline">@{githubHandle} ↗</a>
-                    ) : (
-                      <span>@{githubHandle}</span>
-                    )}
-                  </div>
-                  {/* Metrics grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                    {v.github.repos != null && (
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
-                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.repos} /></div>
-                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>REPOSITORIES</div>
-                      </div>
-                    )}
-                    {v.github.commits != null && (
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
-                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.commits} /></div>
-                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>COMMITS</div>
-                      </div>
-                    )}
-                    {v.github.stars != null && (
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
-                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.stars} /></div>
-                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>STARS EARNED</div>
-                      </div>
-                    )}
-                    {v.github.followers != null && (
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
-                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.followers} /></div>
-                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>FOLLOWERS</div>
-                      </div>
-                    )}
-                  </div>
-                  {/* Languages */}
-                  {v.github.topLanguages.length > 0 && (
-                    <div style={{ marginBottom: 8 }}>
-                      <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>MOST USED LANGUAGES</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                        {v.github.topLanguages.slice(0, 4).map((lang) => (
-                          <span key={lang} style={{ background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569", fontSize: "0.62rem", fontWeight: 700, padding: "3px 8px", borderRadius: 99 }} className="pf-mono">
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {v.github.activeRepos != null && (
-                  <div className="pf-mono flex justify-between items-center pt-2" style={{ borderTop: "1px dashed #e2e8f0", fontSize: "0.62rem", color: "#94a3b8", marginTop: "auto" }}>
-                    <span style={{ color: "#10b981", fontWeight: 700 }}>● {v.github.activeRepos} Active Repos</span>
-                    {v.github.followers != null && <span>{compact(v.github.followers)} Followers</span>}
-                  </div>
-                )}
-              </div>
+            </div>
             )}
 
-            {/* ── CONTRIBUTION HEATMAP (8 col, only when data) ── */}
-            {showGithub && hasContributions && (
-              <div className={card_} style={{ gridColumn: "span 8" }}>
-                <div className={`${label_} pf-mono`}>
-                  <span>┌ CONTRIBUTION ACTIVITY</span>
-                  {v.contributions?.year && <span>{v.contributions.year} ┐</span>}
+            {/* ── GITHUB: stats + heatmap fill the row; stats stretch if no graph ── */}
+            {showGithub && (
+              <div
+                style={{
+                  gridColumn: "span 12",
+                  display: "grid",
+                  gridTemplateColumns: hasContributions ? "minmax(240px, 4fr) minmax(0, 8fr)" : "1fr",
+                  gap: 16,
+                }}
+              >
+                <div className={`${card_} tc`} style={{ minHeight: hasContributions ? undefined : 220 }}>
+                  <div>
+                    <div className={`${label_} pf-mono`}>
+                      <span className="flex items-center gap-1.5"><GithubGlyph size={13} />GITHUB</span>
+                      {githubUrl ? (
+                        <a href={githubUrl} target="_blank" rel="noreferrer" className="hover:underline">@{githubHandle} ↗</a>
+                      ) : (
+                        <span>@{githubHandle}</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                      <img
+                        src={githubAvatar(githubUrl, 80) ?? `https://github.com/${encodeURIComponent(ghLogin || githubHandle)}.png?size=80`}
+                        alt=""
+                        style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0, background: "#f8fafc" }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a" }}>{identity.name}</div>
+                        {ghBio && (
+                          <div className="pf-clamp-2" style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2, lineHeight: 1.4, whiteSpace: "normal" }}>{ghBio}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: hasContributions ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 8, marginBottom: 12 }}>
+                      {v.github.repos != null && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.repos} /></div>
+                          <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginTop: 4 }}>REPOS</div>
+                        </div>
+                      )}
+                      {v.github.activeRepos != null && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.activeRepos} /></div>
+                          <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginTop: 4 }}>ACTIVE</div>
+                        </div>
+                      )}
+                      {ghContribTotal != null && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={ghContribTotal} /></div>
+                          <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginTop: 4 }}>CONTRIBUTIONS</div>
+                        </div>
+                      )}
+                      {ghFollowers != null && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={ghFollowers} /></div>
+                          <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginTop: 4 }}>FOLLOWERS</div>
+                        </div>
+                      )}
+                      {!hasContributions && ghFollowing != null && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={ghFollowing} /></div>
+                          <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginTop: 4 }}>FOLLOWING</div>
+                        </div>
+                      )}
+                    </div>
+                    {v.github.topLanguages.length > 0 && (
+                      <div>
+                        <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Languages</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {v.github.topLanguages.slice(0, 6).map((lang) => (
+                            <span key={lang} style={{ background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569", fontSize: "0.62rem", fontWeight: 700, padding: "3px 8px", borderRadius: 99 }} className="pf-mono">
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <ContributionHeatmap
-                  levels={v.contributions!.levels}
-                  year={v.contributions!.year}
-                  total={v.contributions!.total}
-                  avgPerDay={v.contributions!.avg_per_day}
-                />
+
+                {hasContributions && contributions && (
+                  <div className={card_}>
+                    <div className={`${label_} pf-mono`}>
+                      <span>CONTRIBUTION ACTIVITY</span>
+                      {contributions.year ? <span>{contributions.year}</span> : null}
+                    </div>
+                    <ContributionHeatmap
+                      levels={contributions.levels}
+                      year={contributions.year}
+                      total={contributions.total}
+                      avgPerDay={contributions.avg_per_day}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

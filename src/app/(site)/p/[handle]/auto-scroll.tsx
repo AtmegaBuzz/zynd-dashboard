@@ -47,6 +47,8 @@ export function AutoScroll({
   const count = items.length;
   const scrollable = count > visible;
   const step = rowHeight + gap;
+  const shown = Math.min(count, visible);
+  const viewportH = shown > 0 ? rowHeight * shown + gap * Math.max(shown - 1, 0) : 0;
 
   useEffect(() => {
     if (!scrollable) return;
@@ -95,12 +97,12 @@ export function AutoScroll({
     </div>
   );
 
-  if (!scrollable) return list;
-
+  // Always clip to the viewport. Without this, long quotes paint over the
+  // next row and look like garbled overlapping text.
   return (
     <div
       className="pf-vscroll"
-      style={{ height: rowHeight * visible + gap * (visible - 1) }}
+      style={{ height: viewportH }}
       onMouseEnter={() => { pausedRef.current = true; }}
       onMouseLeave={() => { pausedRef.current = false; }}
       onFocusCapture={() => { pausedRef.current = true; }}

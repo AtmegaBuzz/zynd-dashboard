@@ -47,6 +47,7 @@ export interface LinkedInStats {
   connections: number | string;
   posts: number | string;
   verified?: boolean;
+  avatar?: string;
 }
 
 export interface XStats {
@@ -54,6 +55,7 @@ export interface XStats {
   followers: number | string;
   posts: number | string;
   impressions: number | string;
+  avatar?: string;
 }
 
 /** `levels` holds one 0–4 intensity per day, oldest first (GitHub-style heatmap). */
@@ -98,6 +100,7 @@ export interface AgentProfileCard {
     top_languages: string[];
     total_commits?: number | string | null;
     loc_added?: number | string | null;
+    followers?: number | string | null;
   } | null;
 
   affiliations?: string | null;
@@ -248,3 +251,58 @@ export async function updateCard(
 }
 
 export { API_BASE as CARDS_API };
+
+export interface GithubExtras {
+  followers: number | null;
+  following: number | null;
+  bio: string | null;
+  contributions: ContributionStats | null;
+}
+
+export async function fetchGithubExtras(login: string): Promise<GithubExtras> {
+  const empty: GithubExtras = { followers: null, following: null, bio: null, contributions: null };
+  if (!login || !/^[A-Za-z0-9-]{1,39}$/.test(login)) return empty;
+
+  const headers = { Accept: "application/json", "User-Agent": "zynd-dashboard" };
+  const opts = { headers, next: { revalidate: 3600 } } as const;
+
+  const userP = fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, opts)
+    .then(async (res) => (res.ok ? res.json() : null))
+    .catch(() => null);
+  const contribP = fetch(
+    `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(login)}?y=last`,
+    opts,
+  )
+    .then(async (res) => (res.ok ? res.json() : null))
+    .catch(() => null);
+
+  const [user, contrib] = await Promise.all([userP, contribP]);
+
+  let contributions: ContributionStats | null = null;
+  const days = contrib?.contributions;
+  if (Array.isArray(days) && days.length > 0) {
+    const totalRaw = contrib?.total;
+    const total =
+      typeof totalRaw === "number"
+        ? totalRaw
+        : typeof totalRaw?.lastYear === "number"
+          ? totalRaw.lastYear
+          : days.reduce((n: number, d: { count?: number }) => n + (d.count ?? 0), 0);
+    contributions = {
+      year: new Date().getFullYear(),
+      total,
+      avg_per_day: days.length ? Math.round((total / days.length) * 10) / 10 : 0,
+      levels: days.map((d: { level?: number }) => {
+        const lvl = Number(d.level ?? 0);
+        return Number.isFinite(lvl) ? Math.min(4, Math.max(0, lvl)) : 0;
+      }),
+    };
+  }
+
+  return {
+    followers: typeof user?.followers === "number" ? user.followers : null,
+    following: typeof user?.following === "number" ? user.following : null,
+    bio: typeof user?.bio === "string" && user.bio.trim() ? user.bio.trim() : null,
+    contributions,
+  };
+}
