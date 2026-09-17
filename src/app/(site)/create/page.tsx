@@ -115,6 +115,46 @@ const QUESTIONS: { id: string; label: string; type: QuestionType; options?: stri
   },
 ];
 
+function commitCustomValues(
+  existing: Set<string>,
+  options: string[] | undefined,
+  raw: string,
+): Set<string> {
+  const have = new Set([...existing].map(s => s.toLowerCase()));
+  const next = new Set(existing);
+  for (const part of raw.split(",")) {
+    const v = part.trim();
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (have.has(key)) continue;
+    const preset = (options ?? []).find(o => o.toLowerCase() === key);
+    next.add(preset ?? v);
+    have.add(key);
+  }
+  return next;
+}
+
+function mergeChipDrafts(
+  selections: Record<string, Set<string>>,
+  customs: Record<string, string>,
+): Record<string, Set<string>> {
+  const out: Record<string, Set<string>> = { ...selections };
+  for (const q of QUESTIONS) {
+    if (q.type !== "chips") continue;
+    const raw = customs[q.id]?.trim();
+    if (!raw) continue;
+    out[q.id] = commitCustomValues(out[q.id] ?? new Set(), q.options, raw);
+  }
+  return out;
+}
+
+function prevQuestionIndex(current: number, skipLocation: boolean): number {
+  let prev = current - 1;
+  const locIdx = QUESTIONS.findIndex(q => q.id === "location");
+  if (skipLocation && prev === locIdx) prev -= 1;
+  return Math.max(0, prev);
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function detectKind(url: string): UrlKind {
   try {
@@ -197,15 +237,11 @@ function TextField({ label, value, onChange, rows, placeholder }: {
 function applyAnswers(
   card: AgentProfileCard,
   selections: Record<string, Set<string>>,
-  customs: Record<string, string>,
   locationInput: string,
 ): AgentProfileCard {
   const c = { ...card, identity: { ...card.identity }, skills: [...card.skills], searchable_facts: [...card.searchable_facts] };
 
-  const joinAnswers = (id: string) => [
-    ...(selections[id] ?? new Set<string>()),
-    ...(customs[id]?.trim() ? [customs[id].trim()] : []),
-  ];
+  const joinAnswers = (id: string) => [...(selections[id] ?? new Set<string>())];
 
   const name = c.identity.name || "This person";
 
@@ -490,9 +526,39 @@ function CreateProfilePageContent() {
   function toggleOption(id: string, opt: string) {
     setSelections(prev => {
       const next = new Set(prev[id]);
-      next.has(opt) ? next.delete(opt) : next.add(opt);
-      return { ...prev, [id]: next };
+      if (next.has(opt)) next.delete(opt);
+      else next.add(opt);
+      const out = { ...prev, [id]: next };
+      selectionsRef.current = out;
+      return out;
     });
+  }
+
+  function commitDraft(id: string, options?: string[]) {
+    const raw = (customRefs.current[id]?.value ?? customsRef.current[id] ?? "").trim();
+    if (!raw) return;
+    const nextSel = {
+      ...selectionsRef.current,
+      [id]: commitCustomValues(selectionsRef.current[id] ?? new Set(), options, raw),
+    };
+    selectionsRef.current = nextSel;
+    setSelections(nextSel);
+    const nextCustoms = { ...customsRef.current, [id]: "" };
+    customsRef.current = nextCustoms;
+    setCustoms(nextCustoms);
+  }
+
+  function onNext() {
+    const q = QUESTIONS[questionIndexRef.current];
+    if (q?.type === "chips") commitDraft(q.id, q.options);
+    advanceQuestion();
+  }
+
+  function retreatQuestion() {
+    const skipLoc = Boolean(pendingCardRef.current?.identity.location);
+    const prev = prevQuestionIndex(questionIndexRef.current, skipLoc);
+    questionIndexRef.current = prev;
+    setQuestionIndex(prev);
   }
 
   // ── Submit ──
@@ -518,7 +584,16 @@ function CreateProfilePageContent() {
   }
 
   function goToReview(rawCard: AgentProfileCard) {
-    const enriched = applyAnswers(rawCard, selectionsRef.current, customsRef.current, locationRef.current);
+    const merged = mergeChipDrafts(selectionsRef.current, customsRef.current);
+    selectionsRef.current = merged;
+    setSelections(merged);
+    setCustoms(p => {
+      const cleared = { ...p };
+      for (const q of QUESTIONS) if (q.type === "chips") cleared[q.id] = "";
+      customsRef.current = cleared;
+      return cleared;
+    });
+    const enriched = applyAnswers(rawCard, merged, locationRef.current);
     setCard(enriched);
     setPhase("review");
   }
@@ -586,9 +661,10 @@ function CreateProfilePageContent() {
 
       if (!jobId) return;
       const userAnswers: Record<string, string> = {};
+      const chipAnswers = mergeChipDrafts(selections, customs);
       for (const q of QUESTIONS) {
         if (q.type === "chips") {
-          const parts = [...(selections[q.id] ?? new Set<string>()), ...(customs[q.id]?.trim() ? [customs[q.id].trim()] : [])];
+          const parts = [...(chipAnswers[q.id] ?? new Set<string>())];
           if (parts.length > 0) userAnswers[q.id] = parts.join(", ");
         } else if (q.id === "location" && locationInput.trim()) {
           userAnswers["location"] = locationInput.trim();
@@ -1202,6 +1278,10 @@ function CreateProfilePageContent() {
                         <span className="zc-spin" style={{ width: "18px", height: "18px", borderRadius: "50%", border: `2px solid ${T.dotOff}`, borderTopColor: T.accent, display: "block" }} />
                         <span style={{ font: `400 13px/1 ${SANS}`, color: T.muted }}>Finishing up…</span>
                       </div>
+                      <button type="button" className="zc-ghost" onClick={retreatQuestion}
+                        style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "14px 26px", font: `500 15px/1 ${SANS}`, color: T.soft, cursor: "pointer" }}>
+                        ← Back
+                      </button>
                     </div>
                   );
                 }
@@ -1226,7 +1306,7 @@ function CreateProfilePageContent() {
                     <div className="zc-question">{q.label}</div>
 
                     {q.type === "chips" && q.options && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
                         {q.options.map(opt => {
                           const on = (selections[q.id] ?? new Set<string>()).has(opt);
                           return (
@@ -1242,22 +1322,57 @@ function CreateProfilePageContent() {
                             </button>
                           );
                         })}
+                        {[...(selections[q.id] ?? new Set<string>())]
+                          .filter(s => !q.options!.some(o => o.toLowerCase() === s.toLowerCase()))
+                          .map(custom => (
+                            <button key={custom} type="button" className="zc-opt"
+                              onClick={() => toggleOption(q.id, custom)}
+                              style={{
+                                borderRadius: "999px", padding: "12px 16px", font: `500 15px/1 ${SANS}`,
+                                background: T.accent, border: `1px solid ${T.accent}`, color: "#fff",
+                                display: "inline-flex", alignItems: "center", gap: "8px",
+                              }}>
+                              {custom}
+                              <span aria-hidden style={{ font: `400 15px/1 ${SANS}`, opacity: 0.8 }}>×</span>
+                            </button>
+                          ))}
                         <input
                           ref={el => { customRefs.current[q.id] = el; }}
                           type="text"
                           value={customs[q.id] ?? ""}
-                          onChange={e => setCustoms(p => ({ ...p, [q.id]: e.target.value }))}
-                          placeholder="Other…"
+                          onChange={e => setCustoms(p => {
+                            const out = { ...p, [q.id]: e.target.value };
+                            customsRef.current = out;
+                            return out;
+                          })}
+                          placeholder="Type another…"
                           style={{
                             borderRadius: "999px", padding: "12px 19px", font: `400 15px/1 ${SANS}`,
                             background: T.surface,
                             border: `1px dashed ${customs[q.id] ? T.accent : T.dashed}`,
-                            color: T.ink, outline: "none", width: "128px",
+                            color: T.ink, outline: "none", width: "148px",
                             transition: "border-color .12s, width .2s",
                           }}
-                          onFocus={e => (e.target.style.width = "184px")}
-                          onBlur={e => (e.target.style.width = customs[q.id] ? "184px" : "128px")}
+                          onFocus={e => (e.target.style.width = "200px")}
+                          onBlur={e => (e.target.style.width = customs[q.id] ? "200px" : "148px")}
+                          onKeyDown={e => {
+                            if (e.key !== "Enter") return;
+                            e.preventDefault();
+                            commitDraft(q.id, q.options);
+                          }}
                         />
+                        <button type="button" className="zc-opt"
+                          onClick={() => commitDraft(q.id, q.options)}
+                          disabled={!(customs[q.id] ?? "").trim()}
+                          aria-label="Add custom option"
+                          style={{
+                            borderRadius: "999px", width: "42px", height: "42px", padding: 0,
+                            font: `600 20px/1 ${SANS}`,
+                            background: (customs[q.id] ?? "").trim() ? T.accent : T.surface,
+                            border: `1px solid ${(customs[q.id] ?? "").trim() ? T.accent : T.border}`,
+                            color: (customs[q.id] ?? "").trim() ? "#fff" : T.faint,
+                            cursor: (customs[q.id] ?? "").trim() ? "pointer" : "default",
+                          }}>+</button>
                       </div>
                     )}
 
@@ -1303,15 +1418,28 @@ function CreateProfilePageContent() {
                       </div>
                     )}
 
-                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px" }}>
-                      <button type="button" className="zc-ghost" onClick={advanceQuestion}
-                        style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "14px 26px", font: `500 15px/1 ${SANS}`, color: T.soft, cursor: "pointer" }}>
-                        Skip
+                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                      <button type="button" className="zc-ghost" onClick={retreatQuestion}
+                        disabled={questionIndex === 0}
+                        style={{
+                          background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px",
+                          padding: "14px 26px", font: `500 15px/1 ${SANS}`,
+                          color: questionIndex === 0 ? T.faint : T.soft,
+                          cursor: questionIndex === 0 ? "default" : "pointer",
+                          visibility: questionIndex === 0 ? "hidden" : "visible",
+                        }}>
+                        ← Back
                       </button>
-                      <button type="button" className="zc-primary" onClick={advanceQuestion}
-                        style={{ background: T.accent, border: "none", borderRadius: "999px", padding: "14px 26px", display: "flex", alignItems: "center", gap: "11px", font: `600 15px/1 ${DISPLAY}`, color: "#fff", cursor: "pointer" }}>
-                        {isLast ? "Done" : "Next"} <span style={{ font: `400 15px/1 ${SANS}` }}>→</span>
-                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button type="button" className="zc-ghost" onClick={onNext}
+                          style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "14px 26px", font: `500 15px/1 ${SANS}`, color: T.soft, cursor: "pointer" }}>
+                          Skip
+                        </button>
+                        <button type="button" className="zc-primary" onClick={onNext}
+                          style={{ background: T.accent, border: "none", borderRadius: "999px", padding: "14px 26px", display: "flex", alignItems: "center", gap: "11px", font: `600 15px/1 ${DISPLAY}`, color: "#fff", cursor: "pointer" }}>
+                          {isLast ? "Done" : "Next"} <span style={{ font: `400 15px/1 ${SANS}` }}>→</span>
+                        </button>
+                      </div>
                     </div>
 
                     {urls.length > 0 && (
