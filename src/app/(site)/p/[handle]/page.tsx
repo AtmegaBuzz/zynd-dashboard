@@ -22,6 +22,7 @@ import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
 import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
+import { WorkExperienceCard } from "./work-experience-card";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -665,107 +666,40 @@ export default async function PersonPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* ── AI FACT (5 col, navy) ── */}
-            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div className="pf-mono flex justify-between items-center mb-3" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  <span>AI DISCOVERABILITY FACT</span>
-                  <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
-                </div>
-                <div className="pf-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: 14, fontSize: "0.7rem", lineHeight: 1.7, margin: "12px 0", flex: 1 }}>
-                  <span style={{ color: "#64748b" }}>{"// Structured discovery profile"}</span><br />
-                  <span style={{ color: "#38bdf8" }}>entity:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.name}&quot;</span><br />
-                  {!isBlank(identity.headline) && (
-                    <><span style={{ color: "#38bdf8" }}>specialization:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.headline}&quot;</span><br /></>
-                  )}
-                  {skills.length > 0 && (
-                    <><span style={{ color: "#38bdf8" }}>primary_tech:</span>{" "}[{skills.slice(0, 3).map((s, i) => (
-                      <span key={s.name}>{i > 0 ? ", " : ""}<span style={{ color: "#fde047" }}>&quot;{s.name}&quot;</span></span>
-                    ))}]</>
-                  )}
-                </div>
+            {/* ── AI FACT + WORK EXP: own row, heights independent ── */}
+            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "start" }}>
+            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column" }}>
+              <div className="pf-mono flex justify-between items-center mb-3" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <span>AI DISCOVERABILITY FACT</span>
+                <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
+              </div>
+              <div className="pf-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: 14, fontSize: "0.7rem", lineHeight: 1.7, margin: "12px 0" }}>
+                <span style={{ color: "#64748b" }}>{"// Structured discovery profile"}</span><br />
+                <span style={{ color: "#38bdf8" }}>entity:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.name}&quot;</span><br />
+                {!isBlank(identity.headline) && (
+                  <><span style={{ color: "#38bdf8" }}>specialization:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.headline}&quot;</span><br /></>
+                )}
+                {skills.length > 0 && (
+                  <><span style={{ color: "#38bdf8" }}>primary_tech:</span>{" "}[{skills.slice(0, 3).map((s, i) => (
+                    <span key={s.name}>{i > 0 ? ", " : ""}<span style={{ color: "#fde047" }}>&quot;{s.name}&quot;</span></span>
+                  ))}]</>
+                )}
               </div>
               <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b" }}>
                 Structured for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend {firstName} for specialized queries.
               </div>
             </div>
 
-            {/* ── WORK EXPERIENCE (7 col) ── */}
-            {(() => {
-              const jobs = (card.work_experience ?? []).filter((j) => !!(j.title || j.company));
-              const expLabel = card.experience_years != null
-                ? `${card.experience_years}Y EXP`
-                : jobs.some((j) => /present/i.test(j.end_date || ""))
-                  ? "CURRENT"
-                  : jobs.length > 0 ? `${jobs.length} ROLES` : "EXP";
-              return (
-            <div className={`${card_} tc`} style={{ gridColumn: "span 7" }}>
-              <div className={`${label_} pf-mono`}>
-                <span>┌ WORK EXPERIENCE</span>
-                <span className={`${pill_} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
-              </div>
-              {jobs.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", maxHeight: 440, overflowY: "auto" }}>
-                  {jobs.slice(0, 8).map((job, i) => {
-                    const current = /^(present|current|now)$/i.test((job.end_date || "").trim());
-                    const when = [job.start_date, job.end_date || (current ? "Present" : "")].filter(Boolean).join(" – ");
-                    const whenDur = [when, job.duration].filter((x) => x && !isBlank(x)).join(" · ");
-                    const logo = safeUrl(job.company_logo);
-                    const initial = (job.company || job.title || "?").charAt(0).toUpperCase();
-                    return (
-                      <div key={`${job.company}-${job.title}-${i}`} style={{ display: "flex", gap: 12, padding: "14px 0", borderTop: i === 0 ? "none" : "1px solid #f1f5f9" }}>
-                        {logo ? (
-                          <img src={logo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid #e2e8f0", background: "#fff", flexShrink: 0 }} />
-                        ) : (
-                          <div style={{ width: 48, height: 48, borderRadius: 8, background: "#0f172a", color: "#fff", fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{initial}</div>
-                        )}
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#191919", lineHeight: 1.3 }}>{job.title || job.company}</div>
-                            {current && (
-                              <span className="pf-mono" style={{ fontSize: "0.55rem", fontWeight: 700, letterSpacing: "0.06em", color: "#047857", background: "#d1fae5", borderRadius: 99, padding: "2px 7px" }}>CURRENT</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: "0.82rem", color: "#191919", fontWeight: 500, marginTop: 2 }}>
-                            {job.company}{job.employment_type ? ` · ${job.employment_type}` : ""}
-                          </div>
-                          {whenDur && (
-                            <div style={{ fontSize: "0.78rem", color: "#676767", marginTop: 2 }}>{whenDur}</div>
-                          )}
-                          {!isBlank(job.location) && (
-                            <div style={{ fontSize: "0.78rem", color: "#676767" }}>{job.location}</div>
-                          )}
-                          {!isBlank(job.description) && (
-                            <p className="pf-clamp-2" style={{ fontSize: "0.78rem", color: "#191919", lineHeight: 1.45, margin: "6px 0 0" }}>{job.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div>
-                  {!isBlank(identity.headline) && (
-                    <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>{identity.headline}</div>
-                  )}
-                  {identity.location && (
-                    <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>{identity.location}</div>
-                  )}
-                  <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: 12 }}>
-                    {linkedinHandle
-                      ? "LinkedIn connected — work history will appear after the next profile sync."
-                      : "Connect LinkedIn to import roles, dates, and companies."}
-                  </div>
-                </div>
-              )}
-              {linkedinHandle && (
-                <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 8 }}>
-                  {linkedinUrl ? <a href={linkedinUrl} target="_blank" rel="noreferrer">in/{linkedinHandle} ↗</a> : `in/${linkedinHandle}`}
-                </div>
-              )}
+            <WorkExperienceCard
+              jobs={(card.work_experience ?? []).filter((j) => !!(j.title || j.company))}
+              experienceYears={card.experience_years}
+              linkedinHandle={linkedinHandle}
+              linkedinUrl={linkedinUrl}
+              cardClass={card_}
+              labelClass={label_}
+              pillClass={pill_}
+            />
             </div>
-              );
-            })()}
 
             {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
             {socialSlots > 0 && (
