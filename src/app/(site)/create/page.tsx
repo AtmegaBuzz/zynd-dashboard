@@ -300,12 +300,21 @@ function CreateProfilePageContent() {
   // Supabase allowlists match redirect URLs exactly, and a `?next=` query
   // breaks that match — GoTrue then falls back to its Site URL (localhost).
   const loginRedirect = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`;
+  // Keep the query string (e.g. the `?url=` seeded by /agent-card) so the
+  // pasted link survives the OAuth round trip.
+  const setNextCookie = () => {
+    const next =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/create";
+    document.cookie = `zynd_next=${encodeURIComponent(next)}; path=/; samesite=lax`;
+  };
   const login = () => {
-    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    setNextCookie();
     createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: loginRedirect } });
   };
   const loginWithGithub = () => {
-    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    setNextCookie();
     createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
   };
   const loginWithLinkedin = () => {
@@ -414,6 +423,17 @@ function CreateProfilePageContent() {
         setPhase("error");
       });
   }, [authenticated, editHandle]);
+
+  // Seeded from the /agent-card paste bar: `?url=<link>` lands here as the
+  // first source chip so the visitor never retypes what they already pasted.
+  const seededUrl = searchParams.get("url");
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !seededUrl) return;
+    seededRef.current = true;
+    seededUrl.split(/\s+/).filter(Boolean).forEach(addUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seededUrl]);
 
   // ── URL chip helpers ──
   function addUrl(raw: string) {
