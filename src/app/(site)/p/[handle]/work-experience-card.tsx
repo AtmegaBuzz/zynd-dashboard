@@ -98,11 +98,15 @@ export function WorkExperienceCard({
   pillClass: string;
 }) {
   const [showPast, setShowPast] = useState(false);
+  const PREVIEW = 4;
+  const ranked = [
+    ...jobs.filter((j) => isCurrent(j.end_date)),
+    ...jobs.filter((j) => !isCurrent(j.end_date)),
+  ];
+  const primary = ranked.slice(0, PREVIEW);
+  const extra = ranked.slice(PREVIEW);
+  const shown = showPast ? ranked : primary;
   const current = jobs.filter((j) => isCurrent(j.end_date));
-  const past = jobs.filter((j) => !isCurrent(j.end_date));
-  const primary = current.length > 0 ? current : jobs.slice(0, 2);
-  const extra = current.length > 0 ? past : jobs.slice(2);
-  const shown = showPast ? [...primary, ...extra] : primary;
   const expLabel = experienceYears != null
     ? `${experienceYears}Y EXP`
     : current.length > 0

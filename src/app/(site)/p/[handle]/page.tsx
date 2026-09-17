@@ -24,7 +24,7 @@ import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 import { WorkExperienceCard } from "./work-experience-card";
 import { SkillBrandIcon } from "./skill-icon";
-import { HeroAgentBar } from "./hero-agent-bar";
+import { HeroAskPanel } from "./hero-agent-bar";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -438,13 +438,9 @@ export default async function PersonPage({ params }: PageProps) {
   })();
   const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
   const firstName = identity.name?.split(" ")[0] || "They";
-  const citation = (() => {
-    const raw = (card.citation_snippet || "").trim();
-    if (isBlank(raw)) return null;
-    const summary = (card.summary || "").trim().toLowerCase();
-    if (summary && (summary === raw.toLowerCase() || summary.startsWith(raw.toLowerCase()))) return null;
-    return raw;
-  })();
+  const nowJob = (card.work_experience ?? []).find((j) =>
+    /^(present|current|now)$/i.test((j.end_date || "").trim()) && (j.title || j.company),
+  );
   const helpWith = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
 
   let isOwner = false;
@@ -495,7 +491,9 @@ export default async function PersonPage({ params }: PageProps) {
       />
       <script
         type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(card)).replace(/</g, "\\u003c") }}
+        suppressHydrationWarning
       />
 
       <style>{`
@@ -526,9 +524,7 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-book-card::before { content:''; position:absolute; width:220px; height:220px; right:-60px; top:-70px; background:radial-gradient(circle, rgba(255,255,255,0.22), transparent 68%); pointer-events:none; }
         .pf-book-cta { transition: background .15s, transform .15s, box-shadow .15s; }
         .pf-book-cta:hover { background:#f8fafc !important; text-decoration:none !important; transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,0.18); }
-        .pf-hero-pulse { width:7px; height:7px; border-radius:50%; background:#bbf7d0; box-shadow:0 0 0 0 rgba(187,247,208,0.7); animation:pfPulse 1.8s ease-out infinite; }
-        @keyframes pfPulse { 70% { box-shadow:0 0 0 8px rgba(187,247,208,0); } 100% { box-shadow:0 0 0 0 rgba(187,247,208,0); } }
-        @media (prefers-reduced-motion: reduce) { .pf-hero-pulse { animation:none; } }
+        .pf-hero-h { font-size:0.78rem; color:#e0e7ff; font-weight:600; line-height:1.35; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
       `}</style>
 
       <div className="pf-page" style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}>
@@ -556,110 +552,100 @@ export default async function PersonPage({ params }: PageProps) {
           {/* ── MAIN GRID ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
 
-            {/* ── HERO CARD (4 col) — identity plaque, not a recap of other cards ── */}
+            {/* ── HERO CARD (4 col) ── */}
             <div
-              style={{ gridColumn: "span 4", background: "linear-gradient(160deg, #7c73ff 0%, #5b54e8 55%, #4f46e5 100%)", borderRadius: 20, padding: "22px 22px 18px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 420, position: "relative", overflow: "hidden" }}
+              style={{ gridColumn: "span 4", background: "#6d64f6", borderRadius: 20, padding: "18px", color: "#fff", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
             >
-              <div style={{ position: "absolute", right: -48, bottom: -56, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)", pointerEvents: "none" }} />
-              <div>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                <div style={{ position: "relative", width: 104, height: 104, flexShrink: 0 }}>
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt={identity.name}
-                      style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", objectFit: "cover" }}
+                      style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.35)", objectFit: "cover", display: "block" }}
                     />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 }}>
+                    <div style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800 }}>
                       {initials}
                     </div>
                   )}
                   {verified && (
-                    <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 999, padding: "4px 8px", fontSize: "0.55rem", fontWeight: 800, letterSpacing: "0.08em" }}>
-                      <BadgeCheck size={12} color="#FBC46A" /> VERIFIED
+                    <span
+                      title="Verified on Zynd"
+                      aria-label="Verified on Zynd"
+                      style={{
+                        position: "absolute",
+                        right: -3,
+                        bottom: -3,
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        background: "#fff",
+                        border: "2.5px solid #6d64f6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 10px rgba(15,23,42,0.2)",
+                      }}
+                    >
+                      <BadgeCheck size={18} color="#D97706" strokeWidth={2.25} />
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: "0.78rem", fontWeight: 700, opacity: 0.88 }}>I&apos;m,</div>
-                <div style={{ fontSize: "1.85rem", fontWeight: 800, lineHeight: 1.05, margin: "4px 0 6px" }}>
-                  {nameLines.map((line, i) => <div key={i}>{line}</div>)}
-                </div>
-                {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "0.78rem", color: "#e0e7ff", fontWeight: 600, lineHeight: 1.35 }}>
-                    {identity.headline}
+                <div style={{ minWidth: 0, flex: 1, paddingTop: 4 }}>
+                  <div style={{ fontSize: "0.72rem", fontWeight: 600, opacity: 0.8 }}>I&apos;m</div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.05, margin: "2px 0 0", display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap" }}>
+                    <span>{nameLines.map((line, i) => <span key={i}>{line}{i < nameLines.length - 1 ? " " : ""}</span>)}</span>
                   </div>
-                )}
-                {(!isBlank(identity.location) || !isBlank(card.availability)) && (
-                  <div className="pf-mono" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: "0.62rem", color: "#c7d2fe", fontWeight: 700, letterSpacing: "0.04em", flexWrap: "wrap" }}>
-                    {!isBlank(card.availability) && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                        <span className="pf-hero-pulse" />
-                        {/^open/i.test(card.availability.trim()) ? card.availability : `OPEN TO ${card.availability}`}
-                      </span>
-                    )}
-                    {!isBlank(identity.location) && !isBlank(card.availability) && <span style={{ opacity: 0.5 }}>·</span>}
-                    {!isBlank(identity.location) && <span>{identity.location}</span>}
-                  </div>
-                )}
-
-                <div style={{ marginTop: 16, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 14, padding: "12px 13px" }}>
-                  <div className="pf-mono" style={{ fontSize: "0.55rem", letterSpacing: "0.12em", fontWeight: 800, color: "#c7d2fe", marginBottom: 8 }}>
-                    AGENT ADDRESS
-                  </div>
-                  {citation && (
-                    <p style={{ margin: "0 0 10px", fontSize: "0.78rem", lineHeight: 1.45, fontWeight: 600, color: "#fff", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {citation}
-                    </p>
-                  )}
-                  {!citation && (
-                    <p style={{ margin: "0 0 10px", fontSize: "0.74rem", lineHeight: 1.45, fontWeight: 600, color: "rgba(255,255,255,0.88)" }}>
-                      Query this card. Agents and people get the same source of truth.
-                    </p>
-                  )}
-                  {helpWith.length > 0 && (
-                    <div>
-                      <div className="pf-mono" style={{ fontSize: "0.52rem", letterSpacing: "0.1em", fontWeight: 800, color: "#c7d2fe", marginBottom: 6 }}>
-                        BEST ASKED ABOUT
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {helpWith.map((item) => (
-                          <span key={item} className="pf-mono" style={{ background: "rgba(255,255,255,0.16)", borderRadius: 999, padding: "3px 8px", fontSize: "0.58rem", fontWeight: 700 }}>
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <HeroAgentBar handle={card.handle || card.id} permalink={permalink} firstName={firstName} />
                 </div>
               </div>
+              {!isBlank(identity.headline) && (
+                <div className="pf-hero-h" style={{ marginTop: 12 }}>{identity.headline}</div>
+              )}
+              {(nowJob || !isBlank(identity.location)) && (
+                <div style={{ marginTop: 8, fontSize: "0.72rem", color: "rgba(255,255,255,0.78)", fontWeight: 600, lineHeight: 1.4 }}>
+                  {nowJob && <div>{[nowJob.title, nowJob.company].filter(Boolean).join(" · ")}</div>}
+                  {!isBlank(identity.location) && <div style={{ fontWeight: 500, opacity: 0.85 }}>{identity.location}</div>}
+                </div>
+              )}
+              {helpWith.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 10 }}>
+                  {helpWith.map((item) => (
+                    <span key={item} style={{ background: "rgba(255,255,255,0.16)", borderRadius: 999, padding: "3px 8px", fontSize: "0.62rem", fontWeight: 600 }}>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-              <div>
-                <div style={{ display: "flex", gap: 8, margin: "16px 0 10px" }}>
+              <HeroAskPanel firstName={firstName} handle={card.handle || handle} permalink={permalink} />
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   {identity.links?.x && (
-                    <a href={safeUrl(identity.links.x) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="X">
-                      <XGlyph size={13} />
+                    <a href={safeUrl(identity.links.x) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="X">
+                      <XGlyph size={12} />
                     </a>
                   )}
                   {identity.links?.github && (
-                    <a href={safeUrl(identity.links.github) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="GitHub">
-                      <GithubGlyph size={14} />
+                    <a href={safeUrl(identity.links.github) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="GitHub">
+                      <GithubGlyph size={13} />
                     </a>
                   )}
                   {identity.links?.linkedin && (
-                    <a href={safeUrl(identity.links.linkedin) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="LinkedIn">
-                      <LinkedinGlyph size={14} />
+                    <a href={safeUrl(identity.links.linkedin) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="LinkedIn">
+                      <LinkedinGlyph size={13} />
                     </a>
                   )}
                 </div>
-                <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#c7d2fe" }}>
+                <div className="pf-mono" style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.62)" }}>
                   {syncedAt && <>Updated {syncedAt}</>}
                 </div>
               </div>
             </div>
 
             {/* ── RIGHT STACK: Dossier + Signals (8 col) ── */}
-            <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
 
               {/* Dossier */}
               {!isBlank(card.summary) && (
@@ -773,7 +759,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
             {socialSlots > 0 && (
-            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${socialSlots}, minmax(0, 1fr))`, gap: 16, alignItems: "start" }}>
+            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${Math.max(socialSlots, 2)}, minmax(0, 1fr))`, gap: 16, alignItems: "start" }}>
 
             {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
@@ -982,11 +968,11 @@ export default async function PersonPage({ params }: PageProps) {
                 style={{
                   gridColumn: "span 12",
                   display: "grid",
-                  gridTemplateColumns: hasContributions ? "minmax(240px, 4fr) minmax(0, 8fr)" : "1fr",
+                  gridTemplateColumns: hasContributions ? "minmax(240px, 4fr) minmax(0, 8fr)" : "minmax(0, 1fr) minmax(0, 1fr)",
                   gap: 16,
                 }}
               >
-                <div className={`${card_} tc`} style={{ minHeight: hasContributions ? undefined : 220 }}>
+                <div className={`${card_} tc`}>
                   <div>
                     <div className={`${label_} pf-mono`}>
                       <span className="flex items-center gap-1.5"><GithubGlyph size={13} />GITHUB</span>
@@ -1115,7 +1101,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── PROJECTS + SKILLS ── */}
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: v.projects.length > 0 && skills.length > 0 ? "1fr 1fr" : "1fr", gap: 16, alignItems: "start" }}>
+              <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16, alignItems: "start" }}>
 
                   {v.projects.length > 0 && (
                     <div className={`${card_} tc`} style={{ justifyContent: "flex-start" }}>
