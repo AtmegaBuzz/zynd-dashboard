@@ -110,37 +110,41 @@ export function WorkExperienceCard({
       : jobs.length > 0 ? `${jobs.length} ROLES` : "EXP";
 
   return (
-    <div className={`${cardClass} tc`} style={{ gridColumn: "span 7", justifyContent: "flex-start" }}>
-      <div className={`${labelClass} pf-mono`}>
-        <span>┌ WORK EXPERIENCE</span>
-        <span className={`${pillClass} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
+    <div className={`${cardClass} tc`} style={{ gridColumn: "span 7", height: "100%", justifyContent: "space-between" }}>
+      <div>
+        <div className={`${labelClass} pf-mono`}>
+          <span>┌ WORK EXPERIENCE</span>
+          <span className={`${pillClass} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
+        </div>
+        {shown.length > 0 ? (
+          shown.map((job, i) => (
+            <JobRow key={`${job.company}-${job.title}-${i}`} job={job} first={i === 0} />
+          ))
+        ) : (
+          <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+            {linkedinHandle
+              ? "LinkedIn connected — work history will appear after the next profile sync."
+              : "Connect LinkedIn to import roles, dates, and companies."}
+          </div>
+        )}
       </div>
-      {shown.length > 0 ? (
-        shown.map((job, i) => (
-          <JobRow key={`${job.company}-${job.title}-${i}`} job={job} first={i === 0} />
-        ))
-      ) : (
-        <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-          {linkedinHandle
-            ? "LinkedIn connected — work history will appear after the next profile sync."
-            : "Connect LinkedIn to import roles, dates, and companies."}
-        </div>
-      )}
-      {extra.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowPast((v) => !v)}
-          className="pf-mono"
-          style={{ marginTop: 4, fontSize: "0.68rem", fontWeight: 700, color: "#4f46e5", background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left" }}
-        >
-          {showPast ? "Hide previous experience" : `See previous experience (${extra.length})`}
-        </button>
-      )}
-      {linkedinHandle && (
-        <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 4 }}>
-          {linkedinUrl ? <a href={linkedinUrl} target="_blank" rel="noreferrer">in/{linkedinHandle} ↗</a> : `in/${linkedinHandle}`}
-        </div>
-      )}
+      <div>
+        {extra.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowPast((v) => !v)}
+            className="pf-mono"
+            style={{ marginTop: 4, fontSize: "0.68rem", fontWeight: 700, color: "#4f46e5", background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left" }}
+          >
+            {showPast ? "Hide previous experience" : `See previous experience (${extra.length})`}
+          </button>
+        )}
+        {linkedinHandle && (
+          <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 4 }}>
+            {linkedinUrl ? <a href={linkedinUrl} target="_blank" rel="noreferrer">in/{linkedinHandle} ↗</a> : `in/${linkedinHandle}`}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

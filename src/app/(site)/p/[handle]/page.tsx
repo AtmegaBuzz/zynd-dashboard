@@ -666,29 +666,58 @@ export default async function PersonPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* ── AI FACT + WORK EXP: own row, heights independent ── */}
-            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "start" }}>
-            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column" }}>
-              <div className="pf-mono flex justify-between items-center mb-3" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {/* ── AI FACT + WORK EXP: equal height, fact card fills ── */}
+            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
+            {(() => {
+              const q = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
+              const arr = (items: string[]) => `[${items.map(q).join(", ")}]`;
+              const currentRoles = (card.work_experience ?? [])
+                .filter((j) => /^(present|current|now)$/i.test((j.end_date || "").trim()) && (j.title || j.company))
+                .map((j) => j.title || j.company)
+                .slice(0, 3);
+              const tech = skills.slice(0, 5).map((s) => s.name);
+              const industries = (card.industries ?? []).filter((x) => !isBlank(x)).slice(0, 4);
+              const help = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
+              return (
+            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+              <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 <span>AI DISCOVERABILITY FACT</span>
                 <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
               </div>
-              <div className="pf-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: 14, fontSize: "0.7rem", lineHeight: 1.7, margin: "12px 0" }}>
-                <span style={{ color: "#64748b" }}>{"// Structured discovery profile"}</span><br />
-                <span style={{ color: "#38bdf8" }}>entity:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.name}&quot;</span><br />
+              <div className="pf-mono" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", fontSize: "0.72rem", lineHeight: 1.75, margin: "14px 0 0", flex: 1 }}>
+                <div style={{ color: "#64748b", marginBottom: 8 }}>{"// structured discovery profile"}</div>
+                <div><span style={{ color: "#38bdf8" }}>entity</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.name)}</span></div>
                 {!isBlank(identity.headline) && (
-                  <><span style={{ color: "#38bdf8" }}>specialization:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.headline}&quot;</span><br /></>
+                  <div><span style={{ color: "#38bdf8" }}>role</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.headline)}</span></div>
                 )}
-                {skills.length > 0 && (
-                  <><span style={{ color: "#38bdf8" }}>primary_tech:</span>{" "}[{skills.slice(0, 3).map((s, i) => (
-                    <span key={s.name}>{i > 0 ? ", " : ""}<span style={{ color: "#fde047" }}>&quot;{s.name}&quot;</span></span>
-                  ))}]</>
+                {!isBlank(identity.location) && (
+                  <div><span style={{ color: "#38bdf8" }}>location</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.location)}</span></div>
+                )}
+                {card.experience_years != null && (
+                  <div><span style={{ color: "#38bdf8" }}>experience</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#86efac" }}>{card.experience_years}</span><span style={{ color: "#94a3b8" }}> years</span></div>
+                )}
+                {!isBlank(card.availability) && (
+                  <div><span style={{ color: "#38bdf8" }}>availability</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(card.availability)}</span></div>
+                )}
+                {currentRoles.length > 0 && (
+                  <div><span style={{ color: "#38bdf8" }}>current_roles</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{arr(currentRoles)}</span></div>
+                )}
+                {tech.length > 0 && (
+                  <div><span style={{ color: "#38bdf8" }}>primary_tech</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{arr(tech)}</span></div>
+                )}
+                {industries.length > 0 && (
+                  <div><span style={{ color: "#38bdf8" }}>industries</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{arr(industries)}</span></div>
+                )}
+                {help.length > 0 && (
+                  <div><span style={{ color: "#38bdf8" }}>can_help_with</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{arr(help)}</span></div>
                 )}
               </div>
-              <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b" }}>
-                Structured for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend {firstName} for specialized queries.
+              <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 12, lineHeight: 1.5 }}>
+                Indexed for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend {firstName}.
               </div>
             </div>
+              );
+            })()}
 
             <WorkExperienceCard
               jobs={(card.work_experience ?? []).filter((j) => !!(j.title || j.company))}
