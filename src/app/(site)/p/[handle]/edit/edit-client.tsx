@@ -766,15 +766,20 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
               </div>
               {(draft.work_experience ?? []).length > 0 ? (
                 <div className="flex-1 space-y-0 divide-y divide-gray-100 overflow-y-auto max-h-[300px] pr-1">
-                  {(draft.work_experience ?? []).slice(0, 6).map((job, i) => (
+                  {(draft.work_experience ?? []).slice(0, 8).map((job, i) => (
                     <div key={i} className="flex gap-3.5 py-4 first:pt-0">
-                      <div className="shrink-0 w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center">
-                        <span className="text-[11px] font-bold text-slate-500">{(job.company || job.title || "?").charAt(0).toUpperCase()}</span>
-                      </div>
+                      {job.company_logo ? (
+                        <img src={job.company_logo} alt="" className="shrink-0 w-10 h-10 rounded-lg object-cover border border-slate-200 bg-white" />
+                      ) : (
+                        <div className="shrink-0 w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[13px] font-bold">
+                          {(job.company || job.title || "?").charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-[#0B0B0B] text-[13px]">{job.title}</div>
-                        <div className="text-[12px] text-slate-600 mt-0.5">{job.company}</div>
-                        <div className="text-[11px] font-mono text-[#8E8E88] mt-0.5">{[job.start_date, job.end_date].filter(Boolean).join(" – ")}</div>
+                        <div className="text-[12px] text-slate-600 mt-0.5">{job.company}{job.employment_type ? ` · ${job.employment_type}` : ""}</div>
+                        <div className="text-[11px] text-[#676767] mt-0.5">{[job.start_date, job.end_date].filter(Boolean).join(" – ")}{job.duration ? ` · ${job.duration}` : ""}</div>
+                        {job.location && <div className="text-[11px] text-[#676767]">{job.location}</div>}
                       </div>
                     </div>
                   ))}

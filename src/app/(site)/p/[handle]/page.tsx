@@ -108,7 +108,7 @@ const OBSESSION_CARDS: {
 }[] = [
   { key: "love_talking_about", label: "Love Talking About", unit: "TOPICS", card: "bg-[#bbf7d0] border border-[#86efac] text-[#064e3b]", chip: "bg-white text-[#064e3b]" },
   { key: "working_on", label: "Working On", unit: "TRACKS", card: "bg-[#fef08a] border border-[#fde047] text-[#78350f]", chip: "bg-white text-[#78350f]" },
-  { key: "connect_with", label: "Connect With", unit: "PEOPLE", card: "bg-[#a5b4fc] border border-[#818cf8] text-white", chip: "bg-white/25 text-white" },
+  { key: "connect_with", label: "Connect With", unit: "PEOPLE", card: "bg-[#c7d2fe] border border-[#818cf8] text-[#1e1b4b]", chip: "bg-white text-[#312e81]" },
 ];
 
 /* ─── brand glyphs ──────────────────────────────────────────────────────── */
@@ -690,40 +690,81 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* ── WORK EXPERIENCE (7 col) ── */}
+            {(() => {
+              const jobs = (card.work_experience ?? []).filter((j) => !!(j.title || j.company));
+              const expLabel = card.experience_years != null
+                ? `${card.experience_years}Y EXP`
+                : jobs.some((j) => /present/i.test(j.end_date || ""))
+                  ? "CURRENT"
+                  : jobs.length > 0 ? `${jobs.length} ROLES` : "EXP";
+              return (
             <div className={`${card_} tc`} style={{ gridColumn: "span 7" }}>
-              <div>
-                <div className={`${label_} pf-mono`}>
-                  <span>┌ WORK EXPERIENCE</span>
-                  <span className={`${pill_} text-indigo-600 bg-indigo-50 border-indigo-200`}>
-                    {skills.length > 0 ? `${skills.length}Y EXP ┐` : "EXP ┐"}
-                  </span>
-                </div>
-                {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
-                    📍 {identity.headline}
-                  </div>
-                )}
-                {identity.location && (
-                  <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600, marginTop: 4 }}>
-                    {identity.location}
-                  </div>
-                )}
+              <div className={`${label_} pf-mono`}>
+                <span>┌ WORK EXPERIENCE</span>
+                <span className={`${pill_} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
               </div>
-              <div>
-                {card.industries && card.industries.length > 0 && (
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                    {card.industries.slice(0, 4).map((tag) => (
-                      <span key={tag} className={pill_}>{tag}</span>
-                    ))}
-                  </div>
-                )}
-                <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                  {linkedinHandle
-                    ? `in/${linkedinHandle}`
-                    : "LinkedIn not yet synced — experience will appear here after connecting."}
+              {jobs.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", maxHeight: 440, overflowY: "auto" }}>
+                  {jobs.slice(0, 8).map((job, i) => {
+                    const current = /^(present|current|now)$/i.test((job.end_date || "").trim());
+                    const when = [job.start_date, job.end_date || (current ? "Present" : "")].filter(Boolean).join(" – ");
+                    const whenDur = [when, job.duration].filter((x) => x && !isBlank(x)).join(" · ");
+                    const logo = safeUrl(job.company_logo);
+                    const initial = (job.company || job.title || "?").charAt(0).toUpperCase();
+                    return (
+                      <div key={`${job.company}-${job.title}-${i}`} style={{ display: "flex", gap: 12, padding: "14px 0", borderTop: i === 0 ? "none" : "1px solid #f1f5f9" }}>
+                        {logo ? (
+                          <img src={logo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid #e2e8f0", background: "#fff", flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 48, height: 48, borderRadius: 8, background: "#0f172a", color: "#fff", fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{initial}</div>
+                        )}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#191919", lineHeight: 1.3 }}>{job.title || job.company}</div>
+                            {current && (
+                              <span className="pf-mono" style={{ fontSize: "0.55rem", fontWeight: 700, letterSpacing: "0.06em", color: "#047857", background: "#d1fae5", borderRadius: 99, padding: "2px 7px" }}>CURRENT</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "0.82rem", color: "#191919", fontWeight: 500, marginTop: 2 }}>
+                            {job.company}{job.employment_type ? ` · ${job.employment_type}` : ""}
+                          </div>
+                          {whenDur && (
+                            <div style={{ fontSize: "0.78rem", color: "#676767", marginTop: 2 }}>{whenDur}</div>
+                          )}
+                          {!isBlank(job.location) && (
+                            <div style={{ fontSize: "0.78rem", color: "#676767" }}>{job.location}</div>
+                          )}
+                          {!isBlank(job.description) && (
+                            <p className="pf-clamp-2" style={{ fontSize: "0.78rem", color: "#191919", lineHeight: 1.45, margin: "6px 0 0" }}>{job.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              ) : (
+                <div>
+                  {!isBlank(identity.headline) && (
+                    <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>{identity.headline}</div>
+                  )}
+                  {identity.location && (
+                    <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>{identity.location}</div>
+                  )}
+                  <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: 12 }}>
+                    {linkedinHandle
+                      ? "LinkedIn connected — work history will appear after the next profile sync."
+                      : "Connect LinkedIn to import roles, dates, and companies."}
+                  </div>
+                </div>
+              )}
+              {linkedinHandle && (
+                <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 8 }}>
+                  {linkedinUrl ? <a href={linkedinUrl} target="_blank" rel="noreferrer">in/{linkedinHandle} ↗</a> : `in/${linkedinHandle}`}
+                </div>
+              )}
             </div>
+              );
+            })()}
 
             {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
             {socialSlots > 0 && (
