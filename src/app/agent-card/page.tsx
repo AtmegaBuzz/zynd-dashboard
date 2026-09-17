@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { HeroCardStack } from "./hero-card-stack";
+import { Typewriter } from "./typewriter";
+
 /**
  * `/agent-card` — the standalone Zynd landing page.
  *
@@ -40,13 +43,12 @@ export default function AgentCardPage() {
 <a className="hover:text-white transition-colors" href="#paradigm">Shift</a>
 <a className="hover:text-white transition-colors" href="#signals">Signals</a>
 <a className="hover:text-white transition-colors" href="#discovery">Agent Query</a>
-<a className="hover:text-white transition-colors" href="#network">Network</a>
 <a className="hover:text-white transition-colors" href="#dual-view">Dual Interface</a>
 <a className="hover:text-white transition-colors" href="#privacy">Privacy</a>
 </nav>
 {/* Quick Action CTA */}
 <div className="flex items-center gap-3">
-<a className="text-xs font-mono font-medium text-white/80 hover:text-white px-3 py-2 transition-colors hidden sm:block" href="#network">Explore Network</a>
+<a className="text-xs font-mono font-medium text-white/80 hover:text-white px-3 py-2 transition-colors hidden sm:block" href="https://www.zynd.ai">Explore Network</a>
 <Link className="text-xs font-mono font-bold bg-[#7b72e9] hover:bg-[#a78bfa] text-black px-4 sm:px-5 py-2 sm:py-2.5 rounded-full transition-all hover:shadow-[0_0_20px_rgba(123,114,233,0.35)] active:scale-95 flex items-center gap-1.5" href="/create">
 <span className="">Claim Handle</span>
 <span className="text-sm font-bold leading-none">→</span>
@@ -60,7 +62,7 @@ export default function AgentCardPage() {
 {/* SECTION 01 — HERO (THE HOOK & REAL PREVIEW) */}
 {/* ========================================================================= */}
 <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 lg:pt-20" data-purpose="hero">
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
 {/* Left 7 cols */}
 <div className="lg:col-span-7 space-y-7">
 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-mono text-[#7b72e9]">
@@ -103,74 +105,10 @@ export default function AgentCardPage() {
 <span className="flex items-center gap-1.5"><span className="text-[#7b72e9]">✓</span> No password or resume needed</span>
 </div>
 </div>
-{/* Right 5 cols: REAL PROFILE CARD PREVIEW */}
+{/* Right 5 cols: ANIMATED LIVING-PROFILE CARD STACK */}
 <div className="lg:col-span-5 relative" data-purpose="hero-profile-card">
 <div className="absolute -inset-1 bg-gradient-to-tr from-[#7b72e9]/20 via-transparent to-[#7b72e9]/5 rounded-3xl blur-2xl -z-10 opacity-70"></div>
-<div className="rounded-2xl bg-[#0e1010] border border-white/15 p-6 sm:p-7 space-y-5 shadow-2xl relative backdrop-blur-xl">
-{/* Card Header */}
-<div className="flex items-start justify-between border-b border-white/[0.08] pb-4">
-<div className="flex items-center gap-3.5">
-<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/15 flex items-center justify-center text-white font-mono font-bold text-lg shadow-inner">
-                CK
-              </div>
-<div>
-<div className="flex items-center gap-2">
-<h3 className="font-sans font-bold text-white text-base">Chandan Kumar</h3>
-<span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" title="Active this week"></span>
-</div>
-<div className="text-xs font-mono text-[#7b72e9]">zynd.me/@chandan</div>
-</div>
-</div>
-<span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/[0.06] text-[#b6b6b0] border border-white/10">
-              LIVING PROFILE
-            </span>
-</div>
-{/* Dynamic 3 Signals Inside Card */}
-<div className="space-y-3 text-xs font-sans">
-{/* Vector 1: Working on */}
-<div className="p-3 rounded-xl bg-[#121413] border border-white/[0.07] space-y-1">
-<div className="font-mono text-[10px] text-[#7b72e9] uppercase tracking-wider flex items-center gap-1.5">
-<span className="w-1.5 h-1.5 rounded-full bg-[#7b72e9]"></span>
-                Working On
-              </div>
-<p className="text-white font-medium text-xs leading-relaxed">
-                Agent-native professional discovery protocol &amp; schema parser in Rust
-              </p>
-</div>
-{/* Vector 2: Can help with */}
-<div className="p-3 rounded-xl bg-[#121413] border border-white/[0.07] space-y-1">
-<div className="font-mono text-[10px] text-[#9c9c96] uppercase tracking-wider flex items-center gap-1.5">
-<span className="w-1.5 h-1.5 rounded-full bg-[#9c9c96]"></span>
-                Can Help With
-              </div>
-<p className="text-[#d7d7d1] text-xs leading-relaxed">
-                AI agent architectures · Distributed systems · High-throughput vector search
-              </p>
-</div>
-{/* Vector 3: Looking for */}
-<div className="p-3 rounded-xl bg-[#121413] border border-[#7b72e9]/30 space-y-1 bg-gradient-to-r from-[#121413] to-[#161c12]">
-<div className="font-mono text-[10px] text-[#7b72e9] uppercase tracking-wider flex items-center justify-between">
-<span className="flex items-center gap-1.5">
-<span className="w-1.5 h-1.5 rounded-full bg-[#7b72e9] animate-ping"></span>
-                  Looking For
-                </span>
-<span className="text-[9px] text-[#8b8b85] font-mono">Expires in 5d</span>
-</div>
-<p className="text-white font-medium text-xs leading-relaxed">
-                Engineers building local LLM harnesses &amp; early design partners
-              </p>
-</div>
-</div>
-{/* Card Footer Status */}
-<div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px] font-mono">
-<span className="text-[#7d7d77] flex items-center gap-1.5">
-<span className="text-[#7b72e9]">●</span> Updated 8m ago via GitHub traces
-            </span>
-<span className="text-white font-medium flex items-center gap-1 text-xs">
-              📅 Book 20m Intro
-            </span>
-</div>
-</div>
+<HeroCardStack />
 </div>
 </div>
 </section>
@@ -277,7 +215,7 @@ export default function AgentCardPage() {
 {/* 3-column structured comparative matrix */}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 {/* LinkedIn */}
-<div className="p-6 sm:p-7 rounded-2xl bg-[#0e1010] border border-white/[0.08] space-y-4">
+<div className="p-6 sm:p-7 rounded-2xl bg-[#0e1010] border border-white/[0.08] space-y-4 opacity-55">
 <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
 <h3 className="text-xl font-bold text-white">LinkedIn</h3>
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-[#7d7d77] border border-white/10">CAREER ARCHIVE</span>
@@ -302,7 +240,7 @@ export default function AgentCardPage() {
 </div>
 </div>
 {/* Linktree */}
-<div className="p-6 sm:p-7 rounded-2xl bg-[#0e1010] border border-white/[0.08] space-y-4">
+<div className="p-6 sm:p-7 rounded-2xl bg-[#0e1010] border border-white/[0.08] space-y-4 opacity-55">
 <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
 <h3 className="text-xl font-bold text-white">Linktree</h3>
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-[#7d7d77] border border-white/10">LINK DIRECTORY</span>
@@ -464,9 +402,12 @@ export default function AgentCardPage() {
 {/* Query prompt bar */}
 <div className="space-y-2">
 <div className="text-[10px] font-mono text-[#7d7d77] uppercase tracking-wider">NATURAL LANGUAGE AGENT PROMPT</div>
-<div className="p-4 rounded-xl bg-[#080909] border border-[#7b72e9]/30 flex items-center gap-3 font-mono text-xs sm:text-sm text-white">
+<div className="p-4 rounded-xl bg-[#080909] border border-[#7b72e9]/30 flex items-start gap-3 font-mono text-xs sm:text-sm text-white">
 <span className="text-[#7b72e9] font-bold text-base">❯</span>
-<span className="">&quot;Find me someone in Bangalore building AI agents who knows Rust and distributed systems.&quot;</span>
+<Typewriter
+  className="flex-1 min-w-0"
+  text={'"Find me someone in Bangalore building AI agents who knows Rust and distributed systems."'}
+/>
 </div>
 </div>
 {/* Output parsing trace */}
