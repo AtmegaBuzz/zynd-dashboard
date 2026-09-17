@@ -90,7 +90,7 @@ function displayExcerpt(raw: string | null | undefined): string {
 
 const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
-const POST_ROW_H = 104;
+const POST_ROW_H = 128;
 const POST_GAP = 12;
 
 const POST_STYLES = [
@@ -488,15 +488,16 @@ export default async function PersonPage({ params }: PageProps) {
       />
 
       <style>{`
-        .pf-page { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+        .pf-page { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: 0; line-height: 1.45; word-spacing: normal; }
         .pf-mono { font-family: 'Space Mono', monospace; }
         .pf-page a { color: inherit; text-decoration: none; }
         .pf-page a:hover { text-decoration: underline; }
         /* AutoScroll */
         .pf-vscroll { overflow: hidden; position: relative; }
         .pf-vrow { display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; overflow: hidden; }
-        .pf-vrow-post { height: 104px; }
+        .pf-vrow-post { height: 128px; }
         .pf-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .pf-post-excerpt { margin: 0; font-size: 13.5px; line-height: 1.55; font-weight: 500; font-style: normal; letter-spacing: 0.01em; word-spacing: 0.06em; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
         .pf-quote-reel { height: 100%; display: flex; flex-direction: column; min-height: 0; }
         .pf-quote-text { margin: 0; flex: 1; min-height: 0; overflow: hidden; white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; font-weight: 500; font-style: normal; letter-spacing: 0.01em; word-break: break-word; overflow-wrap: break-word; max-height: calc(1.55em * 6); }
         .pf-quote-count { margin-top: 8px; font-size: 0.58rem; letter-spacing: 0.08em; opacity: 0.55; }
@@ -1098,7 +1099,7 @@ export default async function PersonPage({ params }: PageProps) {
                           </div>
                           {url && <a href={url} target="_blank" rel="noreferrer" className={`font-mono text-xs ${style.link}`}>↗</a>}
                         </div>
-                        <p className={`text-[11.5px] italic leading-snug font-medium pf-clamp-2 ${style.text}`}>
+                        <p className={`pf-post-excerpt ${style.text}`}>
                           &ldquo;{post.excerpt}&rdquo;
                         </p>
                       </div>
