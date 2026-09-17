@@ -92,7 +92,6 @@ const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
 const POST_ROW_H = 104;
 const POST_GAP = 12;
-const SOCIAL_CARD_H = 340;
 
 const POST_STYLES = [
   { card: "bg-[#111827] text-white border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-0" },
@@ -728,12 +727,12 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
             {socialSlots > 0 && (
-            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${socialSlots}, minmax(0, 1fr))`, gap: 16 }}>
+            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${socialSlots}, minmax(0, 1fr))`, gap: 16, alignItems: "start" }}>
 
             {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
               <div
-                style={{ background: "#0A66C2", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
+                style={{ background: "#0A66C2", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
               >
                 <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><LinkedinGlyph size={12} /> LINKEDIN</span>
@@ -745,23 +744,20 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>in/{linkedinHandle}</span>
                   ) : null}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
                   {linkedinAvatar ? (
-                    <img src={linkedinAvatar} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                    <img src={linkedinAvatar} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
                   )}
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
                     {!isBlank(identity.headline) && (
-                      <div className="pf-clamp-2" style={{ fontSize: "0.72rem", opacity: 0.8, marginTop: 4, fontWeight: 600 }}>{identity.headline}</div>
+                      <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 3, fontWeight: 600 }}>{identity.headline}</div>
                     )}
                   </div>
                 </div>
-                {linkedinHandle && (
-                  <div className="pf-mono" style={{ marginTop: 14, fontSize: "0.68rem", opacity: 0.75 }}>in/{linkedinHandle}</div>
-                )}
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
                   {v.linkedin.connections != null && (
                     <div>
                       <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>
@@ -776,7 +772,7 @@ export default async function PersonPage({ params }: PageProps) {
                   )}
                 </div>
                 {linkedinUrl && (
-                  <a href={linkedinUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.14)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                  <a href={linkedinUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.14)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
                     View LinkedIn profile →
                   </a>
                 )}
@@ -786,7 +782,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: X / TWITTER ── */}
             {showX && (
               <div
-                style={{ background: "#090a0f", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
+                style={{ background: "#090a0f", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
               >
                 <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><XGlyph size={11} /> X / TWITTER</span>
@@ -798,23 +794,20 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>{v.x.handle}</span>
                   ) : null}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
                   {xAvatar ? (
-                    <img src={xAvatar} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                    <img src={xAvatar} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
                   )}
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
                     {v.x.handle && (
-                      <div className="pf-mono" style={{ fontSize: "0.72rem", opacity: 0.65, marginTop: 4 }}>{v.x.handle}</div>
-                    )}
-                    {!isBlank(identity.headline) && (
-                      <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.75, marginTop: 4 }}>{identity.headline}</div>
+                      <div className="pf-mono" style={{ fontSize: "0.7rem", opacity: 0.65, marginTop: 3 }}>{v.x.handle}</div>
                     )}
                   </div>
                 </div>
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   <div>
                     <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>
                     <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>FOLLOWERS</span>
@@ -831,7 +824,7 @@ export default async function PersonPage({ params }: PageProps) {
                   )}
                 </div>
                 {xUrl && (
-                  <a href={xUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.08)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                  <a href={xUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.08)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
                     View X profile →
                   </a>
                 )}
@@ -841,7 +834,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: ZYND MEMORY ── */}
             {showMemory && (
               <div
-                style={{ background: "#0f172a", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden", minWidth: 0 }}
+                style={{ background: "#0f172a", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
               >
                 <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span>● ZYND MEMORY</span>
@@ -875,24 +868,24 @@ export default async function PersonPage({ params }: PageProps) {
             {calendlyUrl && (
               <div
                 className="pf-book-card"
-                style={{ background: "linear-gradient(160deg, #2563eb 0%, #1d4ed8 48%, #1e3a8a 100%)", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, minWidth: 0 }}
+                style={{ background: "linear-gradient(160deg, #2563eb 0%, #1d4ed8 48%, #1e3a8a 100%)", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", minWidth: 0 }}
               >
                 <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", position: "relative" }}>
                   <span className="flex items-center gap-1.5"><Calendar size={12} /> BOOK A CALL</span>
                   <span style={{ background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, padding: "3px 8px", fontSize: "0.58rem" }}>OPEN</span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16, position: "relative" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Calendar size={20} />
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, position: "relative" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Calendar size={18} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: "1.12rem", fontWeight: 800, lineHeight: 1.2 }}>Meet {firstName}</div>
-                    <div style={{ fontSize: "0.72rem", opacity: 0.8, marginTop: 2 }}>20-min intro · collab, projects, ideas</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>Meet {firstName}</div>
+                    <div style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 2 }}>20-min intro · collab, projects, ideas</div>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 6, marginTop: 14, position: "relative" }}>
+                <div style={{ display: "flex", gap: 6, marginTop: 10, position: "relative" }}>
                   <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
                     <Clock size={10} /> 20 MIN
                   </span>
@@ -902,7 +895,7 @@ export default async function PersonPage({ params }: PageProps) {
                   <span className="pf-mono" style={{ background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>1:1</span>
                 </div>
 
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 16, position: "relative" }}>
+                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 10, position: "relative" }}>
                   {weekLabels.map((d, i) => (
                     <div
                       key={`${d}-${i}`}
@@ -926,7 +919,7 @@ export default async function PersonPage({ params }: PageProps) {
                   target="_blank"
                   rel="noreferrer"
                   className="pf-book-cta pf-mono"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: "auto", padding: "11px 16px", borderRadius: 12, background: "#fff", fontSize: "0.72rem", fontWeight: 800, color: "#1e3a8a", cursor: "pointer", textDecoration: "none", letterSpacing: "0.04em" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, padding: "9px 14px", borderRadius: 10, background: "#fff", fontSize: "0.7rem", fontWeight: 800, color: "#1e3a8a", cursor: "pointer", textDecoration: "none", letterSpacing: "0.04em" }}
                 >
                   Book intro call
                   <span aria-hidden>→</span>
