@@ -460,7 +460,7 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
 
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
-      <div className="pf-bento zd-canvas font-sans antialiased w-full min-h-screen flex flex-col selection:bg-[#7B72E9] selection:text-white px-4 sm:px-10 md:px-16 lg:px-24 xl:px-32">
+      <div className="pf-bento zd-canvas font-sans antialiased w-full min-h-screen flex flex-col text-[#0B0B0B] selection:bg-[#7B72E9] selection:text-white px-4 sm:px-10 md:px-16 lg:px-24 xl:px-32">
         <main className="w-full max-w-[1440px] mx-auto py-8 sm:py-12 flex-1">
 
           {/* header */}
@@ -668,7 +668,7 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
                   <>
                     {OBSESSION_CARDS.some((oc) => obsessionData[oc.key].length > 0) ? (
                       <div className="grid gap-4 auto-rows-fr" style={{ gridTemplateColumns: `repeat(${Math.min(OBSESSION_CARDS.filter((oc) => obsessionData[oc.key].length > 0).length, 3)}, minmax(0, 1fr))` }}>
-                        <EditBtn onClick={startObs} />
+                        <EditBtn onClick={startObs} light />
                         {OBSESSION_CARDS.filter((oc) => obsessionData[oc.key].length > 0).map((tile) => (
                           <div key={tile.key} className={`rounded-[28px] p-5 tc shadow-sm flex flex-col h-[140px] overflow-hidden ${tile.card}`}>
                             <div className="flex-shrink-0 text-[10px] font-mono uppercase tracking-widest opacity-55 mb-3">{tile.label} ({obsessionData[tile.key].length})</div>
@@ -992,7 +992,8 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
                 </div>
               ) : (
                 <button type="button" onClick={startCal}
-                  className="w-full h-full min-h-[80px] p-5 rounded-[32px] border-2 border-dashed border-blue-200 text-blue-400 font-mono text-[12px] hover:border-blue-400 hover:text-blue-600 transition-colors text-center">
+                  style={{ color: "#3B82F6" }}
+                  className="w-full h-full min-h-[80px] p-5 rounded-[32px] border-2 border-dashed border-blue-200 font-mono text-[12px] hover:border-blue-500 hover:bg-blue-50 transition-colors text-center">
                   + Add scheduling link (Calendly, Cal.com…)
                 </button>
               )}
