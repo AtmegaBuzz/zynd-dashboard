@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
+
+const CARDS_API = process.env.NEXT_PUBLIC_API_URL ?? "https://api.zynd.ai";
 
 import { HeroCardStack } from "./hero-card-stack";
 import { Typewriter } from "./typewriter";
@@ -24,6 +26,35 @@ export default function AgentCardPage() {
   function synthesize() {
     const trimmed = link.trim();
     router.push(trimmed ? `/create?url=${encodeURIComponent(trimmed)}` : "/create");
+  }
+
+  // Handle claim section — debounced availability check
+  const [handle, setHandle] = useState("");
+  const [handleStatus, setHandleStatus] = useState<"idle" | "checking" | "available" | "taken" | "error">("idle");
+  const handleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function onHandleInput(raw: string) {
+    const slug = raw.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+    setHandle(slug);
+    setHandleStatus("idle");
+    if (handleTimer.current) clearTimeout(handleTimer.current);
+    if (slug.length < 2) return;
+    setHandleStatus("checking");
+    handleTimer.current = setTimeout(async () => {
+      try {
+        const r = await fetch(`${CARDS_API}/cards/handle-available/${encodeURIComponent(slug)}`);
+        if (!r.ok) { setHandleStatus("error"); return; }
+        const d = await r.json();
+        setHandleStatus(d.available ? "available" : "taken");
+      } catch {
+        setHandleStatus("error");
+      }
+    }, 400);
+  }
+
+  function claimHandle() {
+    if (!handle || handleStatus === "taken") return;
+    router.push(`/create?handle=${encodeURIComponent(handle)}`);
   }
 
   return (
@@ -94,10 +125,10 @@ export default function AgentCardPage() {
 <span className="">Create your Living Profile</span>
 <span className="text-base leading-none">→</span>
 </Link>
-<a className="bg-white/[0.05] hover:bg-white/[0.09] text-white border border-white/15 font-mono text-sm py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2" href="#network">
+<Link className="bg-white/[0.05] hover:bg-white/[0.09] text-white border border-white/15 font-mono text-sm py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2" href="/directory">
 <span className="">Explore the Network</span>
 <span className="text-xs text-[#a0a09a]">→</span>
-</a>
+</Link>
 </div>
 <div className="flex flex-wrap items-center gap-5 text-xs font-mono text-[#7d7d77] pt-2">
 <span className="flex items-center gap-1.5"><span className="text-[#7b72e9]">✓</span> Free to create</span>
@@ -831,15 +862,46 @@ export default function AgentCardPage() {
 <p className="text-xs sm:text-sm font-mono text-[#a0a09a] max-w-lg mx-auto">
         Create → become discoverable → discover others → stay current.
       </p>
-{/* Input field + Lime button */}
+{/* Input field + CTA */}
 <div className="max-w-md mx-auto space-y-3 pt-2">
-<div className="flex items-center bg-[#080909] border border-white/20 rounded-xl px-4 py-3.5 focus-within:border-[#7b72e9] transition-colors">
-<span className="text-xs font-mono text-[#7d7d77] select-none pr-1">zynd.me/</span>
-<input className="w-full bg-transparent border-none p-0 text-sm font-mono text-white placeholder:text-[#52524c] focus:ring-0" placeholder="your-handle" type="text" />
+<div className={`flex items-center bg-[#080909] border rounded-xl px-4 py-3.5 transition-colors ${
+  handleStatus === "available" ? "border-emerald-500" :
+  handleStatus === "taken" ? "border-red-500" :
+  handleStatus === "error" ? "border-amber-500/60" :
+  "border-white/20 focus-within:border-[#7b72e9]"
+}`}>
+<span className="text-xs font-mono text-[#7d7d77] select-none pr-1 whitespace-nowrap">zynd.ai/p/</span>
+<input
+  className="w-full bg-transparent border-none p-0 text-sm font-mono text-white placeholder:text-[#52524c] focus:ring-0 focus:outline-none"
+  placeholder="your-handle"
+  type="text"
+  value={handle}
+  onChange={e => onHandleInput(e.target.value)}
+  onKeyDown={e => { if (e.key === "Enter") claimHandle(); }}
+  autoComplete="off"
+  spellCheck="false"
+/>
+{handleStatus === "checking" && <span className="text-[10px] font-mono text-[#7d7d77] ml-2 shrink-0">checking…</span>}
+{handleStatus === "available" && <span className="text-[10px] font-mono text-emerald-400 ml-2 shrink-0">✓ available</span>}
+{handleStatus === "taken" && <span className="text-[10px] font-mono text-red-400 ml-2 shrink-0">✗ taken</span>}
+{handleStatus === "error" && <span className="text-[10px] font-mono text-amber-400 ml-2 shrink-0">can&apos;t verify</span>}
 </div>
-<Link className="block text-center w-full bg-[#7b72e9] hover:bg-[#a78bfa] text-black font-mono font-bold text-sm py-4 px-6 rounded-xl active:scale-95 transition-all shadow-[0_0_25px_rgba(123,114,233,0.3)]" href="/create">
-          Create your Living Profile →
-        </Link>
+{handleStatus === "taken" ? (
+  <div className="text-center text-xs font-mono text-red-400 py-1">That handle is taken — try another one.</div>
+) : (
+  <button
+    type="button"
+    disabled={handle.length < 2 || handleStatus === "checking"}
+    onClick={claimHandle}
+    className="block w-full bg-[#7b72e9] hover:bg-[#a78bfa] disabled:opacity-40 disabled:cursor-not-allowed text-black font-mono font-bold text-sm py-4 px-6 rounded-xl active:scale-95 transition-all shadow-[0_0_25px_rgba(123,114,233,0.3)]"
+  >
+    {handle.length >= 2 && handleStatus === "available"
+      ? `Claim zynd.ai/p/${handle} →`
+      : handle.length >= 2 && handleStatus === "error"
+      ? `Claim zynd.ai/p/${handle} →`
+      : "Create your Living Profile →"}
+  </button>
+)}
 </div>
 {/* Trust items */}
 <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-mono text-[#7d7d77] pt-3">
