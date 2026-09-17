@@ -435,6 +435,18 @@ function CreateProfilePageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seededUrl]);
 
+  // Pre-fill the custom handle field when the user arrives from /agent-card
+  // with ?handle=<slug> — they typed it there so honour it exactly.
+  const seededHandle = searchParams.get("handle");
+  const seededHandleRef = useRef(false);
+  useEffect(() => {
+    if (seededHandleRef.current || !seededHandle) return;
+    seededHandleRef.current = true;
+    const slug = seededHandle.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+    if (slug.length >= 2) setCustomHandle(slug);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seededHandle]);
+
   // ── URL chip helpers ──
   function addUrl(raw: string) {
     const trimmed = raw.trim();
