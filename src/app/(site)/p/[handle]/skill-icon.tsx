@@ -55,6 +55,12 @@ function slugify(name: string) {
   return norm(name).replace(/[^a-z0-9]+/g, "");
 }
 
+function initialsImg(name: string, size: number): string {
+  const letters = (name || "?").slice(0, 2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#312e81"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="#c7d2fe" font-family="system-ui,sans-serif" font-size="${Math.round(size * 0.38)}" font-weight="800">${letters}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 export function skillIconSrcs(name: string): string[] {
   const key = norm(name);
   const compact = slugify(name);
@@ -68,16 +74,9 @@ export function skillIconSrcs(name: string): string[] {
 }
 
 export function SkillBrandIcon({ name, size = 28 }: { name: string; size?: number }) {
-  const srcs = skillIconSrcs(name);
+  const srcs = [...skillIconSrcs(name), initialsImg(name, size)];
   const [i, setI] = useState(0);
-  const src = srcs[i];
-  if (!src) {
-    return (
-      <span style={{ width: size, height: size, borderRadius: 8, background: "#312e81", color: "#c7d2fe", fontSize: size * 0.38, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {name.slice(0, 2).toUpperCase()}
-      </span>
-    );
-  }
+  const src = srcs[Math.min(i, srcs.length - 1)];
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -85,8 +84,9 @@ export function SkillBrandIcon({ name, size = 28 }: { name: string; size?: numbe
       alt=""
       width={size}
       height={size}
-      onError={() => setI((n) => n + 1)}
-      style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, borderRadius: 6 }}
+      referrerPolicy="no-referrer"
+      onError={() => setI((n) => (n + 1 < srcs.length ? n + 1 : n))}
+      style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, borderRadius: 6, display: "block" }}
     />
   );
 }

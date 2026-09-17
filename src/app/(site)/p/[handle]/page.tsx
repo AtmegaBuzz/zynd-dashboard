@@ -557,45 +557,31 @@ export default async function PersonPage({ params }: PageProps) {
               style={{ gridColumn: "span 4", background: "#6d64f6", borderRadius: 20, padding: "18px", color: "#fff", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
             >
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                <div style={{ position: "relative", width: 104, height: 104, flexShrink: 0 }}>
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={identity.name}
-                      style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.35)", objectFit: "cover", display: "block" }}
-                    />
-                  ) : (
-                    <div style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800 }}>
-                      {initials}
-                    </div>
-                  )}
-                  {verified && (
-                    <span
-                      title="Verified on Zynd"
-                      aria-label="Verified on Zynd"
-                      style={{
-                        position: "absolute",
-                        right: -3,
-                        bottom: -3,
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        background: "#fff",
-                        border: "2.5px solid #6d64f6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 10px rgba(15,23,42,0.2)",
-                      }}
-                    >
-                      <BadgeCheck size={18} color="#D97706" strokeWidth={2.25} />
-                    </span>
-                  )}
-                </div>
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt={identity.name}
+                    referrerPolicy="no-referrer"
+                    style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.35)", objectFit: "cover", flexShrink: 0, display: "block" }}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="104" height="104"><rect width="104" height="104" rx="18" fill="rgba(255,255,255,0.18)"/><text x="52" y="58" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="32" font-weight="800">${initials}</text></svg>`)}`}
+                    alt={identity.name}
+                    width={104}
+                    height={104}
+                    style={{ width: 104, height: 104, borderRadius: 18, flexShrink: 0, display: "block" }}
+                  />
+                )}
                 <div style={{ minWidth: 0, flex: 1, paddingTop: 4 }}>
                   <div style={{ fontSize: "0.72rem", fontWeight: 600, opacity: 0.8 }}>I&apos;m</div>
-                  <div style={{ fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.05, margin: "2px 0 0", display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap" }}>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.05, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span>{nameLines.map((line, i) => <span key={i}>{line}{i < nameLines.length - 1 ? " " : ""}</span>)}</span>
+                    {verified && (
+                      <BadgeCheck size={22} color="#FBBF24" fill="#FBBF24" stroke="#6d64f6" strokeWidth={1.5} aria-label="Verified" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -778,9 +764,11 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
                   {linkedinAvatar ? (
-                    <img src={linkedinAvatar} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={linkedinAvatar} alt="" referrerPolicy="no-referrer" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="22" fill="rgba(255,255,255,0.2)"/><text x="22" y="24" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="system-ui" font-size="14" font-weight="800">${initials}</text></svg>`)}`} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0 }} />
                   )}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
@@ -828,9 +816,11 @@ export default async function PersonPage({ params }: PageProps) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
                   {xAvatar ? (
-                    <img src={xAvatar} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={xAvatar} alt="" referrerPolicy="no-referrer" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>{initials}</div>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="22" fill="rgba(255,255,255,0.12)"/><text x="22" y="24" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="system-ui" font-size="14" font-weight="800">${initials}</text></svg>`)}`} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0 }} />
                   )}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
@@ -986,6 +976,7 @@ export default async function PersonPage({ params }: PageProps) {
                       <img
                         src={githubAvatar(githubUrl, 80) ?? `https://github.com/${encodeURIComponent(ghLogin || githubHandle)}.png?size=80`}
                         alt=""
+                        referrerPolicy="no-referrer"
                         style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", border: "1px solid #e2e8f0", flexShrink: 0, background: "#f8fafc" }}
                       />
                       <div style={{ minWidth: 0 }}>
@@ -1114,10 +1105,8 @@ export default async function PersonPage({ params }: PageProps) {
                           const url = safeUrl(proj.url);
                           const desc = (proj.description || "").trim();
                           return (
-                            <div key={proj.name} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 12px" }}>
-                              <div style={{ width: 32, height: 32, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                {proj.tech[0] ? <SkillBrandIcon name={proj.tech[0]} size={18} /> : <GithubGlyph size={14} />}
-                              </div>
+                            <div key={proj.name} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 12px" }}>
+                              {proj.tech[0] ? <SkillBrandIcon name={proj.tech[0]} size={28} /> : <GithubGlyph size={24} />}
                               <div style={{ minWidth: 0, flex: 1 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                                   {url ? (

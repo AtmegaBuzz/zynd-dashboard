@@ -18,39 +18,82 @@ function isCurrent(end?: string) {
   return /^(present|current|now)$/i.test((end || "").trim());
 }
 
-function jobLogoSrc(logo?: string): string | null {
-  if (!logo) return null;
-  try {
-    const u = new URL(logo);
-    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-    if (u.hostname.includes("clearbit.com")) {
-      const host = u.pathname.replace(/^\//, "").split("/")[0];
-      return host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128` : null;
-    }
-    if (u.hostname.includes("licdn.com") || u.hostname.includes("linkedin.com")) return null;
-    return logo;
-  } catch {
-    return null;
-  }
+/** Known company → domain for favicon when scrape logo is missing/broken. */
+const COMPANY_DOMAINS: Record<string, string> = {
+  zynd: "zynd.ai",
+  "zynd ai": "zynd.ai",
+  avalanche: "avax.network",
+  "snowball money": "snowball.money",
+  "0xspace": "0xspace.io",
+  "0x space": "0xspace.io",
+  scaler: "scaler.com",
+  google: "google.com",
+  microsoft: "microsoft.com",
+  amazon: "amazon.com",
+  meta: "meta.com",
+  apple: "apple.com",
+  openai: "openai.com",
+  anthropic: "anthropic.com",
+};
+
+function favicon(domain: string) {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
 }
 
-function JobLogo({ src, name }: { src?: string | null; name: string }) {
-  const [dead, setDead] = useState(false);
-  const initial = (name || "?").charAt(0).toUpperCase();
-  const resolved = src && !dead ? src : null;
-  if (!resolved) {
-    return (
-      <div style={{ width: 40, height: 40, borderRadius: 8, background: "#0f172a", color: "#fff", fontWeight: 800, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {initial}
-      </div>
-    );
+function initialsImg(name: string): string {
+  const letter = (name || "?").charAt(0).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" rx="14" fill="#0f172a"/><text x="40" y="44" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="34" font-weight="700">${letter}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/** Resolve durable logo URLs. Never leave clearbit/licdn as the only option. */
+export function companyLogoSrcs(company: string, logo?: string): string[] {
+  const out: string[] = [];
+  const push = (u: string | null | undefined) => {
+    if (u && !out.includes(u)) out.push(u);
+  };
+
+  if (logo) {
+    try {
+      const u = new URL(logo);
+      if (u.protocol === "http:" || u.protocol === "https:") {
+        if (u.hostname.includes("clearbit.com")) {
+          const host = u.pathname.replace(/^\//, "").split("/")[0];
+          if (host?.includes(".") && !/(^|\.)bit\.ly$/i.test(host)) push(favicon(host));
+        } else if (!u.hostname.includes("licdn.com") && !u.hostname.includes("linkedin.com")) {
+          push(logo);
+        }
+      }
+    } catch {
+      /* ignore bad url */
+    }
   }
+
+  const key = (company || "").trim().toLowerCase();
+  const known = COMPANY_DOMAINS[key];
+  if (known) push(favicon(known));
+
+  const slug = key.replace(/[^a-z0-9]+/g, "");
+  if (slug.length >= 3) push(favicon(`${slug}.com`));
+
+  push(initialsImg(company));
+  return out;
+}
+
+function JobLogo({ company, logo }: { company: string; logo?: string }) {
+  const srcs = companyLogoSrcs(company, logo);
+  const [i, setI] = useState(0);
+  const src = srcs[Math.min(i, srcs.length - 1)];
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={resolved}
+      src={src}
       alt=""
-      onError={() => setDead(true)}
-      style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", border: "1px solid #e2e8f0", background: "#fff", flexShrink: 0, padding: 4 }}
+      width={40}
+      height={40}
+      referrerPolicy="no-referrer"
+      onError={() => setI((n) => (n + 1 < srcs.length ? n + 1 : n))}
+      style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", flexShrink: 0, background: "#fff" }}
     />
   );
 }
@@ -61,7 +104,7 @@ function JobRow({ job, first }: { job: WorkJob; first: boolean }) {
   const whenDur = [when, job.duration].filter(Boolean).join(" · ");
   return (
     <div style={{ display: "flex", gap: 10, padding: "10px 0", borderTop: first ? "none" : "1px solid #f1f5f9" }}>
-      <JobLogo src={jobLogoSrc(job.company_logo)} name={job.company || job.title} />
+      <JobLogo company={job.company || job.title} logo={job.company_logo} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#191919", lineHeight: 1.25 }}>{job.title || job.company}</div>

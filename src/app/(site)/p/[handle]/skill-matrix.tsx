@@ -10,19 +10,6 @@ const LEVEL_META: Record<string, { label: string; color: string; bar: string; gl
 };
 const levelMeta = (l: string) => LEVEL_META[l.toLowerCase()] ?? LEVEL_META.intermediate;
 
-const SKILL_ACCENTS: Record<string, string> = {
-  rust: "#F97316", "c++": "#0070BA", cuda: "#5C9400", python: "#3776AB", kubernetes: "#326CE5",
-  pytorch: "#EE4C2C", terraform: "#7B42BC", go: "#00ADD8", sql: "#336791",
-  "product management": "#DA552F", "ai technologies": "#10A37F", "rest apis": "#FF6C37",
-  "agile/scrum": "#0052CC", html: "#E34F26", javascript: "#F7DF1E",
-};
-const skillAccent = (name: string) => SKILL_ACCENTS[name.trim().toLowerCase()] ?? "#7B72E9";
-
-function alpha(hex: string, a: number): string {
-  const n = Number.parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
-
 export function SkillMatrix({ skills, embedded = false }: { skills: { name: string; level: string }[]; embedded?: boolean }) {
   const body = (
     <>
@@ -35,19 +22,13 @@ export function SkillMatrix({ skills, embedded = false }: { skills: { name: stri
       <div className="grid grid-cols-3 gap-2">
         {skills.map((skill) => {
           const meta = levelMeta(skill.level);
-          const accent = skillAccent(skill.name);
           return (
             <div
               key={skill.name}
               className="flex flex-col items-center text-center px-2 py-2.5 rounded-xl bg-white border border-[#e2e8f0]"
             >
-              <span
-                className="w-8 h-8 rounded-lg border flex items-center justify-center mb-1.5"
-                style={{ background: alpha(accent, 0.12), borderColor: alpha(accent, 0.22) }}
-              >
-                <SkillBrandIcon name={skill.name} size={18} />
-              </span>
-              <span className="text-[11px] font-semibold text-[#0f172a] truncate max-w-full leading-tight" title={skill.name}>
+              <SkillBrandIcon name={skill.name} size={28} />
+              <span className="text-[11px] font-semibold text-[#0f172a] truncate max-w-full leading-tight mt-1.5" title={skill.name}>
                 {skill.name}
               </span>
               <span className="inline-flex items-center gap-1 mt-1">
