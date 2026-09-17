@@ -23,8 +23,8 @@ import { AutoScroll } from "./auto-scroll";
 import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 import { WorkExperienceCard } from "./work-experience-card";
-import { SkillBrandIcon } from "./skill-icon";
 import { HeroAskPanel } from "./hero-agent-bar";
+import { ProjectsCard } from "./projects-card";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -1095,55 +1095,13 @@ export default async function PersonPage({ params }: PageProps) {
               <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16, alignItems: "start" }}>
 
                   {v.projects.length > 0 && (
-                    <div className={`${card_} tc`} style={{ justifyContent: "flex-start" }}>
-                      <div className={`${label_} pf-mono`}>
-                        <span>┌ LIVE IN PRODUCTION</span>
-                        <span className={`${pill_} text-indigo-600 bg-indigo-50 border-indigo-200`}>{v.projects.length} HIGHLIGHTS ┐</span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {v.projects.slice(0, 5).map((proj) => {
-                          const url = safeUrl(proj.url);
-                          const desc = (proj.description || "").trim();
-                          return (
-                            <div key={proj.name} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 12px" }}>
-                              {proj.tech[0] ? <SkillBrandIcon name={proj.tech[0]} size={28} /> : <GithubGlyph size={24} />}
-                              <div style={{ minWidth: 0, flex: 1 }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                                  {url ? (
-                                    <a href={url} target="_blank" rel="noreferrer" style={{ color: "#0f172a", fontWeight: 800, fontSize: "0.82rem" }} className="hover:underline">
-                                      {proj.name}
-                                    </a>
-                                  ) : (
-                                    <span style={{ color: "#0f172a", fontWeight: 800, fontSize: "0.82rem" }}>{proj.name}</span>
-                                  )}
-                                  {proj.stars != null && proj.stars > 0 && (
-                                    <span className="pf-mono" style={{ color: "#c2410c", fontSize: "0.58rem", fontWeight: 800 }}>★ {compact(proj.stars)}</span>
-                                  )}
-                                </div>
-                                {desc && (
-                                  <p style={{ margin: "2px 0 0", fontSize: "0.7rem", color: "#64748b", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</p>
-                                )}
-                                {proj.tech.length > 0 && (
-                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
-                                    {proj.tech.slice(0, 3).map((t) => (
-                                      <span key={t} className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#fff", border: "1px solid #e2e8f0", color: "#4338ca", fontSize: "0.55rem", padding: "2px 6px", borderRadius: 99, fontWeight: 700 }}>
-                                        <SkillBrandIcon name={t} size={12} />
-                                        {t}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {githubUrl && (
-                        <a href={githubUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ display: "inline-block", marginTop: 10, fontSize: "0.68rem", fontWeight: 700, color: "#4f46e5" }}>
-                          View GitHub ↗
-                        </a>
-                      )}
-                    </div>
+                    <ProjectsCard
+                      projects={v.projects}
+                      githubUrl={githubUrl}
+                      cardClass={card_}
+                      labelClass={label_}
+                      pillClass={pill_}
+                    />
                   )}
 
                   {skills.length > 0 && (

@@ -8,7 +8,7 @@ import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import { CARDS_API } from "@/lib/cards";
-import type { AgentProfileCard, OnboardStatus, Project, WritingSample } from "@/lib/cards";
+import type { AgentProfileCard, OnboardStatus, Project, ScrapeWarning, WritingSample } from "@/lib/cards";
 
 // Memory layer (api.zynd.ai) — same host the /connect and /findable pages use.
 const ZYND_API = process.env.NEXT_PUBLIC_ZYND_API_URL || "https://api.zynd.ai";
@@ -355,6 +355,9 @@ function CreateProfilePageContent() {
   // post-publish "claim your card" screen.
   const [published, setPublished] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [urlWarnings, setUrlWarnings] = useState<ScrapeWarning[]>([]);
+  const [fixingUrl, setFixingUrl] = useState<string | null>(null);
+  const [fixUrlInput, setFixUrlInput] = useState("");
 
   // Custom URL handle (review screen)
   const [customHandle, setCustomHandle] = useState("");
@@ -530,6 +533,7 @@ function CreateProfilePageContent() {
         pendingCardRef.current = status.card;
         jobDoneRef.current = true;
         setJobDone(true);
+        if (status.url_warnings?.length) setUrlWarnings(status.url_warnings);
         // If user already answered all questions, go to review immediately
         if (questionIndexRef.current >= QUESTIONS.length) {
           goToReview(status.card);
@@ -724,6 +728,38 @@ function CreateProfilePageContent() {
     setPhase("working");
     const form = new FormData();
     allUrls.forEach(u => form.append("url", u));
+    const resumeFile = addMoreResume || resume;
+    if (resumeFile) form.append("resume", resumeFile);
+    try {
+      const res = await fetch(`${CARDS_API}/onboard/start`, { method: "POST", body: form });
+      if (!res.ok) throw new Error((await res.text()) || `Status ${res.status}`);
+      const data = await res.json();
+      setJobId(data.job_id);
+      pollRef.current = setInterval(() => pollJob(data.job_id), 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Re-extract failed");
+      setPhase("error");
+    }
+  }
+
+  async function fixAndReExtract(badUrl: string, goodUrl: string) {
+    const corrected = /^https?:\/\//i.test(goodUrl) ? goodUrl : `https://${goodUrl}`;
+    const next = [...new Set(urls.map(u => u === badUrl ? corrected : u)), ...addMoreUrls].filter(Boolean);
+    setUrls(next);
+    setUrlWarnings(prev => prev.filter(w => w.url !== badUrl));
+    setFixingUrl(null);
+    setFixUrlInput("");
+    setAddMoreUrls([]);
+    setAddMoreInput("");
+    setError(null);
+    setPhase("working");
+    questionIndexRef.current = QUESTIONS.length;
+    setQuestionIndex(QUESTIONS.length);
+    jobDoneRef.current = false;
+    setJobDone(false);
+    pendingCardRef.current = null;
+    const form = new FormData();
+    next.forEach(u => form.append("url", u));
     const resumeFile = addMoreResume || resume;
     if (resumeFile) form.append("resume", resumeFile);
     try {
@@ -1314,6 +1350,60 @@ function CreateProfilePageContent() {
               {/* ── REVIEW ── */}
               {phase === "review" && card && !published && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                  {/* ── URL WARNINGS: shown inline so user can fix without losing scraped data ── */}
+                  {urlWarnings.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {urlWarnings.map(w => (
+                        <div key={w.url} className="zc-card" style={{ padding: "18px 22px", borderLeft: `3px solid #C2401F`, display: "flex", flexDirection: "column", gap: "10px" }}>
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                              <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".12em", textTransform: "uppercase", color: "#C2401F" }}>
+                                ⚠ Source not scraped
+                              </span>
+                              <span style={{ font: `400 13px/1.5 ${SANS}`, color: T.soft }}>{w.message}</span>
+                              <span style={{ font: `400 12px/1 ${MONO}`, color: T.faint, wordBreak: "break-all" }}>{w.url}</span>
+                            </div>
+                            <button type="button" className="zc-rowbtn"
+                              onClick={() => setUrlWarnings(p => p.filter(x => x.url !== w.url))}
+                              aria-label="Dismiss warning">×</button>
+                          </div>
+                          {fixingUrl === w.url ? (
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <input
+                                type="text"
+                                value={fixUrlInput}
+                                autoFocus
+                                onChange={e => setFixUrlInput(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter" && fixUrlInput.trim()) fixAndReExtract(w.url, fixUrlInput.trim());
+                                  if (e.key === "Escape") { setFixingUrl(null); setFixUrlInput(""); }
+                                }}
+                                placeholder="Correct URL, e.g. github.com/yourhandle"
+                                className="zc-field"
+                                style={{ flex: 1, padding: "10px 14px", fontSize: "13px", border: `1px solid ${T.accent}`, borderRadius: "10px", background: T.surface, color: T.ink, outline: "none", fontFamily: MONO }}
+                              />
+                              <button type="button" disabled={!fixUrlInput.trim()}
+                                onClick={() => { if (fixUrlInput.trim()) fixAndReExtract(w.url, fixUrlInput.trim()); }}
+                                style={{ background: T.accent, color: "#fff", border: "none", borderRadius: "10px", padding: "10px 16px", font: `600 12px/1 ${SANS}`, cursor: fixUrlInput.trim() ? "pointer" : "not-allowed", opacity: fixUrlInput.trim() ? 1 : 0.5, flexShrink: 0 }}>
+                                Re-scrape ↺
+                              </button>
+                              <button type="button" onClick={() => { setFixingUrl(null); setFixUrlInput(""); }}
+                                style={{ background: "none", border: "none", padding: "10px 8px", font: `400 12px/1 ${SANS}`, color: T.faint, cursor: "pointer" }}>
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button type="button"
+                              onClick={() => { setFixingUrl(w.url); setFixUrlInput(""); }}
+                              style={{ background: T.ink, color: "#fff", border: "none", borderRadius: "10px", padding: "10px 18px", font: `600 12px/1 ${DISPLAY}`, cursor: "pointer", width: "fit-content" }}>
+                              Fix URL and re-scrape →
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="zc-card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "20px" }}>
                     <SectionLabel label="Identity" />

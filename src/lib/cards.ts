@@ -148,10 +148,16 @@ export interface AgentSearchResponse {
   results: AgentSearchResult[];
 }
 
+export interface ScrapeWarning {
+  url: string;
+  message: string;
+}
+
 export interface OnboardStatus {
   status: "running" | "ready" | "error";
   card: AgentProfileCard | null;
   error: string | null;
+  url_warnings: ScrapeWarning[];
 }
 
 const API_BASE =
