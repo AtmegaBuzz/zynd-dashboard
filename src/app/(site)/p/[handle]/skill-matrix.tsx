@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Code2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { SkillBrandIcon } from "./skill-icon";
 
 /** Skills shown before the "see all" toggle. */
 const SKILLS_PREVIEW = 6;
 
-/** `bars` fills the 3-segment gauge; `glow` is the lit-segment halo. */
 const LEVEL_META: Record<string, { label: string; color: string; bar: string; glow: string; bars: number }> = {
   expert: { label: "Expert", color: "#D97706", bar: "#F59E0B", glow: "rgba(245,158,11,.4)", bars: 3 },
   advanced: { label: "Advanced", color: "#5448D4", bar: "#7B72E9", glow: "rgba(123,114,233,.35)", bars: 2 },
@@ -15,53 +15,32 @@ const LEVEL_META: Record<string, { label: string; color: string; bar: string; gl
 };
 const levelMeta = (l: string) => LEVEL_META[l.toLowerCase()] ?? LEVEL_META.intermediate;
 
-const SKILL_SLUGS: Record<string, string> = {
-  rust: "rust", "c++": "cplusplus", cuda: "nvidia", python: "python", kubernetes: "kubernetes",
-  pytorch: "pytorch", terraform: "terraform", go: "go", golang: "go", typescript: "typescript",
-  javascript: "javascript", react: "react", docker: "docker", postgresql: "postgresql",
-  redis: "redis", tensorflow: "tensorflow", linux: "linux", git: "git",
-};
-
 const SKILL_ACCENTS: Record<string, string> = {
-  rust: "#F97316", "c++": "#0070BA", cuda: "#5C9400", python: "#0284C7", kubernetes: "#6366F1",
-  pytorch: "#E11D48", terraform: "#9333EA", go: "#14B8A6", "distributed systems": "#0891B2",
-  "performance testing": "#059669",
+  rust: "#F97316", "c++": "#0070BA", cuda: "#5C9400", python: "#3776AB", kubernetes: "#326CE5",
+  pytorch: "#EE4C2C", terraform: "#7B42BC", go: "#00ADD8", "distributed systems": "#0891B2",
+  "performance testing": "#059669", sql: "#336791", "product management": "#DA552F",
+  "ai technologies": "#10A37F", "rest apis": "#FF6C37", "agile/scrum": "#0052CC",
+  html: "#E34F26", javascript: "#F7DF1E",
 };
 const skillAccent = (name: string) => SKILL_ACCENTS[name.trim().toLowerCase()] ?? "#7B72E9";
 
-/** #rrggbb → rgba(), for the 10%-tint fills the icon tiles use. */
 function alpha(hex: string, a: number): string {
   const n = Number.parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-function SkillGlyph({ name, color, size = 14 }: { name: string; color: string; size?: number }) {
-  const slug = SKILL_SLUGS[name.trim().toLowerCase()];
-  if (slug) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={`https://cdn.simpleicons.org/${slug}`}
-        alt=""
-        width={size}
-        height={size}
-        style={{ width: size, height: size, objectFit: "contain", flexShrink: 0 }}
-      />
-    );
-  }
-  return <Code2 size={size} style={{ color }} />;
-}
-
-export function SkillMatrix({ skills }: { skills: { name: string; level: string }[] }) {
+export function SkillMatrix({ skills, embedded = false }: { skills: { name: string; level: string }[]; embedded?: boolean }) {
   const [open, setOpen] = useState(false);
   const visible = open ? skills : skills.slice(0, SKILLS_PREVIEW);
 
-  return (
-    <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm" id="skills">
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Skill Matrix</span>
-        <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{skills.length} TRACKED</span>
-      </div>
+  const body = (
+    <>
+      {!embedded && (
+        <div className="flex items-center justify-between mb-4">
+          <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#8E8E88]">Skill Matrix</span>
+          <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{skills.length} TRACKED</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {visible.map((skill) => {
           const meta = levelMeta(skill.level);
@@ -69,13 +48,13 @@ export function SkillMatrix({ skills }: { skills: { name: string; level: string 
           return (
             <div
               key={skill.name}
-              className="flex flex-col items-center text-center p-3 rounded-2xl bg-[#F7F7F4] border border-[#E8E8E1] hover:border-[#D5D5CE] transition-colors"
+              className="flex flex-col items-center text-center p-3.5 rounded-2xl bg-white border border-[#c7d2fe] shadow-[0_1px_0_rgba(79,70,229,0.08)]"
             >
               <span
-                className="w-9 h-9 rounded-xl border flex items-center justify-center mb-2"
-                style={{ background: alpha(accent, 0.1), borderColor: alpha(accent, 0.2) }}
+                className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-2"
+                style={{ background: alpha(accent, 0.12), borderColor: alpha(accent, 0.25) }}
               >
-                <SkillGlyph name={skill.name} color={accent} size={18} />
+                <SkillBrandIcon name={skill.name} size={28} />
               </span>
               <span className="text-[12px] font-semibold text-[#1E1E1E] truncate max-w-full mb-1" title={skill.name}>
                 {skill.name}
@@ -87,7 +66,7 @@ export function SkillMatrix({ skills }: { skills: { name: string; level: string 
                     <span
                       key={i}
                       className="w-2.5 h-1.5 rounded-sm"
-                      style={i < meta.bars ? { background: meta.bar, boxShadow: `0 0 4px ${meta.glow}` } : { background: "#E2E2DB" }}
+                      style={i < meta.bars ? { background: meta.bar, boxShadow: `0 0 4px ${meta.glow}` } : { background: "#E2E8F0" }}
                     />
                   ))}
                 </span>
@@ -101,12 +80,10 @@ export function SkillMatrix({ skills }: { skills: { name: string; level: string 
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          style={{ color: "#7B72E9" }}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-[#7B72E9] font-mono text-[10px] font-bold uppercase tracking-wider hover:bg-[#7B72E9] hover:!text-white transition-colors"
+          style={{ color: "#4f46e5" }}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-[#c7d2fe] bg-[#eef2ff] font-mono text-[10px] font-bold uppercase tracking-wider hover:bg-[#4f46e5] hover:!text-white transition-colors"
         >
           {open ? "Show less" : `See all ${skills.length} skills`}
-          {/* squarer + heavier than lucide's default, to read like the Material
-              Symbols `expand_more` glyph this card was designed against */}
           <ChevronDown
             size={16}
             strokeWidth={2.5}
@@ -116,6 +93,13 @@ export function SkillMatrix({ skills }: { skills: { name: string; level: string 
           />
         </button>
       )}
+    </>
+  );
+
+  if (embedded) return <div id="skills">{body}</div>;
+  return (
+    <div className="bg-white border border-[#E5E5DE] rounded-[28px] p-6 bento-corner bento-corner-dark shadow-sm" id="skills">
+      {body}
     </div>
   );
 }

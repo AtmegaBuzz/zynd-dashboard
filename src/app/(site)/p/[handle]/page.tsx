@@ -23,6 +23,7 @@ import { AutoScroll } from "./auto-scroll";
 import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 import { WorkExperienceCard } from "./work-experience-card";
+import { SkillBrandIcon } from "./skill-icon";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -1072,115 +1073,109 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* ── LIVE IN PRODUCTION + SKILL MATRIX (6+6) ── */}
+            {/* ── PROJECTS + SKILLS ── */}
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div style={{ gridColumn: "span 12", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: "24px 28px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: v.projects.length > 0 && skills.length > 0 ? "1fr 1fr" : "1fr", gap: 24 }}>
+              <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: v.projects.length > 0 && skills.length > 0 ? "1fr 1fr" : "1fr", gap: 16, alignItems: "stretch" }}>
 
-                  {/* Live in Production */}
                   {v.projects.length > 0 && (
-                    <div>
-                      <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
-                        <span style={{ color: "#0f172a", fontWeight: 700 }}>┌ LIVE IN PRODUCTION</span>
-                        <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
-                          {v.projects.length} HIGHLIGHTS ┐
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {v.projects.slice(0, 4).map((proj) => {
-                          const url = safeUrl(proj.url);
-                          return (
-                            <div key={proj.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.8rem", fontWeight: 700 }}>
-                                <div style={{ width: 32, height: 32, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#94a3b8" }}>
-                                  <GithubGlyph size={14} />
-                                </div>
-                                <div>
-                                  {url ? (
-                                    <a href={url} target="_blank" rel="noreferrer" style={{ color: "#0f172a", fontWeight: 700 }} className="hover:underline">
-                                      {proj.name}
-                                    </a>
-                                  ) : (
-                                    <span style={{ color: "#0f172a" }}>{proj.name}</span>
-                                  )}
-                                  {proj.tech[0] && (
-                                    <span className="pf-mono" style={{ display: "inline-block", marginLeft: 6, background: "#eff6ff", color: "#3b82f6", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 6, fontWeight: 800 }}>
-                                      {proj.tech[0].toUpperCase()}
-                                    </span>
-                                  )}
-                                  {proj.stars != null && proj.stars > 0 && (
-                                    <span className="pf-mono" style={{ marginLeft: 4, background: "#fff7ed", color: "#ea580c", fontSize: "0.6rem", padding: "2px 6px", borderRadius: 6, fontWeight: 800 }}>
-                                      ★ {compact(proj.stars)}
-                                    </span>
-                                  )}
+                    <div style={{ background: "#0f172a", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700 }}>
+                          <span>┌ LIVE IN PRODUCTION</span>
+                          <span style={{ background: "rgba(99,102,241,0.25)", color: "#c7d2fe", padding: "3px 10px", borderRadius: 99 }}>{v.projects.length} HIGHLIGHTS ┐</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {v.projects.slice(0, 4).map((proj) => {
+                            const url = safeUrl(proj.url);
+                            const desc = (proj.description || "").trim();
+                            return (
+                              <div key={proj.name} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "12px 14px" }}>
+                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                                  <div style={{ width: 40, height: 40, background: "rgba(255,255,255,0.08)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    {proj.tech[0] ? <SkillBrandIcon name={proj.tech[0]} size={26} /> : <GithubGlyph size={18} />}
+                                  </div>
+                                  <div style={{ minWidth: 0, flex: 1 }}>
+                                    {url ? (
+                                      <a href={url} target="_blank" rel="noreferrer" style={{ color: "#fff", fontWeight: 800, fontSize: "0.9rem" }} className="hover:underline">
+                                        {proj.name}
+                                      </a>
+                                    ) : (
+                                      <div style={{ color: "#fff", fontWeight: 800, fontSize: "0.9rem" }}>{proj.name}</div>
+                                    )}
+                                    {desc && (
+                                      <p className="pf-clamp-2" style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.45, fontWeight: 500 }}>{desc}</p>
+                                    )}
+                                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 8 }}>
+                                      {proj.tech.slice(0, 4).map((t) => (
+                                        <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.08)", color: "#e2e8f0", fontSize: "0.62rem", padding: "3px 8px", borderRadius: 99, fontWeight: 700 }}>
+                                          <SkillBrandIcon name={t} size={14} />
+                                          {t}
+                                        </span>
+                                      ))}
+                                      {proj.stars != null && proj.stars > 0 && (
+                                        <span className="pf-mono" style={{ color: "#fdba74", fontSize: "0.62rem", fontWeight: 800 }}>★ {compact(proj.stars)}</span>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
+                      {githubUrl && (
+                        <a href={githubUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ display: "inline-block", marginTop: 14, fontSize: "0.68rem", fontWeight: 700, color: "#a5b4fc" }}>
+                          View GitHub ↗
+                        </a>
+                      )}
                     </div>
                   )}
 
-                  {/* Skill Matrix */}
                   {skills.length > 0 && (
-                    <div>
-                      <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
-                        <span style={{ color: "#0f172a", fontWeight: 700 }}>┌ SKILL MATRIX</span>
-                        <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
-                          {skills.length} TRACKED ┐
-                        </span>
+                    <div style={{ background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 20, padding: 20, display: "flex", flexDirection: "column" }}>
+                      <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem", fontWeight: 700, color: "#3730a3" }}>
+                        <span>┌ SKILL MATRIX</span>
+                        <span style={{ background: "#fff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99 }}>{skills.length} TRACKED ┐</span>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {skills.slice(0, 6).map((skill) => {
-                          const meta = levelMeta(skill.level);
-                          const bars = meta.bars;
-                          return (
-                            <div key={skill.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.8rem", fontWeight: 700, color: "#0f172a" }}>
-                                <div className="pf-mono" style={{ width: 32, height: 32, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "0.55rem", fontWeight: 800, color: skillAccent(skill.name) }}>
-                                  {skill.name.slice(0, 2).toUpperCase()}
-                                </div>
-                                {skill.name}
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>
-                                {meta.label}
-                                <div style={{ display: "flex", gap: 3 }}>
-                                  {[0, 1, 2].map((i) => (
-                                    <span key={i} style={{ width: 10, height: 6, borderRadius: 2, background: i < bars ? "#6b63ff" : "#e2e8f0" }} />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <SkillMatrix skills={skills} embedded />
                     </div>
                   )}
-                </div>
               </div>
             )}
 
             {/* ── EXPLORE FOOTER ── */}
-            <div style={{ gridColumn: "span 12", background: "linear-gradient(135deg, #1e293b, #0f172a)", border: "1px solid #334155", borderRadius: 20, padding: "28px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginTop: 8 }}>
-              <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-                <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
-                  <Search size={18} />
+            <div style={{ gridColumn: "span 12", position: "relative", overflow: "hidden", background: "linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #4f46e5 100%)", borderRadius: 20, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+              <div style={{ position: "absolute", right: -40, top: -50, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)", pointerEvents: "none" }} />
+              <div style={{ position: "relative", display: "flex", gap: 16, alignItems: "center", minWidth: 0 }}>
+                <div style={{ width: 48, height: 48, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
+                  <Search size={20} />
                 </div>
-                <div>
-                  <div className="pf-mono mb-1.5" style={{ fontSize: "0.65rem", color: "#cbd5e1", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>EXPLORE ZYND INTELLIGENCE</div>
-                  <h3 style={{ fontSize: "1.3rem", color: "#ffffff", fontWeight: 800, marginBottom: 6, maxWidth: 500, lineHeight: 1.2 }}>
-                    Find people with matching expertise across the Zynd directory.
+                <div style={{ minWidth: 0 }}>
+                  <div className="pf-mono mb-1" style={{ fontSize: "0.62rem", color: "#c7d2fe", fontWeight: 700, letterSpacing: "0.08em" }}>ZYND DIRECTORY</div>
+                  <h3 style={{ fontSize: "1.25rem", color: "#fff", fontWeight: 800, margin: 0, lineHeight: 1.25 }}>
+                    Find people who share {firstName}&apos;s stack
                   </h3>
-                  <p style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Powered by Zynd&apos;s semantic search across verified profiles.</p>
+                  {skills.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                      {skills.slice(0, 4).map((s) => (
+                        <Link
+                          key={s.name}
+                          href={`/search?skills=${encodeURIComponent(s.name)}`}
+                          className="pf-mono"
+                          style={{ fontSize: "0.62rem", fontWeight: 700, color: "#e0e7ff", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "3px 10px", textDecoration: "none" }}
+                        >
+                          {s.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <Link
                 href={skills.length > 0 ? `/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}` : "/directory"}
-                style={{ padding: "12px 22px", borderRadius: 99, border: "none", background: "#6b63ff", fontWeight: 700, fontSize: "0.8rem", color: "#ffffff", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0 }}
-                className="hover:bg-[#5a52ff] transition-colors"
+                style={{ position: "relative", padding: "12px 22px", borderRadius: 99, border: "none", background: "#fff", fontWeight: 800, fontSize: "0.78rem", color: "#312e81", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0 }}
               >
-                <Search size={14} /> FIND SIMILAR PROFILES
+                <Search size={14} /> Find similar profiles
               </Link>
             </div>
 
