@@ -9,6 +9,7 @@ import { type AgentProfileCard, updateCard, CARDS_API } from "@/lib/cards";
 import { createClient } from "@/lib/supabase/client";
 import { ContributionHeatmap } from "../contribution-heatmap";
 import { CountUp } from "../count-up";
+import { SkillBrandIcon } from "../skill-icon";
 
 /* ─── helpers ───────────────────────────────────────────────────────────── */
 
@@ -74,9 +75,9 @@ const OBSESSION_CARDS: {
   chip: string;
   inputBorder: string;
 }[] = [
-  { key: "love_talking_about", label: "Love Talking About", card: "bg-[#a7f3d0] text-[#064e3b]", chip: "bg-white/60 text-[#064e3b] border border-white/50", inputBorder: "border-[#064e3b]/30 text-[#064e3b]" },
-  { key: "working_on",         label: "Working On",         card: "bg-[#fde68a] text-[#78350f]", chip: "bg-white/60 text-[#78350f] border border-white/50", inputBorder: "border-[#78350f]/30 text-[#78350f]" },
-  { key: "connect_with",       label: "Connect With",       card: "bg-[#7B72E9] text-white",     chip: "bg-white/15 text-white border border-white/25",    inputBorder: "border-white/30 text-white" },
+  { key: "love_talking_about", label: "Love Talking About", card: "bg-[#bbf7d0] border border-[#86efac] text-[#064e3b]", chip: "bg-white text-[#064e3b]", inputBorder: "border-[#064e3b]/30 text-[#064e3b]" },
+  { key: "working_on",         label: "Working On",         card: "bg-[#fef08a] border border-[#fde047] text-[#78350f]", chip: "bg-white text-[#78350f]", inputBorder: "border-[#78350f]/30 text-[#78350f]" },
+  { key: "connect_with",       label: "Connect With",       card: "bg-[#c7d2fe] border border-[#818cf8] text-[#1e1b4b]", chip: "bg-white text-[#312e81]", inputBorder: "border-[#312e81]/30 text-[#1e1b4b]" },
 ];
 
 const LINK_LABELS: Record<string, string> = {
@@ -138,10 +139,10 @@ function EditBtn({ onClick, light = false }: { onClick: () => void; light?: bool
     <button
       type="button"
       onClick={onClick}
-      className={`absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold shadow-sm
+      className={`z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all
         ${light
-          ? "bg-black/20 border border-white/20 text-white hover:bg-black/35"
-          : "bg-white border border-gray-200 text-[#0B0B0B] hover:bg-[#7B72E9] hover:text-white hover:border-[#7B72E9]"
+          ? "bg-black/25 border border-white/25 text-white hover:bg-black/40"
+          : "bg-white border border-gray-200 text-[#0B0B0B] hover:bg-[#4f46e5] hover:text-white hover:border-[#4f46e5]"
         }`}
     >
       <Pencil size={10} />
@@ -215,8 +216,13 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
 
   function showToast(msg: string, type: "ok" | "err") {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
   }
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const isEditing = (s: string) => editingSection === s;
   const startEdit = (s: string) => setEditingSection(s);
@@ -253,9 +259,11 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
         showToast(`${data.zynd_memory.length} memory facts synced!`, "ok");
       } else {
         setMemoryStatus("disconnected");
+        showToast("No ZYND memory found for this account", "err");
       }
     } catch {
       setMemoryStatus("disconnected");
+      showToast("Memory sync failed", "err");
     }
   }
 
@@ -271,7 +279,10 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
     setHandleInput(slug);
     setHandleAvail(null);
     if (handleTimerRef.current) clearTimeout(handleTimerRef.current);
-    if (slug.length < 2) return;
+    if (slug.length < 2) {
+      setHandleChecking(false);
+      return;
+    }
     setHandleChecking(true);
     handleTimerRef.current = setTimeout(async () => {
       try {
@@ -287,7 +298,10 @@ export function EditProfileClient({ initialCard, handle, token }: Props) {
 
   async function saveHandle() {
     if (handleInput === handle) { cancelEdit(); return; }
-    if (!handleAvail) return;
+    if (!handleAvail) {
+      showToast("Choose an available handle first", "err");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch(
