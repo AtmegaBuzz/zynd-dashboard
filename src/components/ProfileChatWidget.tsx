@@ -27,6 +27,12 @@ export function ProfileChatWidget({ handle, personName }: ProfileChatWidgetProps
     if (open) setTimeout(() => inputRef.current?.focus(), 80);
   }, [open]);
 
+  useEffect(() => {
+    const openChat = () => setOpen(true);
+    window.addEventListener("zynd:open-profile-chat", openChat);
+    return () => window.removeEventListener("zynd:open-profile-chat", openChat);
+  }, []);
+
   function scrollToBottom() {
     requestAnimationFrame(() => {
       const el = scrollRef.current;

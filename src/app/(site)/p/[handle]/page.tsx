@@ -24,6 +24,7 @@ import { ContributionHeatmap } from "./contribution-heatmap";
 import { ProfileChatWidget } from "@/components/ProfileChatWidget";
 import { WorkExperienceCard } from "./work-experience-card";
 import { SkillBrandIcon } from "./skill-icon";
+import { HeroAgentBar } from "./hero-agent-bar";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -437,6 +438,14 @@ export default async function PersonPage({ params }: PageProps) {
   })();
   const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
   const firstName = identity.name?.split(" ")[0] || "They";
+  const citation = (() => {
+    const raw = (card.citation_snippet || "").trim();
+    if (isBlank(raw)) return null;
+    const summary = (card.summary || "").trim().toLowerCase();
+    if (summary && (summary === raw.toLowerCase() || summary.startsWith(raw.toLowerCase()))) return null;
+    return raw;
+  })();
+  const helpWith = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
 
   let isOwner = false;
   try {
@@ -517,6 +526,9 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-book-card::before { content:''; position:absolute; width:220px; height:220px; right:-60px; top:-70px; background:radial-gradient(circle, rgba(255,255,255,0.22), transparent 68%); pointer-events:none; }
         .pf-book-cta { transition: background .15s, transform .15s, box-shadow .15s; }
         .pf-book-cta:hover { background:#f8fafc !important; text-decoration:none !important; transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,0.18); }
+        .pf-hero-pulse { width:7px; height:7px; border-radius:50%; background:#bbf7d0; box-shadow:0 0 0 0 rgba(187,247,208,0.7); animation:pfPulse 1.8s ease-out infinite; }
+        @keyframes pfPulse { 70% { box-shadow:0 0 0 8px rgba(187,247,208,0); } 100% { box-shadow:0 0 0 0 rgba(187,247,208,0); } }
+        @media (prefers-reduced-motion: reduce) { .pf-hero-pulse { animation:none; } }
       `}</style>
 
       <div className="pf-page" style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}>
@@ -544,57 +556,86 @@ export default async function PersonPage({ params }: PageProps) {
           {/* ── MAIN GRID ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
 
-            {/* ── HERO CARD (4 col) ── */}
+            {/* ── HERO CARD (4 col) — identity plaque, not a recap of other cards ── */}
             <div
-              style={{ gridColumn: "span 4", background: "linear-gradient(145deg, #7c73ff, #6b63ff)", borderRadius: 20, padding: "24px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 420 }}
+              style={{ gridColumn: "span 4", background: "linear-gradient(160deg, #7c73ff 0%, #5b54e8 55%, #4f46e5 100%)", borderRadius: 20, padding: "22px 22px 18px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 420, position: "relative", overflow: "hidden" }}
             >
+              <div style={{ position: "absolute", right: -48, bottom: -56, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)", pointerEvents: "none" }} />
               <div>
-                {/* Avatar */}
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={identity.name}
-                    style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", objectFit: "cover", marginBottom: 20 }}
-                  />
-                ) : (
-                  <div style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, marginBottom: 20 }}>
-                    {initials}
-                  </div>
-                )}
-                <div style={{ fontSize: "0.8rem", fontWeight: 700, opacity: 0.9 }}>I&apos;m,</div>
-                <div style={{ fontSize: "1.9rem", fontWeight: 800, lineHeight: 1.05, margin: "4px 0 6px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={identity.name}
+                      style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 }}>
+                      {initials}
+                    </div>
+                  )}
+                  {verified && (
+                    <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 999, padding: "4px 8px", fontSize: "0.55rem", fontWeight: 800, letterSpacing: "0.08em" }}>
+                      <BadgeCheck size={12} color="#FBC46A" /> VERIFIED
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: "0.78rem", fontWeight: 700, opacity: 0.88 }}>I&apos;m,</div>
+                <div style={{ fontSize: "1.85rem", fontWeight: 800, lineHeight: 1.05, margin: "4px 0 6px" }}>
                   {nameLines.map((line, i) => <div key={i}>{line}</div>)}
                 </div>
                 {!isBlank(identity.headline) && (
-                  <div style={{ fontSize: "0.8rem", color: "#e0e7ff", fontWeight: 600, marginBottom: 20 }}>
+                  <div style={{ fontSize: "0.78rem", color: "#e0e7ff", fontWeight: 600, lineHeight: 1.35 }}>
                     {identity.headline}
                   </div>
                 )}
+                {(!isBlank(identity.location) || !isBlank(card.availability)) && (
+                  <div className="pf-mono" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: "0.62rem", color: "#c7d2fe", fontWeight: 700, letterSpacing: "0.04em", flexWrap: "wrap" }}>
+                    {!isBlank(card.availability) && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span className="pf-hero-pulse" />
+                        {/^open/i.test(card.availability.trim()) ? card.availability : `OPEN TO ${card.availability}`}
+                      </span>
+                    )}
+                    {!isBlank(identity.location) && !isBlank(card.availability) && <span style={{ opacity: 0.5 }}>·</span>}
+                    {!isBlank(identity.location) && <span>{identity.location}</span>}
+                  </div>
+                )}
 
-                {/* Tags */}
-                <div className="pf-mono" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {card.working_on[0] && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.65rem" }}>
-                      <span style={{ color: "#c7d2fe", width: 80, flexShrink: 0 }}>BUILDING</span>
-                      <span style={{ background: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: 6, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
-                        {card.working_on[0].toUpperCase()}
-                      </span>
+                <div style={{ marginTop: 16, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 14, padding: "12px 13px" }}>
+                  <div className="pf-mono" style={{ fontSize: "0.55rem", letterSpacing: "0.12em", fontWeight: 800, color: "#c7d2fe", marginBottom: 8 }}>
+                    AGENT ADDRESS
+                  </div>
+                  {citation && (
+                    <p style={{ margin: "0 0 10px", fontSize: "0.78rem", lineHeight: 1.45, fontWeight: 600, color: "#fff", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {citation}
+                    </p>
+                  )}
+                  {!citation && (
+                    <p style={{ margin: "0 0 10px", fontSize: "0.74rem", lineHeight: 1.45, fontWeight: 600, color: "rgba(255,255,255,0.88)" }}>
+                      Query this card. Agents and people get the same source of truth.
+                    </p>
+                  )}
+                  {helpWith.length > 0 && (
+                    <div>
+                      <div className="pf-mono" style={{ fontSize: "0.52rem", letterSpacing: "0.1em", fontWeight: 800, color: "#c7d2fe", marginBottom: 6 }}>
+                        BEST ASKED ABOUT
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {helpWith.map((item) => (
+                          <span key={item} className="pf-mono" style={{ background: "rgba(255,255,255,0.16)", borderRadius: 999, padding: "3px 8px", fontSize: "0.58rem", fontWeight: 700 }}>
+                            {item}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {card.love_talking_about[0] && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.65rem" }}>
-                      <span style={{ color: "#c7d2fe", width: 80, flexShrink: 0 }}>TALKS ABOUT</span>
-                      <span style={{ background: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: 6, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
-                        {card.love_talking_about[0].toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+                  <HeroAgentBar handle={card.handle || card.id} permalink={permalink} firstName={firstName} />
                 </div>
               </div>
 
               <div>
-                {/* Social icons */}
-                <div style={{ display: "flex", gap: 10, margin: "20px 0 16px" }}>
+                <div style={{ display: "flex", gap: 8, margin: "16px 0 10px" }}>
                   {identity.links?.x && (
                     <a href={safeUrl(identity.links.x) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="X">
                       <XGlyph size={13} />
@@ -611,9 +652,8 @@ export default async function PersonPage({ params }: PageProps) {
                     </a>
                   )}
                 </div>
-                <div className="pf-mono" style={{ fontSize: "0.7rem", color: "#c7d2fe" }}>
+                <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#c7d2fe" }}>
                   {syncedAt && <>Updated {syncedAt}</>}
-                  {card.industries?.[0] && <> · {card.industries[0]}</>}
                 </div>
               </div>
             </div>
