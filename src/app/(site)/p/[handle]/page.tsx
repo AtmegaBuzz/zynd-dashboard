@@ -49,10 +49,6 @@ function compact(n: number): string {
   return String(n);
 }
 
-/* The cards API returns an 80x80 avatar (imgproxy `rs:fill:80:80`, baked into a
-   signed path, so it cannot be re-requested any larger) which visibly upscales
-   in the hero circle. GitHub renders the same face at any size, so a linked
-   GitHub *profile* — not a repo URL — gives us a crisp source for free. */
 function githubAvatar(url: string | null | undefined, size = 400): string | null {
   const safe = safeUrl(url);
   if (!safe) return null;
@@ -72,21 +68,18 @@ function usernameFromUrl(url: string | null | undefined): string | null {
   return url.replace(/\/+$/, "").split("/").pop() || null;
 }
 
-// Green palette to match GitHub's real contribution heatmap
-
-
 const VSCROLL_VISIBLE = 3;
 const VSCROLL_SECS_PER_ROW = 3.5;
 const POST_ROW_H = 104;
 const POST_GAP = 12;
-const SOCIAL_CARD_H = 360;
+const SOCIAL_CARD_H = 340;
 const SOCIAL_POST_ROW_H = 84;
-const SOCIAL_POST_VISIBLE = 1;
+const SOCIAL_POST_VISIBLE = 2;
 
 const POST_STYLES = [
-  { card: "bg-[#0B0B0B] text-white border-slate-800 hover:border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-0" },
-  { card: "bg-[#0A66C2]/10 border-[#0A66C2]/30 hover:border-[#0A66C2]/50", badge: "bg-[#0A66C2] text-white", text: "text-[#1a2b42]", meta: "text-[#0A66C2]/80", link: "pf-post-link-1" },
-  { card: "bg-[#F7F7F4] border-[#E8E8E1] hover:border-[#D5D5CE]", badge: "bg-[#0B0B0B] text-white", text: "text-[#2A2A2A]", meta: "text-[#8E8E88]", link: "pf-post-link-2" },
+  { card: "bg-[#111827] text-white border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-0" },
+  { card: "bg-[#e0e7ff] border-indigo-200", badge: "bg-[#3b82f6] text-white", text: "text-[#1e293b]", meta: "text-indigo-600", link: "pf-post-link-1" },
+  { card: "bg-[#111827] text-white border-slate-700", badge: "bg-white/10 text-white", text: "text-slate-200", meta: "text-slate-400", link: "pf-post-link-2" },
 ];
 
 const OBSESSION_CARDS: {
@@ -96,9 +89,9 @@ const OBSESSION_CARDS: {
   chip: string;
   unit: string;
 }[] = [
-  { key: "love_talking_about", label: "Love Talking About", unit: "TOPICS", card: "bg-[#a7f3d0] text-[#064e3b]", chip: "bg-white/60 text-[#064e3b] border border-white/50" },
-  { key: "working_on", label: "Working On", unit: "TRACKS", card: "bg-[#fde68a] text-[#78350f]", chip: "bg-white/60 text-[#78350f] border border-white/50" },
-  { key: "connect_with", label: "Connect With", unit: "PEOPLE", card: "bg-[#7B72E9] text-white", chip: "bg-white/15 text-white border border-white/25" },
+  { key: "love_talking_about", label: "Love Talking About", unit: "TOPICS", card: "bg-[#bbf7d0] border border-[#86efac] text-[#064e3b]", chip: "bg-white text-[#064e3b]" },
+  { key: "working_on", label: "Working On", unit: "TRACKS", card: "bg-[#fef08a] border border-[#fde047] text-[#78350f]", chip: "bg-white text-[#78350f]" },
+  { key: "connect_with", label: "Connect With", unit: "PEOPLE", card: "bg-[#a5b4fc] border border-[#818cf8] text-white", chip: "bg-white/25 text-white" },
 ];
 
 /* ─── brand glyphs ──────────────────────────────────────────────────────── */
@@ -128,13 +121,8 @@ function LinkedinGlyph({ size = 16 }: { size?: number }) {
 }
 
 const LINK_LABELS: Record<string, string> = {
-  github: "GitHub",
-  x: "X",
-  twitter: "X",
-  linkedin: "LinkedIn",
-  website: "Website",
-  portfolio: "Portfolio",
-  linktree: "Linktree",
+  github: "GitHub", x: "X", twitter: "X", linkedin: "LinkedIn",
+  website: "Website", portfolio: "Portfolio", linktree: "Linktree",
 };
 
 function LinkGlyph({ platform, size = 15 }: { platform: string; size?: number }) {
@@ -150,11 +138,11 @@ function linkLabel(platform: string) {
 }
 
 const GRADIENTS = [
-  "linear-gradient(135deg, #3B82F6, #1D4ED8)", // blue
-  "linear-gradient(135deg, #10B981, #047857)", // emerald
-  "linear-gradient(135deg, #8B5CF6, #6D28D9)", // purple
-  "linear-gradient(135deg, #EC4899, #BE185D)", // pink
-  "linear-gradient(135deg, #F59E0B, #B45309)", // amber
+  "linear-gradient(135deg, #3B82F6, #1D4ED8)",
+  "linear-gradient(135deg, #10B981, #047857)",
+  "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+  "linear-gradient(135deg, #EC4899, #BE185D)",
+  "linear-gradient(135deg, #F59E0B, #B45309)",
 ];
 function getGradient(name: string): string {
   let hash = 0;
@@ -226,7 +214,6 @@ function buildView(card: AgentProfileCard) {
     .filter((s) => ["x", "twitter"].includes(s.platform.toLowerCase()))
     .map((s) => s.excerpt);
 
-  // Fallbacks so there is always at least one scrollable item per card.
   const linkedinScrollItems = linkedinPosts.length > 0 ? linkedinPosts : endorsementQuote ? [endorsementQuote] : [];
   const xScrollItems = xPosts.length > 0 ? xPosts : xQuote ? [xQuote] : [];
 
@@ -238,7 +225,6 @@ function buildView(card: AgentProfileCard) {
     xQuote,
     linkedinScrollItems,
     xScrollItems,
-
     linkedin: {
       connections: card.linkedin_stats?.connections ?? null,
       posts: card.linkedin_stats?.posts ?? null,
@@ -248,6 +234,8 @@ function buildView(card: AgentProfileCard) {
       activeRepos: card.github_stats?.active_repos ?? null,
       topLanguages: card.github_stats?.top_languages ?? [],
       commits: card.github_stats?.total_commits ?? null,
+      stars: null as number | null,
+      followers: null as number | null,
     },
     x: {
       handle:
@@ -338,15 +326,12 @@ export default async function PersonPage({ params }: PageProps) {
   const permalink = `zynd.ai/p/${card.handle || card.id}`;
 
   const initials = (identity.name || "?")
-    .split(/\s+/)
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    .split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
 
   const nameParts = (identity.name || "").trim().split(/\s+/);
-  const nameLines = nameParts.length > 1 ? [nameParts.slice(0, -1).join(" "), nameParts[nameParts.length - 1]] : nameParts;
+  const nameLines = nameParts.length > 1
+    ? [nameParts.slice(0, -1).join(" "), nameParts[nameParts.length - 1]]
+    : nameParts;
 
   const avatarUrl = safeUrl(identity.avatar_url) ?? githubAvatar(identity.links?.github);
   const verified = card.review?.status === "human_approved";
@@ -376,9 +361,6 @@ export default async function PersonPage({ params }: PageProps) {
 
   const memoryFacts = (card.zynd_memory ?? []) as Array<Record<string, unknown>>;
 
-  // Predicate → human language. The memory layer stores facts as
-  // {predicate, object, source, confidence, approved_at} — the predicate is
-  // the meaning, the object is the value.
   const MEMORY_GROUPS: Record<string, { label: string; icon: string }> = {
     is_building: { label: "Currently building", icon: "⚙️" },
     is_learning: { label: "Learning", icon: "📚" },
@@ -426,7 +408,6 @@ export default async function PersonPage({ params }: PageProps) {
       .map((p) => {
         const meta = MEMORY_GROUPS[p];
         const items = byPredicate.get(p)!;
-        // Activity groups: newest first. Expertise: highest confidence first.
         const sorted = p === "has_expertise_in"
           ? [...items].sort((a, b) => b.confidence - a.confidence)
           : [...items].sort((a, b) => b.approved_at.localeCompare(a.approved_at));
@@ -436,7 +417,6 @@ export default async function PersonPage({ params }: PageProps) {
   const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
   const firstName = identity.name?.split(" ")[0] || "They";
 
-  // Only show Edit button to the profile's owner — never to other viewers.
   let isOwner = false;
   try {
     const supabase = await createClient();
@@ -446,12 +426,21 @@ export default async function PersonPage({ params }: PageProps) {
       isOwner = !!(myCard && myCard.handle === handle);
     }
   } catch {
-    // Auth check is best-effort; failing silently is safe since we just hide the button
+    // Auth check is best-effort
   }
 
   const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
   const showX = !!(v.x.handle || v.x.followers != null);
   const showGithub = !!(identity.links?.github || card.github_stats || card.contribution_stats);
+  const hasContributions = !!(v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0);
+
+  // Social cards: 4 cards when calendlyUrl exists → 3-col each; else 3 cards → 4-col each
+  const socialColSpan = calendlyUrl ? 3 : 4;
+
+  /* ── shared card style ─────────────────────────────────── */
+  const card_ = "bg-white border border-[#e2e8f0] rounded-[20px] p-5 flex flex-col justify-between";
+  const label_ = "flex justify-between items-center text-[0.65rem] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3";
+  const pill_ = "bg-[#f1f5f9] border border-[#e2e8f0] text-slate-500 text-[0.65rem] font-bold font-mono px-2.5 py-1 rounded-full";
 
   return (
     <>
@@ -460,7 +449,7 @@ export default async function PersonPage({ params }: PageProps) {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet"
       />
       <script
@@ -469,244 +458,165 @@ export default async function PersonPage({ params }: PageProps) {
       />
 
       <style>{`
-        .pf-bento { letter-spacing: normal; line-height: 1.5; }
-        .pf-bento h2 {
-          font-family: 'Space Grotesk', sans-serif !important;
-          text-transform: none !important;
-          letter-spacing: normal !important;
-        }
-        .pf-bento.font-sans, .pf-bento .font-sans { font-family: 'Geist', sans-serif !important; }
-        .pf-bento .font-mono { font-family: 'Geist Mono', monospace !important; }
-        .pf-bento .font-display { font-family: 'Space Grotesk', sans-serif !important; }
-
-        /* globals.css unlayered a { color } beats Tailwind — fix with same-tier selector */
-        .pf-bento a { color: inherit; text-decoration: none; }
-        .pf-bento a:hover { text-decoration: underline; }
-        .pf-bento .pf-c-dark { color: #0B0B0B; }
-        .pf-bento .pf-c-muted { color: #8E8E88; }
-        .pf-bento .pf-c-slate { color: #94a3b8; }
-        .pf-bento .pf-hv-dark:hover { color: #0B0B0B; }
-        .pf-bento .pf-hv-purple:hover { color: #7B72E9; }
-        .pf-bento .pf-hv-white:hover { color: #fff; }
-        .pf-bento .pf-post-link-0 { color: #94a3b8; }
-        .pf-bento .pf-post-link-0:hover { color: #fff; }
-        .pf-bento .pf-post-link-1 { color: #0A66C2; }
-        .pf-bento .pf-post-link-1:hover { color: #000; }
-        .pf-bento .pf-post-link-2 { color: #8E8E88; }
-        .pf-bento .pf-post-link-2:hover { color: #0B0B0B; }
-
-        .pf-bento.zd-canvas, .pf-bento .zd-canvas {
-          background-color: #f4f4f5;
-          background-attachment: fixed;
-        }
-
-        /* tech-corners: bracket decoration (top-left + top-right) */
-        .pf-bento .tc { position: relative; }
-        .pf-bento .tc::before {
-          content: ''; position: absolute;
-          top: 12px; left: 12px; width: 8px; height: 8px;
-          border-top: 1px solid #d4d4d8; border-left: 1px solid #d4d4d8;
-        }
-        .pf-bento .tc::after {
-          content: ''; position: absolute;
-          top: 12px; right: 12px; width: 8px; height: 8px;
-          border-top: 1px solid #d4d4d8; border-right: 1px solid #d4d4d8;
-        }
-        /* tc-b: bottom corners */
-        .pf-bento .tc-b::before {
-          content: ''; position: absolute;
-          bottom: 12px; left: 12px; width: 8px; height: 8px;
-          border-bottom: 1px solid #d4d4d8; border-left: 1px solid #d4d4d8;
-        }
-        .pf-bento .tc-b::after {
-          content: ''; position: absolute;
-          bottom: 12px; right: 12px; width: 8px; height: 8px;
-          border-bottom: 1px solid #d4d4d8; border-right: 1px solid #d4d4d8;
-        }
-
-
-        /* AutoScroll vertical marquee */
+        .pf-page { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+        .pf-mono { font-family: 'Space Mono', monospace; }
+        .pf-page a { color: inherit; text-decoration: none; }
+        .pf-page a:hover { text-decoration: underline; }
+        /* AutoScroll */
         .pf-vscroll { overflow: hidden; position: relative; }
         .pf-vrow { display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
-        .pf-vrow-proj { height: 92px; }
         .pf-vrow-post { height: 104px; }
-        .pf-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
         .pf-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
         @media (prefers-reduced-motion: reduce) { .pf-vscroll { overflow-y: auto; } }
-
-        /* legacy bento-corner for SkillMatrix component */
-        .pf-bento .bento-corner { position: relative; }
-        .pf-bento .bento-corner::after {
-          content: ''; position: absolute; top: 14px; right: 14px;
-          width: 14px; height: 14px; border-top: 2px solid currentColor; border-right: 2px solid currentColor;
-          opacity: 0.35; pointer-events: none;
-        }
-        .pf-bento .bento-corner-light::after { border-color: #ffffff; opacity: 0.45; }
-        .pf-bento .bento-corner-dark::after { border-color: #0B0B0B; opacity: 0.35; }
-
-        /* pf-edit-btn for EditCardButton */
-        .pf-bento .pf-edit-btn {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 6px 14px; border-radius: 999px;
-          background: #f4f4f5; border: 1px solid #E5E5DE;
-          font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 600;
-          color: #0B0B0B; cursor: pointer; transition: background 0.15s, color 0.15s;
-        }
-        .pf-bento .pf-edit-btn:hover { background: #0B0B0B; color: #fff; text-decoration: none; }
+        /* bracket corners */
+        .tc { position: relative; }
+        .tc::before { content:''; position:absolute; top:12px; left:12px; width:8px; height:8px; border-top:1px solid #d4d4d8; border-left:1px solid #d4d4d8; }
+        .tc::after  { content:''; position:absolute; top:12px; right:12px; width:8px; height:8px; border-top:1px solid #d4d4d8; border-right:1px solid #d4d4d8; }
+        /* SkillMatrix / EditCardButton compat */
+        .pf-edit-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; background:#f4f4f5; border:1px solid #E5E5DE; font-family:'Space Mono',monospace; font-size:11px; font-weight:600; color:#0B0B0B; cursor:pointer; transition:background .15s,color .15s; }
+        .pf-edit-btn:hover { background:#0B0B0B; color:#fff; text-decoration:none; }
+        .bento-corner { position:relative; }
+        .bento-corner::after { content:''; position:absolute; top:14px; right:14px; width:14px; height:14px; border-top:2px solid currentColor; border-right:2px solid currentColor; opacity:.35; pointer-events:none; }
       `}</style>
 
-      <div className="pf-bento zd-canvas font-sans antialiased w-full min-h-screen flex flex-col selection:bg-[#7B72E9] selection:text-white px-4 sm:px-10 md:px-16 lg:px-24 xl:px-32">
-        <main className="w-full max-w-[1440px] mx-auto py-8 sm:py-12 flex-1">
+      <div className="pf-page" style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}>
+        <div style={{ maxWidth: 1300, margin: "0 auto", padding: "24px 24px 56px" }}>
 
-          {/* ── TOP HEADER ─────────────────────────────────────────────── */}
-          <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-3 font-mono">
-            <div className="flex items-center gap-2 text-[12px] text-[#8E8E88]">
-              <span className="w-2 h-2 rounded-full bg-[#7B72E9] inline-block flex-shrink-0" />
-              <Link href="/directory" className="pf-c-muted pf-hv-dark">Zynd</Link>
-              <span>/</span>
-              <Link href="/directory" className="pf-c-muted pf-hv-dark">Directory</Link>
-              <span>/</span>
-              <span className="font-semibold text-[#0B0B0B]">@{card.handle || card.id}</span>
+          {/* ── HEADER ── */}
+          <header className="flex justify-between items-center pb-5">
+            <div className="pf-mono text-[0.75rem] text-slate-500">
+              <Link href="/directory" className="hover:text-slate-800">Zynd</Link>
+              {" / "}
+              <Link href="/directory" className="hover:text-slate-800">Directory</Link>
+              {" / "}
+              <strong className="text-slate-800">@{card.handle || card.id}</strong>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+            <div className="flex gap-2.5 items-center flex-wrap justify-end">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[0.7rem] pf-mono font-bold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 SYNTHESIS_ACTIVE
               </span>
               <ShareQrGroup url={canonical} />
-              {isOwner && <EditCardButton handle={card.handle || handle} />}
-              {!isOwner && <UnclaimedCardActions handle={card.handle || handle} />}
+              {isOwner && <EditCardButton handle={card.handle ?? card.id} />}
             </div>
           </header>
 
-          {/* ── MAIN BENTO GRID ────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
+          {/* ── MAIN GRID ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
 
-            {/* ─ ROW 1: HERO ─────────────────────────────────────────── */}
-
-            {/* Purple Hero Card — col-4 */}
-            <div className="col-span-12 lg:col-span-4 bg-[#7B72E9] text-white rounded-[32px] p-8 flex flex-col justify-between shadow-sm relative overflow-hidden">
-              {verified && (
-                <div className="absolute top-5 right-5 z-20 inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-black/25 backdrop-blur-sm border border-white/20">
-                  <BadgeCheck size={14} className="text-[#FBC46A]" />
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">Verified</span>
-                </div>
-              )}
+            {/* ── HERO CARD (4 col) ── */}
+            <div
+              style={{ gridColumn: "span 4", background: "linear-gradient(145deg, #7c73ff, #6b63ff)", borderRadius: 20, padding: "24px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 420 }}
+            >
               <div>
-                <div className="w-20 h-20 rounded-full border-2 border-white/30 mb-5 overflow-hidden flex items-center justify-center bg-[#8b5cf6]">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarUrl} alt={identity.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="font-display text-2xl font-bold text-white">{initials}</span>
+                {/* Avatar */}
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={identity.name}
+                    style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", objectFit: "cover", marginBottom: 20 }}
+                  />
+                ) : (
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, marginBottom: 20 }}>
+                    {initials}
+                  </div>
+                )}
+                <div style={{ fontSize: "0.8rem", fontWeight: 700, opacity: 0.9 }}>I&apos;m,</div>
+                <div style={{ fontSize: "1.9rem", fontWeight: 800, lineHeight: 1.05, margin: "4px 0 6px" }}>
+                  {nameLines.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+                {!isBlank(identity.headline) && (
+                  <div style={{ fontSize: "0.8rem", color: "#e0e7ff", fontWeight: 600, marginBottom: 20 }}>
+                    {identity.headline}
+                  </div>
+                )}
+
+                {/* Tags */}
+                <div className="pf-mono" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {card.working_on[0] && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.65rem" }}>
+                      <span style={{ color: "#c7d2fe", width: 80, flexShrink: 0 }}>BUILDING</span>
+                      <span style={{ background: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: 6, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                        {card.working_on[0].toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  {card.love_talking_about[0] && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.65rem" }}>
+                      <span style={{ color: "#c7d2fe", width: 80, flexShrink: 0 }}>TALKS ABOUT</span>
+                      <span style={{ background: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: 6, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                        {card.love_talking_about[0].toUpperCase()}
+                      </span>
+                    </div>
                   )}
                 </div>
-                <p className="text-white/70 text-sm mb-1 font-mono">I&apos;m,</p>
-                <h2 className="font-display text-[44px]! font-bold! leading-[1.05]! tracking-tight! text-white! text-left">
-                  {nameLines.map((line, i) => (
-                    <span key={i}>{line}{i === 0 && nameLines.length > 1 && <br />}</span>
-                  ))}
-                </h2>
-                {!isBlank(identity.headline) && (
-                  <p className="text-white/90 font-medium mt-2 text-[13px] leading-snug">{identity.headline}</p>
-                )}
-                {(card.working_on.length > 0 || card.love_talking_about.length > 0) && (
-                  <div className="mt-4 space-y-1.5 font-mono text-[11px] uppercase tracking-wide">
-                    {card.working_on.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/50 w-24 flex-shrink-0">Building</span>
-                        <span className="bg-black/15 px-2 py-0.5 rounded border border-white/10 text-white text-[10px] truncate">{card.working_on[0]}</span>
-                      </div>
-                    )}
-                    {card.love_talking_about.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/50 w-24 flex-shrink-0">Talks About</span>
-                        <span className="bg-black/15 px-2 py-0.5 rounded border border-white/10 text-white text-[10px] truncate">{card.love_talking_about[0]}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {v.links.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {v.links.map(([platform, url]) => (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex w-8 h-8 rounded-full items-center justify-center bg-white/15 border border-white/20 text-white hover:bg-white/25 transition-colors flex-shrink-0"
-                        title={linkLabel(platform)}
-                      >
-                        <LinkGlyph platform={platform} size={15} />
-                      </a>
-                    ))}
-                  </div>
-                )}
               </div>
-              <div className="mt-8 pt-4 border-t border-white/10 text-xs text-white/70 font-mono">
-                {syncedAt && !isBlank(identity.location) ? (
-                  <span>Updated {syncedAt} · {identity.location}</span>
-                ) : syncedAt ? (
-                  <span>Updated {syncedAt}</span>
-                ) : !isBlank(identity.location) ? (
-                  <span>{identity.location}</span>
-                ) : null}
+
+              <div>
+                {/* Social icons */}
+                <div style={{ display: "flex", gap: 10, margin: "20px 0 16px" }}>
+                  {identity.links?.x && (
+                    <a href={safeUrl(identity.links.x) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="X">
+                      <XGlyph size={13} />
+                    </a>
+                  )}
+                  {identity.links?.github && (
+                    <a href={safeUrl(identity.links.github) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="GitHub">
+                      <GithubGlyph size={14} />
+                    </a>
+                  )}
+                  {identity.links?.linkedin && (
+                    <a href={safeUrl(identity.links.linkedin) ?? "#"} target="_blank" rel="noreferrer" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="LinkedIn">
+                      <LinkedinGlyph size={14} />
+                    </a>
+                  )}
+                </div>
+                <div className="pf-mono" style={{ fontSize: "0.7rem", color: "#c7d2fe" }}>
+                  {syncedAt && <>Updated {syncedAt}</>}
+                  {card.industries?.[0] && <> · {card.industries[0]}</>}
+                </div>
               </div>
-              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* Right column — col-8 */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6 overflow-hidden">
-              {/* Dossier Summary */}
-              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                    <span>Dossier Summary</span>
-                    {verified && <span className="text-[#0B0B0B] font-bold">Zynd Verified</span>}
+            {/* ── RIGHT STACK: Dossier + Signals (8 col) ── */}
+            <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* Dossier */}
+              {!isBlank(card.summary) && (
+                <div className={`${card_} tc`}>
+                  <div>
+                    <div className={label_}>
+                      <span>┌ DOSSIER SUMMARY</span>
+                      <span>┐</span>
+                    </div>
+                    <p style={{ fontSize: "0.85rem", color: "#0f172a", fontWeight: 600, lineHeight: 1.65, marginBottom: 16 }}>
+                      {card.summary}
+                    </p>
                   </div>
-                  {!isBlank(card.summary) ? (
-                    <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.summary}</p>
-                  ) : !isBlank(card.citation_snippet) ? (
-                    <p className="text-[#2A2A2A] text-[15px] leading-relaxed">{card.citation_snippet}</p>
-                  ) : (
-                    <p className="text-[#8E8E88] text-[14px]">Profile summary not yet synthesized.</p>
+                  {card.industries && card.industries.length > 0 && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {card.industries.slice(0, 5).map((tag) => (
+                        <span key={tag} className={pill_}>{tag}</span>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {(card.industries.length > 0 || !isBlank(card.availability)) && (
-                  <div className="mt-auto pt-4 border-t border-gray-100 flex flex-wrap gap-1.5 font-mono text-[11px]">
-                    {card.industries.map((tag) => (
-                      <span key={tag} className="px-2.5 py-1 rounded-md bg-gray-100 text-[#0B0B0B] font-medium">{tag}</span>
-                    ))}
-                    {!isBlank(card.availability) && (
-                      <span className="px-2.5 py-1 rounded-md bg-[#7B72E9]/10 text-[#7B72E9] font-semibold">Open to {card.availability}</span>
-                    )}
-                  </div>
-                )}
-              </div>
+              )}
 
-              {/* Obsession tiles */}
+              {/* Signal cards row */}
               {obsessions.length > 0 && (
-                <div
-                  className="grid gap-4 auto-rows-fr"
-                  style={{ gridTemplateColumns: `repeat(${Math.min(obsessions.length, 3)}, minmax(0, 1fr))` }}
-                >
-                  {obsessions.map((tile) => (
-                    <div
-                      key={tile.key}
-                      className={`rounded-[28px] p-5 tc shadow-sm flex flex-col h-[140px] overflow-hidden ${tile.card}`}
-                    >
-                      <div className="flex-shrink-0 text-[10px] font-mono uppercase tracking-widest opacity-60 mb-3">
-                        {tile.label} ({tile.items.length} {tile.unit})
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${obsessions.length}, 1fr)`, gap: 16 }}>
+                  {obsessions.map((obs) => (
+                    <div key={obs.key} className={`${obs.card} rounded-[20px] p-[18px] flex flex-col justify-between`}>
+                      <div className={`${label_} pf-mono`} style={{ color: "inherit", opacity: 0.8 }}>
+                        <span>┌ {obs.label.toUpperCase()}</span>
+                        <span className={`${obs.chip} text-[0.6rem] px-2 py-0.5 rounded-full font-mono font-bold`}>
+                          {obsessionSources[obs.key].length} {obs.unit}
+                        </span>
                       </div>
-                      <div
-                        className="flex-1 flex flex-wrap content-start gap-1.5 overflow-y-auto pr-1"
-                        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                      >
-                        {tile.items.map((item) => (
-                          <span
-                            key={item}
-                            className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${tile.chip}`}
-                          >
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+                        {obsessionSources[obs.key].slice(0, 4).map((item) => (
+                          <span key={item} className={`${obs.chip} text-[0.65rem] font-bold font-mono px-2.5 py-1 rounded-full`}>
                             {item}
                           </span>
                         ))}
@@ -717,416 +627,296 @@ export default async function PersonPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* ─ ROW 2: AI DISCOVERABILITY + WORK EXPERIENCE ────────────────────── */}
-
-            {/* AI Discoverability Fact */}
-            <div className="col-span-12 lg:col-span-6 bg-[#0f1729] text-white rounded-[32px] p-8 shadow-sm flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">AI Discoverability Fact</span>
-                  <span className="font-mono text-[10px] bg-white/10 border border-white/15 px-2.5 py-1 rounded-md text-white/70">Zynd Index</span>
+            {/* ── AI FACT (5 col, navy) ── */}
+            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div className="pf-mono flex justify-between items-center mb-3" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <span>AI DISCOVERABILITY FACT</span>
+                  <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
                 </div>
-
-                {/* Code block */}
-                <div className="bg-[#060d1f] rounded-2xl p-5 font-mono text-[12.5px] leading-[1.9] border border-white/5 flex-1">
-                  <div className="text-[#4b5563]">{"// Structured discovery profile"}</div>
-                  <div>
-                    <span className="text-[#67e8f9]">entity</span>
-                    <span className="text-white/40">{": "}</span>
-                    <span className="text-[#86efac]">&ldquo;{!isBlank(identity.name) ? identity.name : "Professional"}&rdquo;</span>
-                  </div>
-                  {(card.industries.length > 0 || !isBlank(identity.headline)) && (
-                    <div>
-                      <span className="text-[#67e8f9]">specialization</span>
-                      <span className="text-white/40">{": "}</span>
-                      <span className="text-[#86efac]">
-                        &ldquo;{card.industries.length > 0 ? card.industries.slice(0, 2).join(" & ") : identity.headline}&rdquo;
-                      </span>
-                    </div>
+                <div className="pf-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: 14, fontSize: "0.7rem", lineHeight: 1.7, margin: "12px 0", flex: 1 }}>
+                  <span style={{ color: "#64748b" }}>{"// Structured discovery profile"}</span><br />
+                  <span style={{ color: "#38bdf8" }}>entity:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.name}&quot;</span><br />
+                  {!isBlank(identity.headline) && (
+                    <><span style={{ color: "#38bdf8" }}>specialization:</span>{" "}<span style={{ color: "#fde047" }}>&quot;{identity.headline}&quot;</span><br /></>
                   )}
                   {skills.length > 0 && (
-                    <div>
-                      <span className="text-[#67e8f9]">primary_tech</span>
-                      <span className="text-white/40">{": ["}</span>
-                      {skills.slice(0, 3).map((s, i) => (
-                        <span key={s.name}>
-                          <span className="text-[#fcd34d]">&ldquo;{s.name}&rdquo;</span>
-                          {i < Math.min(skills.length, 3) - 1 && <span className="text-white/40">, </span>}
-                        </span>
-                      ))}
-                      <span className="text-white/40">{"]"}</span>
-                    </div>
-                  )}
-                  {!isBlank(card.availability) && (
-                    <div>
-                      <span className="text-[#67e8f9]">availability</span>
-                      <span className="text-white/40">{": "}</span>
-                      <span className="text-[#86efac]">&ldquo;{card.availability}&rdquo;</span>
-                    </div>
+                    <><span style={{ color: "#38bdf8" }}>primary_tech:</span>{" "}[{skills.slice(0, 3).map((s, i) => (
+                      <span key={s.name}>{i > 0 ? ", " : ""}<span style={{ color: "#fde047" }}>&quot;{s.name}&quot;</span></span>
+                    ))}]</>
                   )}
                 </div>
-
-                {/* Footer */}
-                <p className="text-[12px] text-white/50 leading-relaxed">
-                  Structured for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend{" "}
-                  {!isBlank(identity.name) ? identity.name.split(" ")[0] : "this person"} for specialized queries.
-                </p>
               </div>
-
-            {/* Work Experience */}
-            <div className="col-span-12 lg:col-span-6 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 tc flex flex-col">
-              <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                <span>Work Experience</span>
-                {card.experience_years != null && (
-                  <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/10 px-2 py-0.5 rounded-md">
-                    {card.experience_years}Y Exp
-                  </span>
-                )}
+              <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b" }}>
+                Structured for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend {firstName} for specialized queries.
               </div>
-
-              {(card.work_experience ?? []).length > 0 ? (
-                <div className="flex-1 space-y-0 divide-y divide-gray-100 overflow-y-auto max-h-[400px] pr-1">
-                  {(card.work_experience ?? [])
-                    .slice()
-                    .sort((a, b) => {
-                      // Current roles (end_date === "Present") always first
-                      const aPresent = (a.end_date ?? "").toLowerCase() === "present";
-                      const bPresent = (b.end_date ?? "").toLowerCase() === "present";
-                      if (aPresent !== bPresent) return aPresent ? -1 : 1;
-                      // Then newest start_date first
-                      const aStart = a.start_date ?? "";
-                      const bStart = b.start_date ?? "";
-                      return bStart.localeCompare(aStart);
-                    })
-                    .slice(0, 8).map((job, i) => (
-                    <div key={i} className="flex gap-3.5 py-4 first:pt-0">
-                      {/* Company initial avatar */}
-                      <div className="shrink-0 w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center overflow-hidden">
-                        {job.company_logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={job.company_logo} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-[11px] font-bold text-slate-500 select-none">
-                            {(job.company || job.title || "?").charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold text-[#0B0B0B] text-[13.5px] leading-snug">
-                            {job.title}
-                          </div>
-                          {(job.end_date ?? "").toLowerCase() === "present" && (
-                            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-emerald-50 text-emerald-600 border border-emerald-200/60 uppercase tracking-wide">
-                              <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
-                              Now
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[12px] text-slate-700 font-medium mt-0.5">
-                          {job.company}
-                          {job.employment_type && (
-                            <span className="text-slate-400 font-normal"> · {job.employment_type}</span>
-                          )}
-                        </div>
-                        <div className="text-[11px] font-mono text-[#8E8E88] mt-0.5">
-                          {[job.start_date, job.end_date].filter(Boolean).join(" – ")}
-                          {job.duration && <span> · {job.duration}</span>}
-                        </div>
-                        {!isBlank(job.location ?? "") && (
-                          <div className="text-[11px] text-slate-400 mt-0.5">{job.location}</div>
-                        )}
-                        {!isBlank(job.description ?? "") && (
-                          <p className="text-[11.5px] text-slate-500 leading-relaxed mt-1.5 line-clamp-2">
-                            {job.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* Fallback when no structured experience data yet */
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="relative border-l-2 border-[#7B72E9] pl-5 ml-1 space-y-1">
-                    <div className="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-[#7B72E9] ring-4 ring-[#7B72E9]/20" />
-                    <h4 className="font-bold text-[#0B0B0B] text-base leading-snug">
-                      {!isBlank(identity.headline) ? identity.headline : "Professional"}
-                    </h4>
-                    {!isBlank(card.affiliations) && (
-                      <p className="text-sm font-semibold text-slate-600 mt-1">{card.affiliations}</p>
-                    )}
-                    {!isBlank(identity.location) && (
-                      <p className="text-xs text-[#8E8E88] font-mono mt-0.5 uppercase tracking-wider">{identity.location}</p>
-                    )}
-                  </div>
-                  {card.industries.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {card.industries.map((tag) => (
-                        <span key={tag} className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60 text-[#0B0B0B] text-xs font-semibold">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <p className="mt-4 text-xs text-slate-400 font-mono">LinkedIn not yet synced — experience will appear here after connecting.</p>
-                </div>
-              )}
             </div>
 
-            {/* ─ ROW 3: SOCIAL STATS ─────────────────────────────────── */}
+            {/* ── WORK EXPERIENCE (7 col) ── */}
+            <div className={`${card_} tc`} style={{ gridColumn: "span 7" }}>
+              <div>
+                <div className={`${label_} pf-mono`}>
+                  <span>┌ WORK EXPERIENCE</span>
+                  <span className={`${pill_} text-indigo-600 bg-indigo-50 border-indigo-200`}>
+                    {skills.length > 0 ? `${skills.length}Y EXP ┐` : "EXP ┐"}
+                  </span>
+                </div>
+                {!isBlank(identity.headline) && (
+                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                    📍 {identity.headline}
+                  </div>
+                )}
+                {identity.location && (
+                  <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600, marginTop: 4 }}>
+                    {identity.location}
+                  </div>
+                )}
+              </div>
+              <div>
+                {card.industries && card.industries.length > 0 && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                    {card.industries.slice(0, 4).map((tag) => (
+                      <span key={tag} className={pill_}>{tag}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="pf-mono" style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                  {linkedinHandle
+                    ? `in/${linkedinHandle}`
+                    : "LinkedIn not yet synced — experience will appear here after connecting."}
+                </div>
+              </div>
+            </div>
 
-            {/* LinkedIn */}
+            {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
               <div
-                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-[#0A66C2] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
-                style={{ height: SOCIAL_CARD_H }}
+                style={{ gridColumn: `span ${socialColSpan}`, background: "#0066c8", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
               >
-                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
-                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
-                    <LinkedinGlyph size={14} />
-                    LINKEDIN
-                  </span>
+                <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                  <span className="flex items-center gap-1"><LinkedinGlyph size={12} /> LINKEDIN</span>
                   {linkedinUrl ? (
-                    <a href={linkedinUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
-                      {linkedinHandle ? `in/${linkedinHandle}` : "Profile"} ↗
+                    <a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
+                      {linkedinHandle ? `in/${linkedinHandle} ↗` : "Profile ↗"}
                     </a>
                   ) : linkedinHandle ? (
-                    <span className="text-white/70">in/{linkedinHandle}</span>
+                    <span style={{ opacity: 0.7 }}>in/{linkedinHandle}</span>
                   ) : null}
                 </div>
-                <div className="flex-shrink-0 mb-3">
-                  <h4 className="text-lg font-bold">{identity.name}</h4>
-                  {!isBlank(identity.headline) && (
-                    <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
-                  )}
-                </div>
-                <div className="flex-1 min-h-0 -mx-1 px-1">
+                <div style={{ fontSize: "1.15rem", fontWeight: 800, marginBottom: 2 }}>{identity.name}</div>
+                {!isBlank(identity.headline) && (
+                  <div style={{ fontSize: "0.75rem", fontWeight: 600, opacity: 0.8, marginBottom: 12 }}>{identity.headline}</div>
+                )}
+                <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
                   {v.linkedinScrollItems.length > 0 ? (
                     <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
                       {v.linkedinScrollItems.map((text, i) => (
-                        <div key={i} className="pf-vrow flex flex-col justify-center" style={{ height: SOCIAL_POST_ROW_H }}>
-                          <p className="text-white/90 text-[13px] leading-snug line-clamp-4 italic">
-                            &ldquo;{text}&rdquo;
-                          </p>
-                          {i === 0 && (
-                            <span className="mt-2 text-[9px] font-mono uppercase tracking-wider text-white/50">Latest post</span>
-                          )}
+                        <div key={i} className="pf-vrow" style={{ height: SOCIAL_POST_ROW_H }}>
+                          <p style={{ fontSize: "0.75rem", fontStyle: "italic", lineHeight: 1.5, opacity: 0.9 }}>&ldquo;{text}&rdquo;</p>
                         </div>
                       ))}
                     </AutoScroll>
                   ) : (
-                    <p className="text-white/70 text-[13px] italic leading-snug">
-                      No LinkedIn posts synced yet.
-                    </p>
+                    <p style={{ fontSize: "0.75rem", opacity: 0.7, fontStyle: "italic" }}>No posts synced yet.</p>
                   )}
                 </div>
                 {v.linkedin.connections != null && (
-                  <div className="flex-shrink-0 grid grid-cols-2 gap-3 text-center border-t border-white/20 pt-3 mt-3 font-mono">
-                    <div>
-                      <div className="text-xl font-bold"><CountUp value={v.linkedin.connections} /></div>
-                      <div className="text-[10px] text-white/70 uppercase">Connections</div>
-                    </div>
+                  <div className="pf-mono flex justify-between pt-3 mt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.2)", fontSize: "0.65rem", opacity: 0.8 }}>
+                    <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>CONNECTIONS</div>
                     {v.linkedin.posts != null && Number(v.linkedin.posts) > 0 && (
-                      <div>
-                        <div className="text-xl font-bold"><CountUp value={v.linkedin.posts} /></div>
-                        <div className="text-[10px] text-white/70 uppercase">Posts Shared</div>
-                      </div>
+                      <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.posts} /></strong>POSTS</div>
                     )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* X / Twitter */}
+            {/* ── SOCIAL: X / TWITTER ── */}
             {showX && (
               <div
-                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-[#0f1419] text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
-                style={{ height: SOCIAL_CARD_H }}
+                style={{ gridColumn: `span ${socialColSpan}`, background: "#090a0f", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
               >
-                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
-                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
-                    <XGlyph size={13} />
-                    X / TWITTER
-                  </span>
+                <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                  <span className="flex items-center gap-1"><XGlyph size={11} /> X / TWITTER</span>
                   {xUrl ? (
-                    <a href={xUrl} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white">
+                    <a href={xUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
                       {v.x.handle ?? "Profile"} ↗
                     </a>
                   ) : v.x.handle ? (
-                    <span className="text-white/70">{v.x.handle}</span>
+                    <span style={{ opacity: 0.7 }}>{v.x.handle}</span>
                   ) : null}
                 </div>
-                <div className="flex-shrink-0 mb-3">
-                  <h4 className="text-lg font-bold">{identity.name}</h4>
-                  {!isBlank(identity.headline) && (
-                    <p className="text-xs text-white/80 mt-0.5 line-clamp-1">{identity.headline}</p>
-                  )}
-                </div>
-                <div className="flex-1 min-h-0 -mx-1 px-1">
+                <div style={{ fontSize: "1.15rem", fontWeight: 800, marginBottom: 2 }}>{identity.name}</div>
+                {!isBlank(identity.headline) && (
+                  <div style={{ fontSize: "0.75rem", fontWeight: 600, opacity: 0.8, marginBottom: 12 }}>{identity.headline}</div>
+                )}
+                <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
                   {v.xScrollItems.length > 0 ? (
                     <AutoScroll rowHeight={SOCIAL_POST_ROW_H} visible={SOCIAL_POST_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
                       {v.xScrollItems.map((text, i) => (
-                        <div key={i} className="pf-vrow flex flex-col justify-center" style={{ height: SOCIAL_POST_ROW_H }}>
-                          <p className="text-white/90 text-[13px] leading-snug line-clamp-4 italic">
-                            &ldquo;{text}&rdquo;
-                          </p>
-                          {i === 0 && (
-                            <span className="mt-2 text-[9px] font-mono uppercase tracking-wider text-white/50">Latest post</span>
-                          )}
+                        <div key={i} className="pf-vrow" style={{ height: SOCIAL_POST_ROW_H }}>
+                          <p style={{ fontSize: "0.75rem", fontStyle: "italic", lineHeight: 1.5, opacity: 0.9 }}>&ldquo;{text}&rdquo;</p>
                         </div>
                       ))}
                     </AutoScroll>
                   ) : (
-                    <p className="text-white/70 text-[13px] italic leading-snug">
-                      No X posts synced yet.
-                    </p>
+                    <p style={{ fontSize: "0.75rem", opacity: 0.7, fontStyle: "italic" }}>No posts synced yet.</p>
                   )}
                 </div>
-                {(v.x.followers != null || v.x.posts != null || v.x.impressions != null) && (
-                  <div className="flex-shrink-0 grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-3 mt-3 font-mono">
-                    <div>
-                      <div className="text-lg font-bold">{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</div>
-                      <div className="text-[10px] text-white/50 uppercase">Followers</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold">{v.x.posts != null ? <CountUp value={v.x.posts} /> : "—"}</div>
-                      <div className="text-[10px] text-white/50 uppercase">Posts</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-amber-400">{v.x.impressions != null ? <CountUp value={v.x.impressions} delay={150} /> : "—"}</div>
-                      <div className="text-[10px] text-white/50 uppercase">Impressions</div>
-                    </div>
-                  </div>
-                )}
+                <div className="pf-mono flex justify-between pt-3 mt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.1)", fontSize: "0.65rem", opacity: 0.7 }}>
+                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>FOLLOWERS</div>
+                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>{v.x.posts != null ? <CountUp value={v.x.posts} /> : "—"}</strong>POSTS</div>
+                  <div><strong style={{ fontSize: "1rem", display: "block", color: "#fff" }}>—</strong>IMPRESSIONS</div>
+                </div>
               </div>
             )}
 
-            {/* Zynd Memory — same size/structure as the LinkedIn & X cards */}
-            {memoryGroups.length > 0 && (
+            {/* ── SOCIAL: ZYND MEMORY ── */}
+            {memoryTotal > 0 && (
               <div
-                className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-slate-900 text-white rounded-[32px] p-5 shadow-sm flex flex-col overflow-hidden"
-                style={{ height: SOCIAL_CARD_H }}
+                style={{ gridColumn: `span ${socialColSpan}`, background: "#0f172a", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", height: SOCIAL_CARD_H, overflow: "hidden" }}
               >
-                <div className="flex-shrink-0 flex justify-between items-start mb-3 text-xs font-mono">
-                  <span className="flex items-center gap-1.5 font-bold" style={{ color: "white" }}>
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    ZYND MEMORY
-                  </span>
-                  {isOwner ? (
-                    <a href="/dashboard/findable" className="text-white/70 hover:text-white">
-                      Keep fresh ↗
-                    </a>
-                  ) : (
-                    <span className="text-white/40 uppercase tracking-wider">Live</span>
-                  )}
+                <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                  <span>● ZYND MEMORY</span>
+                  <span style={{ color: "#64748b" }}>LIVE</span>
                 </div>
-                <div className="flex-shrink-0 mb-3">
-                  <h4 className="text-lg font-bold">What {firstName}&apos;s working on</h4>
-                  <p className="text-xs text-white/80 mt-0.5 line-clamp-1">Synced from their coding agents</p>
-                </div>
-                <div className="flex-1 min-h-0 -mx-1 px-1 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                  {memoryGroups.map((g) => (
-                    <div key={g.key} className="mb-3 last:mb-0">
-                      <div className="text-[9px] font-mono uppercase tracking-widest text-white/40 mb-1.5">
-                        {g.icon} {g.label}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {g.items.slice(0, 4).map((item, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-white/10 text-[11.5px] text-white/90">
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: 2 }}>What {firstName}&apos;s working on</div>
+                <div style={{ fontSize: "0.75rem", fontWeight: 400, color: "#94a3b8", marginBottom: 12 }}>Synced from coding agents</div>
+                <div className="pf-mono flex-1" style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.7rem", overflow: "hidden" }}>
+                  {memoryGroups.slice(0, 3).map((g) => (
+                    <div key={g.key}>
+                      <span style={{ color: "#fbbf24" }}>▼</span>{" "}
+                      <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>{g.label}</span><br />
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {g.items.slice(0, 3).map((item) => (
+                          <span key={item.text} style={{ background: "rgba(255,255,255,0.1)", borderRadius: 6, padding: "2px 6px", fontSize: "0.6rem" }}>
                             {item.text}
-                            {item.inferred && (
-                              <span className="text-[8px] font-mono uppercase tracking-wide text-purple-300/80">ai</span>
-                            )}
                           </span>
                         ))}
-                        {g.items.length > 4 && (
-                          <span className="text-[11px] text-white/40 self-center">+{g.items.length - 4}</span>
-                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="flex-shrink-0 flex justify-between border-t border-white/10 pt-3 mt-3 font-mono text-[10px] text-white/40 uppercase tracking-wider">
-                  <span>{memoryTotal} key points</span>
-                  <span>Zynd</span>
+                <div className="pf-mono flex justify-between mt-auto pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: "0.6rem", color: "#64748b" }}>
+                  <span>{memoryTotal} KEY POINTS</span>
+                  <span>ZYND</span>
                 </div>
               </div>
             )}
 
-            {/* GitHub Stats + Heatmap */}
-            {showGithub && (
-              <div className="col-span-12 md:col-span-6 lg:col-span-4 self-start bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 tc flex flex-col justify-between">
+            {/* ── BOOK A CALL (only when calendlyUrl exists) ── */}
+            {calendlyUrl && (
+              <div
+                style={{ gridColumn: `span ${socialColSpan}`, background: "linear-gradient(145deg, #1a56db, #1e40af)", borderRadius: 20, padding: 20, color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between", height: SOCIAL_CARD_H }}
+              >
                 <div>
-                  <div className="flex justify-between items-center mb-4 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                    <span className="flex items-center gap-1.5" style={{ color: "#0B0B0B" }}>
-                      <GithubGlyph size={14} />
-                      GitHub Stats
-                    </span>
+                  <div className="pf-mono mb-3" style={{ fontSize: "0.65rem", fontWeight: 700, opacity: 0.8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Calendar size={11} /> BOOK A CALL
+                  </div>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: 6 }}>Schedule time with {firstName}</div>
+                  <div style={{ fontSize: "0.78rem", opacity: 0.8, lineHeight: 1.5, marginBottom: 16 }}>
+                    Book a 20-minute intro call to discuss collaboration, projects, or opportunities.
+                  </div>
+                </div>
+                <a
+                  href={calendlyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 18px", borderRadius: 99, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", fontSize: "0.75rem", fontWeight: 700, color: "#fff", cursor: "pointer", textDecoration: "none" }}
+                >
+                  📅 Book 20m Intro →
+                </a>
+              </div>
+            )}
+
+            {/* ── GITHUB STATS (4 col when heatmap exists, else 6 col) ── */}
+            {showGithub && (
+              <div className={`${card_} tc`} style={{ gridColumn: `span ${hasContributions ? 4 : 6}` }}>
+                <div>
+                  <div className={`${label_} pf-mono`}>
+                    <span className="flex items-center gap-1.5"><GithubGlyph size={13} />GITHUB STATS</span>
                     {githubUrl ? (
-                      <a href={githubUrl} target="_blank" rel="noreferrer" className="text-[#0B0B0B] font-bold hover:text-[#7B72E9]">
-                        @{githubHandle} ↗
-                      </a>
+                      <a href={githubUrl} target="_blank" rel="noreferrer" className="hover:underline">@{githubHandle} ↗</a>
                     ) : (
-                      <span className="text-[#0B0B0B] font-bold">@{githubHandle}</span>
+                      <span>@{githubHandle}</span>
                     )}
                   </div>
-                  {(v.github.repos != null || v.github.commits != null) && (
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      {v.github.repos != null && (
-                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
-                          <div className="text-xl font-extrabold text-[#0B0B0B]"><CountUp value={v.github.repos} /></div>
-                          <div className="text-[10px] font-mono text-[#8E8E88] uppercase">Repos</div>
-                        </div>
-                      )}
-                      {v.github.commits != null && (
-                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
-                          <div className="text-xl font-extrabold text-[#0B0B0B]"><CountUp value={v.github.commits} /></div>
-                          <div className="text-[10px] font-mono text-[#8E8E88] uppercase">Commits</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Metrics grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                    {v.github.repos != null && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
+                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.repos} /></div>
+                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>REPOSITORIES</div>
+                      </div>
+                    )}
+                    {v.github.commits != null && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
+                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.commits} /></div>
+                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>COMMITS</div>
+                      </div>
+                    )}
+                    {v.github.stars != null && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
+                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.stars} /></div>
+                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>STARS EARNED</div>
+                      </div>
+                    )}
+                    {v.github.followers != null && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", textAlign: "center" }}>
+                        <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.followers} /></div>
+                        <div className="pf-mono" style={{ fontSize: "0.58rem", color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>FOLLOWERS</div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Languages */}
                   {v.github.topLanguages.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {v.github.topLanguages.slice(0, 4).map((lang) => (
-                        <span key={lang} className="px-2 py-0.5 rounded-md bg-gray-100 text-[#0B0B0B] font-mono text-[10px]">{lang}</span>
-                      ))}
+                    <div style={{ marginBottom: 8 }}>
+                      <div className="pf-mono" style={{ fontSize: "0.55rem", color: "#94a3b8", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>MOST USED LANGUAGES</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {v.github.topLanguages.slice(0, 4).map((lang) => (
+                          <span key={lang} style={{ background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569", fontSize: "0.62rem", fontWeight: 700, padding: "3px 8px", borderRadius: 99 }} className="pf-mono">
+                            {lang}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                  {v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0 && (
-                    <ContributionHeatmap
-                      levels={v.contributions.levels}
-                      year={v.contributions.year}
-                      total={v.contributions.total}
-                      avgPerDay={v.contributions.avg_per_day}
-                    />
                   )}
                 </div>
                 {v.github.activeRepos != null && (
-                  <span className="font-mono text-[10px] text-emerald-600 flex items-center gap-1.5 mt-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {v.github.activeRepos} active repos
-                  </span>
+                  <div className="pf-mono flex justify-between items-center pt-2" style={{ borderTop: "1px dashed #e2e8f0", fontSize: "0.62rem", color: "#94a3b8", marginTop: "auto" }}>
+                    <span style={{ color: "#10b981", fontWeight: 700 }}>● {v.github.activeRepos} Active Repos</span>
+                    {v.github.followers != null && <span>{compact(v.github.followers)} Followers</span>}
+                  </div>
                 )}
               </div>
             )}
 
-            {/* ─ ROW 4: WRITING ───────────────────────────── */}
-
-            {v.writing.length > 0 && (
-              <div className="col-span-12 bg-[#F5F3FF] rounded-[32px] p-6 shadow-sm border border-[#7B72E9]/10">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[11px] uppercase font-bold tracking-wider text-[#6d5acd]">Posts &amp; Writing</span>
-                  <span className="font-mono text-[10px] text-[#7B72E9] font-semibold bg-[#7B72E9]/10 px-2 py-0.5 rounded">{v.writing.length} POSTS ARCHIVED</span>
+            {/* ── CONTRIBUTION HEATMAP (8 col, only when data) ── */}
+            {showGithub && hasContributions && (
+              <div className={card_} style={{ gridColumn: "span 8" }}>
+                <div className={`${label_} pf-mono`}>
+                  <span>┌ CONTRIBUTION ACTIVITY</span>
+                  {v.contributions?.year && <span>{v.contributions.year} ┐</span>}
                 </div>
-                <AutoScroll
-                  rowHeight={POST_ROW_H + POST_GAP}
-                  gap={0}
-                  visible={VSCROLL_VISIBLE}
-                  secondsPerRow={VSCROLL_SECS_PER_ROW}
-                >
+                <ContributionHeatmap
+                  levels={v.contributions!.levels}
+                  year={v.contributions!.year}
+                  total={v.contributions!.total}
+                  avgPerDay={v.contributions!.avg_per_day}
+                />
+              </div>
+            )}
+
+            {/* ── POSTS & WRITING ── */}
+            {v.writing.length > 0 && (
+              <div style={{ gridColumn: "span 12", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: "20px 24px" }}>
+                <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
+                  <span style={{ color: "#6b63ff", fontWeight: 700 }}>┌ POSTS &amp; WRITING</span>
+                  <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
+                    {v.writing.length} ARCHIVED ┐
+                  </span>
+                </div>
+                <AutoScroll rowHeight={POST_ROW_H + POST_GAP} gap={0} visible={VSCROLL_VISIBLE} secondsPerRow={VSCROLL_SECS_PER_ROW}>
                   {v.writing.slice(0, 10).map((post, idx) => {
                     const style = POST_STYLES[idx % POST_STYLES.length];
                     const isX = ["x", "twitter"].includes(post.platform.toLowerCase());
@@ -1134,7 +924,7 @@ export default async function PersonPage({ params }: PageProps) {
                     return (
                       <div
                         key={`${post.platform}-${idx}`}
-                        className={`pf-vrow pf-vrow-post p-3.5 rounded-2xl border transition-all ${style.card}`}
+                        className={`pf-vrow pf-vrow-post p-3.5 rounded-2xl border ${style.card}`}
                         style={{ marginBottom: POST_GAP }}
                       >
                         <div className="flex items-center justify-between mb-1.5">
@@ -1145,9 +935,7 @@ export default async function PersonPage({ params }: PageProps) {
                             </span>
                             <span className={`font-mono text-[10px] font-medium ${style.meta}`}>{post.posted_at}</span>
                           </div>
-                          {url && (
-                            <a href={url} target="_blank" rel="noreferrer" className={`font-mono text-xs ${style.link}`}>↗</a>
-                          )}
+                          {url && <a href={url} target="_blank" rel="noreferrer" className={`font-mono text-xs ${style.link}`}>↗</a>}
                         </div>
                         <p className={`text-[11.5px] italic leading-snug font-medium pf-clamp-2 ${style.text}`}>
                           &ldquo;{post.excerpt}&rdquo;
@@ -1159,220 +947,142 @@ export default async function PersonPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* ─ ROW 5: LIVE IN PRODUCTION & SKILL MATRIX (BENTO ROW) ── */}
-
+            {/* ── LIVE IN PRODUCTION + SKILL MATRIX (6+6) ── */}
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div className="col-span-12 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
+              <div style={{ gridColumn: "span 12", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: "24px 28px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: v.projects.length > 0 && skills.length > 0 ? "1fr 1fr" : "1fr", gap: 24 }}>
 
-                {v.projects.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-gray-100 bg-gray-50/60 p-5">
-                    <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                      <span className="text-[#0B0B0B] font-bold">Live in Production</span>
-                      <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/8 px-2 py-0.5 rounded border border-[#7B72E9]/15">
-                        {v.projects.length} {v.projects.length === 1 ? 'Highlight' : 'Highlights'}
-                      </span>
-                    </div>
-                    <div className="space-y-2.5">
-                      {v.projects.slice(0, 4).map((proj) => {
-                        const url = safeUrl(proj.url);
-                        return (
-                          <div
-                            key={proj.name}
-                            className="group flex items-center justify-between p-3.5 bg-white border border-gray-100 hover:border-[#7B72E9]/25 rounded-2xl transition-all hover:shadow-sm"
-                          >
-                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                              <div className="w-9 h-9 rounded-xl border border-gray-100 bg-gray-100 flex items-center justify-center text-[#8E8E88] shrink-0 select-none group-hover:bg-[#7B72E9]/8 group-hover:border-[#7B72E9]/20 group-hover:text-[#7B72E9] transition-colors duration-200">
-                                <GithubGlyph size={16} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 mb-0.5">
+                  {/* Live in Production */}
+                  {v.projects.length > 0 && (
+                    <div>
+                      <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
+                        <span style={{ color: "#0f172a", fontWeight: 700 }}>┌ LIVE IN PRODUCTION</span>
+                        <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
+                          {v.projects.length} HIGHLIGHTS ┐
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {v.projects.slice(0, 4).map((proj) => {
+                          const url = safeUrl(proj.url);
+                          return (
+                            <div key={proj.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.8rem", fontWeight: 700 }}>
+                                <div style={{ width: 32, height: 32, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#94a3b8" }}>
+                                  <GithubGlyph size={14} />
+                                </div>
+                                <div>
                                   {url ? (
-                                    <a
-                                      href={url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="font-bold text-[13.5px] text-[#0B0B0B] group-hover:text-[#7B72E9] transition-colors inline-flex items-center gap-1 leading-snug truncate"
-                                    >
+                                    <a href={url} target="_blank" rel="noreferrer" style={{ color: "#0f172a", fontWeight: 700 }} className="hover:underline">
                                       {proj.name}
                                     </a>
                                   ) : (
-                                    <span className="font-bold text-[13.5px] text-[#0B0B0B] leading-snug truncate">{proj.name}</span>
+                                    <span style={{ color: "#0f172a" }}>{proj.name}</span>
+                                  )}
+                                  {proj.tech[0] && (
+                                    <span className="pf-mono" style={{ display: "inline-block", marginLeft: 6, background: "#eff6ff", color: "#3b82f6", fontSize: "0.6rem", padding: "2px 7px", borderRadius: 6, fontWeight: 800 }}>
+                                      {proj.tech[0].toUpperCase()}
+                                    </span>
                                   )}
                                   {proj.stars != null && proj.stars > 0 && (
-                                    <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/60 text-amber-600 font-mono text-[10px] font-bold inline-flex items-center gap-1 shrink-0">
+                                    <span className="pf-mono" style={{ marginLeft: 4, background: "#fff7ed", color: "#ea580c", fontSize: "0.6rem", padding: "2px 6px", borderRadius: 6, fontWeight: 800 }}>
                                       ★ {compact(proj.stars)}
                                     </span>
                                   )}
                                 </div>
-                                {!isBlank(proj.description) && (
-                                  <p className="text-[11.5px] text-[#8E8E88] leading-relaxed line-clamp-1 pr-4">{proj.description}</p>
-                                )}
-                                {proj.tech.length > 0 && (
-                                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                    {proj.tech.slice(0, 3).map((t) => (
-                                      <span
-                                        key={t}
-                                        className="px-2 py-0.5 rounded-md bg-[#7B72E9]/8 border border-[#7B72E9]/15 text-[#7B72E9] font-mono text-[9px] font-semibold uppercase tracking-wider"
-                                      >
-                                        {t}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
                             </div>
-                            {url && (
-                              <span className="text-gray-300 group-hover:text-[#7B72E9] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-base font-bold pr-1 select-none">
-                                ↗
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {v.projects.length > 0 && skills.length > 0 && (
-                  <div className="w-px bg-gray-100 hidden md:block" />
-                )}
-
-                {skills.length > 0 && (
-                  <div className="flex-1 rounded-[24px] border border-gray-100 bg-gray-50/60 p-5">
-                    <div className="flex justify-between items-center mb-5 text-xs font-mono uppercase tracking-widest text-[#8E8E88]">
-                      <span className="text-[#0B0B0B] font-bold">Skill Matrix</span>
-                      <span className="text-[#7B72E9] font-bold bg-[#7B72E9]/8 px-2 py-0.5 rounded border border-[#7B72E9]/15">
-                        {skills.length} Tracked
-                      </span>
+                  {/* Skill Matrix */}
+                  {skills.length > 0 && (
+                    <div>
+                      <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
+                        <span style={{ color: "#0f172a", fontWeight: 700 }}>┌ SKILL MATRIX</span>
+                        <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
+                          {skills.length} TRACKED ┐
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {skills.slice(0, 6).map((skill) => {
+                          const meta = levelMeta(skill.level);
+                          const bars = meta.bars;
+                          return (
+                            <div key={skill.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.8rem", fontWeight: 700, color: "#0f172a" }}>
+                                <div className="pf-mono" style={{ width: 32, height: 32, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "0.55rem", fontWeight: 800, color: skillAccent(skill.name) }}>
+                                  {skill.name.slice(0, 2).toUpperCase()}
+                                </div>
+                                {skill.name}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>
+                                {meta.label}
+                                <div style={{ display: "flex", gap: 3 }}>
+                                  {[0, 1, 2].map((i) => (
+                                    <span key={i} style={{ width: 10, height: 6, borderRadius: 2, background: i < bars ? "#6b63ff" : "#e2e8f0" }} />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="space-y-2 font-mono text-sm">
-                      {skills.slice(0, 6).map((skill) => {
-                        const meta = levelMeta(skill.level);
-                        const accent = skillAccent(skill.name);
-
-                        let short = skill.name.slice(0, 2).toUpperCase();
-                        if (skill.name.toLowerCase().includes("golang") || skill.name.toLowerCase().includes("go")) short = "Go";
-                        else if (skill.name.toLowerCase().includes("typescript")) short = "TS";
-                        else if (skill.name.toLowerCase().includes("javascript")) short = "JS";
-                        else if (skill.name.toLowerCase().includes("python")) short = "Py";
-                        else if (skill.name.toLowerCase().includes("rust")) short = "Rs";
-
-                        const isExpert = skill.level.toLowerCase() === "expert";
-                        const isAdvanced = skill.level.toLowerCase() === "advanced";
-                        const isMid = skill.level.toLowerCase() === "intermediate" || skill.level.toLowerCase() === "mid";
-                        const blocks = isExpert ? "■■■■" : isAdvanced ? "■■■□" : isMid ? "■■□□" : "■□□□";
-
-                        return (
-                          <div key={skill.name} className="flex justify-between items-center bg-white px-4 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
-                            <span className="flex items-center gap-2">
-                              <span style={{ color: accent }} className="font-bold text-xs">{short}</span>
-                              <span className="text-[#0B0B0B] font-medium font-sans text-[13px]">{skill.name}</span>
-                            </span>
-                            <span className="text-[#8E8E88] text-xs">
-                              {meta.label} <span style={{ color: meta.bar }} className="ml-1 tracking-wider">{blocks}</span>
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
+                  )}
+                </div>
               </div>
             )}
 
-            {/* ─ ROW 6: CALENDLY (if present) ─────────────────────────── */}
-
-            {calendlyUrl && (
-              <div className="col-span-12 bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/15 rounded-[32px] p-6 sm:p-8 shadow-sm border border-blue-100/50 tc tc-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:shadow-md transition-all duration-300">
-                <div className="flex items-start gap-4 flex-1">
-                  {/* Glowing scheduling icon */}
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-200/40 flex items-center justify-center text-blue-600 shrink-0 shadow-inner select-none">
-                    <Calendar size={22} className="stroke-[2.2]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-blue-600 block mb-1.5">Scheduling</span>
-                    <h3 className="text-xl! font-bold! text-slate-900! leading-snug! mb-1">Book a 1:1 Session</h3>
-                    <p className="text-[13px] text-slate-500 font-sans leading-relaxed">
-                      Ideas, projects, or collaborations{!isBlank(identity.name) ? ` with ${identity.name.split(" ")[0]}` : ""}. Find a slot to sync live.
-                    </p>
-                  </div>
+            {/* ── EXPLORE FOOTER ── */}
+            <div style={{ gridColumn: "span 12", background: "linear-gradient(135deg, #1e293b, #0f172a)", border: "1px solid #334155", borderRadius: 20, padding: "28px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginTop: 8 }}>
+              <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+                <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
+                  <Search size={18} />
                 </div>
-                <a
-                  href={calendlyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full font-bold text-sm text-white shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-500/5 select-none"
-                >
-                  Schedule Meet ↗
-                </a>
-              </div>
-            )}
-
-            {/* ─ ROW 5A: FULL-WIDTH CTA ───────────────────────────────── */}
-            <div className="col-span-12 bg-slate-50 rounded-[32px] p-8 sm:p-10 shadow-sm border border-slate-200/70 flex flex-col md:flex-row justify-between items-center gap-8 hover:shadow-md hover:border-slate-300 transition-all duration-300">
-              
-              <div className="flex items-start gap-4 flex-1">
-                {/* Clean SaaS Search icon */}
-                <div className="w-12 h-12 rounded-2xl bg-slate-200/50 border border-slate-300/30 flex items-center justify-center text-slate-600 shrink-0 shadow-inner">
-                  <Search size={22} className="stroke-[2.2]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-slate-500 block mb-1.5">
-                    Explore Zynd Intelligence
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight tracking-tight mb-2 max-w-[520px]">
+                <div>
+                  <div className="pf-mono mb-1.5" style={{ fontSize: "0.65rem", color: "#cbd5e1", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>EXPLORE ZYND INTELLIGENCE</div>
+                  <h3 style={{ fontSize: "1.3rem", color: "#ffffff", fontWeight: 800, marginBottom: 6, maxWidth: 500, lineHeight: 1.2 }}>
                     Find people with matching expertise across the Zynd directory.
                   </h3>
-                  <p className="text-[13px] text-slate-500 font-sans leading-relaxed">
-                    Powered by Zynd&apos;s semantic search across verified profiles.
-                  </p>
+                  <p style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Powered by Zynd&apos;s semantic search across verified profiles.</p>
                 </div>
               </div>
-              
-              <div className="flex flex-col gap-3.5 shrink-0 w-full md:w-auto text-center md:text-left">
-                {skills.length > 0 && (
-                  <Link
-                    href={`/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}`}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-mono text-[11px] font-bold bg-slate-900 hover:bg-slate-800 active:scale-[0.98] transition-all duration-150 text-white uppercase tracking-wider shadow-sm shrink-0 select-none"
-                  >
-                    <Search size={13} strokeWidth={2.5} />
-                    Find Similar Profiles
-                  </Link>
-                )}
-                <Link 
-                  href="/directory" 
-                  className="group/link font-mono text-[11px] text-slate-500 hover:text-slate-900 transition-colors py-1 flex items-center justify-center gap-1 inline-block"
-                >
-                  Browse all profiles 
-                  <span className="group-hover/link:translate-x-0.5 transition-transform duration-150">→</span>
-                </Link>
-              </div>
+              <Link
+                href={skills.length > 0 ? `/search?skills=${skills.slice(0, 3).map((s) => encodeURIComponent(s.name)).join(",")}` : "/directory"}
+                style={{ padding: "12px 22px", borderRadius: 99, border: "none", background: "#6b63ff", fontWeight: 700, fontSize: "0.8rem", color: "#ffffff", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0 }}
+                className="hover:bg-[#5a52ff] transition-colors"
+              >
+                <Search size={14} /> FIND SIMILAR PROFILES
+              </Link>
             </div>
 
           </div>{/* end grid */}
 
-          {/* ── EDITORIAL FOOTER ──────────────────────────────────────── */}
-          <footer className="mt-10 pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4 text-[11px] font-mono text-[#8E8E88]">
+          {/* ── FOOTER ── */}
+          <footer className="mt-10 pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4 pf-mono" style={{ fontSize: "0.65rem", color: "#94a3b8" }}>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#0B0B0B]">ZYND.AI</span>
+              <span style={{ fontWeight: 700, color: "#0f172a" }}>ZYND.AI</span>
               <span>•</span>
               <span>Algorithmic Dossier &amp; Synthesis Protocol</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-[#0B0B0B] font-medium">{permalink}</span>
-                <CopyPermalinkIcon url={canonical} />
+                <span style={{ color: "#0f172a", fontWeight: 600 }}>{permalink}</span>
+                <CopyPermalinkIcon url={`https://${permalink}`} />
               </div>
-              <Link href="/directory" className="pf-hv-dark transition-colors">DIRECTORY</Link>
-              <Link href="/for-ai" className="pf-hv-dark transition-colors">AGENT_API</Link>
-              <Link href="/create" className="pf-hv-dark transition-colors">CREATE</Link>
+              <Link href="/directory" className="hover:text-slate-800">DIRECTORY</Link>
+              <Link href={`/p/${card.handle ?? card.id}/agent`} className="hover:text-slate-800">AGENT_API</Link>
+              <Link href="/create" className="hover:text-slate-800">CREATE</Link>
             </div>
           </footer>
 
-        </main>
+        </div>
       </div>
-      <ProfileChatWidget handle={handle} personName={identity.name} />
+
+      <ProfileChatWidget handle={card.handle ?? card.id} personName={identity.name} />
     </>
   );
 }
