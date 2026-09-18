@@ -555,10 +555,13 @@ export default async function PersonPage({ params }: PageProps) {
           .pf-obs-row    { grid-template-columns: 1fr 1fr; gap: 10px; }
           .pf-social-row { grid-template-columns: 1fr 1fr; gap: 10px; }
           .pf-proj-row   { grid-template-columns: 1fr 1fr; gap: 10px; }
-          /* Solo card in a 2-col row → full width */
+          /* Solo card OR odd-trailing card in a 2-col row → full width */
           .pf-obs-row > *:only-child,
           .pf-social-row > *:only-child,
           .pf-proj-row > *:only-child { grid-column: 1 / -1; }
+          .pf-obs-row > *:last-child:nth-child(odd),
+          .pf-social-row > *:last-child:nth-child(odd),
+          .pf-proj-row > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
           .pf-hero,
           .pf-right-stack,
           .pf-span-12,
