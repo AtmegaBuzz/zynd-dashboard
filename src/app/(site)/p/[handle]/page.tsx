@@ -542,8 +542,10 @@ export default async function PersonPage({ params }: PageProps) {
         @media (max-width: 820px) {
           .pf-page { overflow-x: hidden; }
           .pf-inner { padding: 12px 12px 72px !important; }
-          .pf-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-          .pf-header-actions { width: 100%; justify-content: flex-start !important; flex-wrap: wrap !important; }
+          /* Nav: single row — hide verbose badge, keep breadcrumb + Share + QR */
+          .pf-synthesis-badge { display: none; }
+          .pf-header { flex-direction: row !important; align-items: center !important; gap: 8px; flex-wrap: wrap; }
+          .pf-header-actions { width: auto !important; justify-content: flex-end !important; flex-wrap: nowrap !important; }
           /* Stack: main grid, ai-work sub-grid, github row */
           .pf-main-grid,
           .pf-ai-work,
@@ -551,17 +553,20 @@ export default async function PersonPage({ params }: PageProps) {
             grid-template-columns: 1fr;
             gap: 12px;
           }
-          /* 2-col bento: compact equal-height card groups */
-          .pf-obs-row    { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .pf-social-row { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .pf-proj-row   { grid-template-columns: 1fr 1fr; gap: 10px; }
-          /* Solo card OR odd-trailing card in a 2-col row → full width */
+          /* 2-col bento: obsessions + social cards */
+          .pf-obs-row    { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+          .pf-social-row { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+          /* Social children: equal-height with content spread top-to-bottom */
+          .pf-social-row > * { justify-content: space-between; }
+          /* Solo or odd-trailing card → full width */
           .pf-obs-row > *:only-child,
-          .pf-social-row > *:only-child,
-          .pf-proj-row > *:only-child { grid-column: 1 / -1; }
+          .pf-social-row > *:only-child { grid-column: 1 / -1; }
           .pf-obs-row > *:last-child:nth-child(odd),
-          .pf-social-row > *:last-child:nth-child(odd),
-          .pf-proj-row > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+          .pf-social-row > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+          /* Projects + Skills: too cramped at 2-col on mobile — stack full-width */
+          .pf-proj-row { grid-template-columns: 1fr; gap: 12px; }
+          /* Skill grid gets full card width — use 3-col */
+          .pf-skill-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
           .pf-hero,
           .pf-right-stack,
           .pf-span-12,
@@ -585,8 +590,6 @@ export default async function PersonPage({ params }: PageProps) {
           /* x stats: keep 3-col when impressions present — short numbers fit fine */
           .pf-x-stats { grid-template-columns: 1fr 1fr !important; }
           .pf-x-stats-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-          /* skill grid stays 2-col inside the narrower proj-row card */
-          .pf-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
           .pf-cta { flex-direction: column; align-items: stretch !important; padding: 20px 16px !important; }
           .pf-cta a { width: 100%; justify-content: center !important; }
           .pf-posts { padding: 16px !important; }
@@ -622,7 +625,7 @@ export default async function PersonPage({ params }: PageProps) {
               <strong className="text-slate-800">@{card.handle || card.id}</strong>
             </div>
             <div className="pf-header-actions flex gap-2.5 items-center flex-wrap justify-end">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[0.7rem] pf-mono font-bold text-emerald-700">
+              <span className="pf-synthesis-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[0.7rem] pf-mono font-bold text-emerald-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 SYNTHESIS_ACTIVE
               </span>
