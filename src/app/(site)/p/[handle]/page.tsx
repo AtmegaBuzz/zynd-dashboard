@@ -544,15 +544,21 @@ export default async function PersonPage({ params }: PageProps) {
           .pf-inner { padding: 12px 12px 72px !important; }
           .pf-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
           .pf-header-actions { width: 100%; justify-content: flex-start !important; flex-wrap: wrap !important; }
+          /* Stack: main grid, ai-work sub-grid, github row */
           .pf-main-grid,
           .pf-ai-work,
-          .pf-social-row,
-          .pf-gh-row,
-          .pf-proj-row,
-          .pf-obs-row {
+          .pf-gh-row {
             grid-template-columns: 1fr;
             gap: 12px;
           }
+          /* 2-col bento: compact equal-height card groups */
+          .pf-obs-row    { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .pf-social-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .pf-proj-row   { grid-template-columns: 1fr 1fr; gap: 10px; }
+          /* Solo card in a 2-col row → full width */
+          .pf-obs-row > *:only-child,
+          .pf-social-row > *:only-child,
+          .pf-proj-row > *:only-child { grid-column: 1 / -1; }
           .pf-hero,
           .pf-right-stack,
           .pf-span-12,
@@ -569,11 +575,14 @@ export default async function PersonPage({ params }: PageProps) {
           .pf-code { overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 0.65rem !important; }
           .pf-code > div { word-break: break-word; overflow-wrap: anywhere; }
           .pf-ai-fact { padding: 16px; }
-          .pf-gh-stats,
+          /* GitHub heatmap card: let wide SVG scroll rather than squish */
+          .pf-gh-row > *:last-child { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .pf-gh-stats { grid-template-columns: 1fr 1fr 1fr 1fr !important; }
           .pf-li-stats { grid-template-columns: 1fr 1fr !important; }
           /* x stats: keep 3-col when impressions present — short numbers fit fine */
           .pf-x-stats { grid-template-columns: 1fr 1fr !important; }
           .pf-x-stats-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+          /* skill grid stays 2-col inside the narrower proj-row card */
           .pf-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
           .pf-cta { flex-direction: column; align-items: stretch !important; padding: 20px 16px !important; }
           .pf-cta a { width: 100%; justify-content: center !important; }
