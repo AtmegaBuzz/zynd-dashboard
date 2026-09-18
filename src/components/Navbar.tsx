@@ -176,28 +176,28 @@ export function Navbar(): React.ReactElement {
                           >
                             Team
                           </Link>
-                          {authenticated && cardHandle && (
-                            <Link
-                              href={`/p/${encodeURIComponent(cardHandle)}`}
-                              className="navbar-link w-nav-link"
-                              style={{ color: "#6366F1", fontWeight: 600 }}
-                            >
-                              My profile
-                            </Link>
-                          )}
-                          {authenticated && (
-                            <Link
-                              href="/dashboard"
-                              className="navbar-link w-nav-link"
-                              style={{ color: "#6366F1", fontWeight: 600 }}
-                            >
-                              Dashboard
-                            </Link>
-                          )}
                         </div>
                         <div className="navbar-button-w">
                           <div className="navbar-button-c">
-                            <div className="navbar-button-b">
+                            <div className="navbar-button-b" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                              {authenticated && cardHandle && (
+                                <Link
+                                  href={`/p/${encodeURIComponent(cardHandle)}`}
+                                  className="navbar-link w-nav-link"
+                                  style={{ padding: 0, fontSize: "16px", fontWeight: 600, color: "#a5b4fc", whiteSpace: "nowrap" }}
+                                >
+                                  My profile
+                                </Link>
+                              )}
+                              {authenticated && (
+                                <Link
+                                  href="/dashboard"
+                                  className="navbar-link w-nav-link"
+                                  style={{ padding: 0, fontSize: "16px", fontWeight: 600, color: "#a5b4fc", whiteSpace: "nowrap" }}
+                                >
+                                  Dashboard
+                                </Link>
+                              )}
                               {authenticated ? (
                                 <button
                                   onClick={logout}

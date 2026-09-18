@@ -235,6 +235,7 @@ export async function lookupMyCardHandle(
     const res = await fetch(`${API_BASE}/cards/mine`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(2500),
     });
     if (res.status === 401 || res.status >= 500) {
       return { handle: null, card: null, failed: true };
