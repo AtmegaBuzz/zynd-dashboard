@@ -157,7 +157,7 @@ export function WorkExperienceCard({
       : jobs.length > 0 ? `${jobs.length} ROLES` : "EXP";
 
   return (
-    <div className={`${cardClass} tc pf-work`} style={{ gridColumn: "span 7", justifyContent: "flex-start", alignSelf: "start", height: "auto" }}>
+    <div className={`${cardClass} tc pf-work`} style={{ justifyContent: "flex-start", alignSelf: "start", height: "auto" }}>
       <div>
         <div className={`${labelClass} pf-mono`}>
           <span>┌ WORK EXPERIENCE</span>
