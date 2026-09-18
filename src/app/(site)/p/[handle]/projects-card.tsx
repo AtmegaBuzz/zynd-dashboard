@@ -85,7 +85,7 @@ export function ProjectsCard({
                   )}
                 </div>
                 {desc && (
-                  <p style={{ margin: "2px 0 0", fontSize: "0.7rem", color: "#64748b", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</p>
+                  <p className="pf-proj-desc" style={{ margin: "2px 0 0", fontSize: "0.7rem", color: "#64748b", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</p>
                 )}
                 {proj.tech.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>

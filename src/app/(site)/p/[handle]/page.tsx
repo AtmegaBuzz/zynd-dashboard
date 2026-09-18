@@ -531,7 +531,7 @@ export default async function PersonPage({ params }: PageProps) {
           .pf-page { overflow-x: hidden; }
           .pf-inner { padding: 12px 12px 72px !important; }
           .pf-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-          .pf-header-actions { width: 100%; justify-content: flex-start !important; }
+          .pf-header-actions { width: 100%; justify-content: flex-start !important; flex-wrap: wrap !important; }
           .pf-main-grid,
           .pf-ai-work,
           .pf-social-row,
@@ -552,21 +552,36 @@ export default async function PersonPage({ params }: PageProps) {
           }
           .pf-hero { height: auto !important; padding: 16px !important; }
           .pf-hero-avatar { width: 72px !important; height: 72px !important; }
+          .pf-hero-name { font-size: clamp(1.1rem, 4.5vw, 1.45rem) !important; }
           .pf-right-stack { height: auto !important; }
           .pf-code { overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 0.65rem !important; }
           .pf-code > div { word-break: break-word; overflow-wrap: anywhere; }
           .pf-ai-fact { padding: 16px !important; }
           .pf-gh-stats,
-          .pf-x-stats,
           .pf-li-stats { grid-template-columns: 1fr 1fr !important; }
+          /* x stats: keep 3-col when impressions present — short numbers fit fine */
+          .pf-x-stats { grid-template-columns: 1fr 1fr !important; }
+          .pf-x-stats-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
           .pf-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
           .pf-cta { flex-direction: column; align-items: stretch !important; padding: 20px 16px !important; }
           .pf-cta a { width: 100%; justify-content: center !important; }
           .pf-posts { padding: 16px !important; }
+          .pf-post-excerpt { font-size: 12.5px !important; }
           .pf-book-week { overflow-x: auto; }
+          .pf-book-badges { flex-wrap: wrap !important; gap: 6px !important; }
           .pf-footer { flex-direction: column; align-items: flex-start !important; }
+          .pf-footer-links { flex-wrap: wrap !important; gap: 8px !important; }
+          .pf-permalink-badge { max-width: calc(100vw - 48px) !important; min-width: 0 !important; overflow: hidden !important; }
+          .pf-permalink-text { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; max-width: 160px !important; }
           .pf-social-head { flex-wrap: wrap; gap: 6px; }
-          .pf-social-head a, .pf-social-head span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+          /* nowrap + ellipsis so long handles like "in/very-long-username" truncate cleanly */
+          .pf-social-head a { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 55% !important; }
+          .pf-social-head span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+          .pf-obs-card { min-height: 0 !important; }
+          /* project description: 2-line wrap beats single-line truncation on wide mobile */
+          .pf-proj-desc { white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; text-overflow: clip !important; }
+          /* obsession chips: ensure they wrap tightly */
+          .pf-obs-chips { gap: 4px !important; }
         }
       `}</style>
 
@@ -625,7 +640,7 @@ export default async function PersonPage({ params }: PageProps) {
                 )}
                 <div style={{ minWidth: 0, flex: 1, paddingTop: 4 }}>
                   <div style={{ fontSize: "0.72rem", fontWeight: 600, opacity: 0.8 }}>I&apos;m</div>
-                  <div style={{ fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.05, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div className="pf-hero-name" style={{ fontSize: "1.45rem", fontWeight: 800, lineHeight: 1.05, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span>{nameLines.map((line, i) => <span key={i}>{line}{i < nameLines.length - 1 ? " " : ""}</span>)}</span>
                     {verified && (
                       <BadgeCheck size={22} color="#FBBF24" fill="#FBBF24" stroke="#6d64f6" strokeWidth={1.5} aria-label="Verified" />
@@ -707,14 +722,14 @@ export default async function PersonPage({ params }: PageProps) {
               {obsessions.length > 0 && (
                 <div className="pf-obs-row" style={{ display: "grid", gridTemplateColumns: `repeat(${obsessions.length}, 1fr)`, gap: 16 }}>
                   {obsessions.map((obs) => (
-                    <div key={obs.key} className={`${obs.card} rounded-[20px] p-[18px] flex flex-col justify-between`}>
+                    <div key={obs.key} className={`pf-obs-card ${obs.card} rounded-[20px] p-[18px] flex flex-col justify-between`}>
                       <div className={`${label_} pf-mono`} style={{ color: "inherit", opacity: 0.8 }}>
                         <span>┌ {obs.label.toUpperCase()}</span>
                         <span className={`${obs.chip} text-[0.6rem] px-2 py-0.5 rounded-full font-mono font-bold`}>
                           {obsessionSources[obs.key].length} {obs.unit}
                         </span>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+                      <div className="pf-obs-chips" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
                         {obsessionSources[obs.key].slice(0, 4).map((item) => (
                           <span key={item} className={`${obs.chip} text-[0.65rem] font-bold font-mono px-2.5 py-1 rounded-full`}>
                             {item}
@@ -877,7 +892,7 @@ export default async function PersonPage({ params }: PageProps) {
                     )}
                   </div>
                 </div>
-                <div className="pf-mono pf-x-stats" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className={`pf-mono pf-x-stats${xImpressions != null ? " pf-x-stats-3" : ""}`} style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   <div>
                     <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>
                     <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>FOLLOWERS</span>
@@ -955,7 +970,7 @@ export default async function PersonPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 6, marginTop: 10, position: "relative" }}>
+                <div className="pf-book-badges" style={{ display: "flex", gap: 6, marginTop: 10, position: "relative" }}>
                   <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
                     <Clock size={10} /> 20 MIN
                   </span>
@@ -1210,9 +1225,9 @@ export default async function PersonPage({ params }: PageProps) {
               <span>•</span>
               <span>Algorithmic Dossier &amp; Synthesis Protocol</span>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span style={{ color: "#0f172a", fontWeight: 600 }}>{permalink}</span>
+            <div className="pf-footer-links flex flex-wrap items-center gap-3">
+              <div className="pf-permalink-badge flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200">
+                <span className="pf-permalink-text" style={{ color: "#0f172a", fontWeight: 600 }}>{permalink}</span>
                 <CopyPermalinkIcon url={`https://${permalink}`} />
               </div>
               <Link href="/directory" className="hover:text-slate-800">DIRECTORY</Link>
