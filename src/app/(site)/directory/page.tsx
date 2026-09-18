@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { listCards, cardCanonicalUrl } from "@/lib/cards";
 import { pageMetadata } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export const metadata: Metadata = pageMetadata({

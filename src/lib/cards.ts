@@ -189,9 +189,12 @@ export async function fetchCardByHandle(handle: string): Promise<AgentProfileCar
 
 export async function listCards(): Promise<AgentProfileCard[]> {
   try {
-    const res = await fetch(`${API_BASE}/cards`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_BASE}/cards`, {
+      next: { revalidate: 60 },
+    });
     if (!res.ok) return [];
-    return (await res.json()) as AgentProfileCard[];
+    const data = await res.json();
+    return Array.isArray(data) ? (data as AgentProfileCard[]) : [];
   } catch {
     return [];
   }

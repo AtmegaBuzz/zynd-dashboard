@@ -44,14 +44,18 @@ function buildJsonLd(skill: string, cards: AgentProfileCard[]) {
 }
 
 export async function generateStaticParams() {
-  const cards = await listCards();
-  const skills = new Set<string>();
-  for (const c of cards) {
-    for (const s of c.skills) {
-      if (s.name) skills.add(encodeSkill(s.name));
+  try {
+    const cards = await listCards();
+    const skills = new Set<string>();
+    for (const c of cards) {
+      for (const s of c.skills ?? []) {
+        if (s.name) skills.add(encodeSkill(s.name));
+      }
     }
+    return Array.from(skills).map((skill) => ({ skill }));
+  } catch {
+    return [];
   }
-  return Array.from(skills).map((skill) => ({ skill }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
