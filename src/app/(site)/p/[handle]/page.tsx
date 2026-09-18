@@ -607,8 +607,8 @@ export default async function PersonPage({ params }: PageProps) {
           .pf-obs-card { min-height: 0 !important; }
           /* project description: 2-line wrap beats single-line truncation on wide mobile */
           .pf-proj-desc { white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; text-overflow: clip !important; }
-          /* obsession chips: ensure they wrap tightly */
-          .pf-obs-chips { gap: 4px !important; }
+          /* obsession chips: row-wrap fills card width (esp. when card is full-width) */
+          .pf-obs-chips { flex-direction: row !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; }
         }
       `}</style>
 
