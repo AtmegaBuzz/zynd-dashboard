@@ -527,13 +527,54 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-book-cta { transition: background .15s, transform .15s, box-shadow .15s; }
         .pf-book-cta:hover { background:#f8fafc !important; text-decoration:none !important; transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,0.18); }
         .pf-hero-h { font-size:0.78rem; color:#e0e7ff; font-weight:600; line-height:1.35; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+        @media (max-width: 820px) {
+          .pf-page { overflow-x: hidden; }
+          .pf-inner { padding: 12px 12px 72px !important; }
+          .pf-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+          .pf-header-actions { width: 100%; justify-content: flex-start !important; }
+          .pf-main-grid,
+          .pf-ai-work,
+          .pf-social-row,
+          .pf-gh-row,
+          .pf-proj-row,
+          .pf-obs-row {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          .pf-hero,
+          .pf-right-stack,
+          .pf-span-12,
+          .pf-ai-fact,
+          .pf-work {
+            grid-column: 1 / -1 !important;
+            width: 100%;
+            min-width: 0;
+          }
+          .pf-hero { height: auto !important; padding: 16px !important; }
+          .pf-hero-avatar { width: 72px !important; height: 72px !important; }
+          .pf-right-stack { height: auto !important; }
+          .pf-code { overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 0.65rem !important; }
+          .pf-code > div { word-break: break-word; overflow-wrap: anywhere; }
+          .pf-ai-fact { padding: 16px !important; }
+          .pf-gh-stats,
+          .pf-x-stats,
+          .pf-li-stats { grid-template-columns: 1fr 1fr !important; }
+          .pf-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+          .pf-cta { flex-direction: column; align-items: stretch !important; padding: 20px 16px !important; }
+          .pf-cta a { width: 100%; justify-content: center !important; }
+          .pf-posts { padding: 16px !important; }
+          .pf-book-week { overflow-x: auto; }
+          .pf-footer { flex-direction: column; align-items: flex-start !important; }
+          .pf-social-head { flex-wrap: wrap; gap: 6px; }
+          .pf-social-head a, .pf-social-head span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        }
       `}</style>
 
       <div className="pf-page" style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}>
-        <div style={{ maxWidth: 1300, margin: "0 auto", padding: "24px 24px 56px" }}>
+        <div className="pf-inner" style={{ maxWidth: 1300, margin: "0 auto", padding: "24px 24px 56px" }}>
 
           {/* ── HEADER ── */}
-          <header className="flex justify-between items-center pb-5">
+          <header className="pf-header flex justify-between items-center pb-5">
             <div className="pf-mono text-[0.75rem] text-slate-500">
               <Link href="/directory" className="hover:text-slate-800">Zynd</Link>
               {" / "}
@@ -541,7 +582,7 @@ export default async function PersonPage({ params }: PageProps) {
               {" / "}
               <strong className="text-slate-800">@{card.handle || card.id}</strong>
             </div>
-            <div className="flex gap-2.5 items-center flex-wrap justify-end">
+            <div className="pf-header-actions flex gap-2.5 items-center flex-wrap justify-end">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[0.7rem] pf-mono font-bold text-emerald-700">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 SYNTHESIS_ACTIVE
@@ -554,10 +595,11 @@ export default async function PersonPage({ params }: PageProps) {
           </header>
 
           {/* ── MAIN GRID ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
+          <div className="pf-main-grid" style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "stretch" }}>
 
             {/* ── HERO CARD (4 col) ── */}
             <div
+              className="pf-hero"
               style={{ gridColumn: "span 4", background: "#6d64f6", borderRadius: 20, padding: "18px", color: "#fff", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
             >
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
@@ -567,6 +609,7 @@ export default async function PersonPage({ params }: PageProps) {
                     src={avatarUrl}
                     alt={identity.name}
                     referrerPolicy="no-referrer"
+                    className="pf-hero-avatar"
                     style={{ width: 104, height: 104, borderRadius: 18, border: "2px solid rgba(255,255,255,0.35)", objectFit: "cover", flexShrink: 0, display: "block" }}
                   />
                 ) : (
@@ -576,6 +619,7 @@ export default async function PersonPage({ params }: PageProps) {
                     alt={identity.name}
                     width={104}
                     height={104}
+                    className="pf-hero-avatar"
                     style={{ width: 104, height: 104, borderRadius: 18, flexShrink: 0, display: "block" }}
                   />
                 )}
@@ -635,7 +679,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* ── RIGHT STACK: Dossier + Signals (8 col) ── */}
-            <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
+            <div className="pf-right-stack" style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
 
               {/* Dossier */}
               {!isBlank(card.summary) && (
@@ -661,7 +705,7 @@ export default async function PersonPage({ params }: PageProps) {
 
               {/* Signal cards row */}
               {obsessions.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${obsessions.length}, 1fr)`, gap: 16 }}>
+                <div className="pf-obs-row" style={{ display: "grid", gridTemplateColumns: `repeat(${obsessions.length}, 1fr)`, gap: 16 }}>
                   {obsessions.map((obs) => (
                     <div key={obs.key} className={`${obs.card} rounded-[20px] p-[18px] flex flex-col justify-between`}>
                       <div className={`${label_} pf-mono`} style={{ color: "inherit", opacity: 0.8 }}>
@@ -684,7 +728,7 @@ export default async function PersonPage({ params }: PageProps) {
             </div>
 
             {/* ── AI FACT + WORK EXP: equal height, fact card fills ── */}
-            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "start" }}>
+            <div className="pf-span-12 pf-ai-work" style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 16, alignItems: "start" }}>
             {(() => {
               const q = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
               const arr = (items: string[]) => `[${items.map(q).join(", ")}]`;
@@ -696,12 +740,12 @@ export default async function PersonPage({ params }: PageProps) {
               const industries = (card.industries ?? []).filter((x) => !isBlank(x)).slice(0, 4);
               const help = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
               return (
-            <div style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column", alignSelf: "start" }}>
+            <div className="pf-ai-fact" style={{ gridColumn: "span 5", background: "#0f172a", borderRadius: 20, padding: "20px 24px", color: "#fff", display: "flex", flexDirection: "column", alignSelf: "start" }}>
               <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 <span>AI DISCOVERABILITY FACT</span>
                 <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
               </div>
-              <div className="pf-mono" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", fontSize: "0.72rem", lineHeight: 1.75, margin: "14px 0 0" }}>
+              <div className="pf-mono pf-code" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", fontSize: "0.72rem", lineHeight: 1.75, margin: "14px 0 0" }}>
                 <div style={{ color: "#64748b", marginBottom: 8 }}>{"// structured discovery profile"}</div>
                 <div><span style={{ color: "#38bdf8" }}>entity</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.name)}</span></div>
                 {!isBlank(identity.headline) && (
@@ -749,14 +793,14 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── SOCIAL ROW: equal columns, always fills the 12-col track ── */}
             {socialSlots > 0 && (
-            <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${Math.max(socialSlots, 2)}, minmax(0, 1fr))`, gap: 16, alignItems: "start" }}>
+            <div className="pf-span-12 pf-social-row" style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: `repeat(${Math.max(socialSlots, 2)}, minmax(0, 1fr))`, gap: 16, alignItems: "start" }}>
 
             {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
               <div
                 style={{ background: "#0A66C2", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
               >
-                <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono pf-social-head flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><LinkedinGlyph size={12} /> LINKEDIN</span>
                   {linkedinUrl ? (
                     <a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -781,7 +825,7 @@ export default async function PersonPage({ params }: PageProps) {
                     )}
                   </div>
                 </div>
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
+                <div className="pf-mono pf-li-stats" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
                   {v.linkedin.connections != null && (
                     <div>
                       <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>
@@ -808,7 +852,7 @@ export default async function PersonPage({ params }: PageProps) {
               <div
                 style={{ background: "#090a0f", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
               >
-                <div className="pf-mono flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono pf-social-head flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span className="flex items-center gap-1"><XGlyph size={11} /> X / TWITTER</span>
                   {xUrl ? (
                     <a href={xUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -833,7 +877,7 @@ export default async function PersonPage({ params }: PageProps) {
                     )}
                   </div>
                 </div>
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className="pf-mono pf-x-stats" style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   <div>
                     <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>
                     <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>FOLLOWERS</span>
@@ -921,7 +965,7 @@ export default async function PersonPage({ params }: PageProps) {
                   <span className="pf-mono" style={{ background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>1:1</span>
                 </div>
 
-                <div className="pf-mono" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 10, position: "relative" }}>
+                <div className="pf-mono pf-book-week" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 10, position: "relative" }}>
                   {weekLabels.map((d, i) => (
                     <div
                       key={`${d}-${i}`}
@@ -959,6 +1003,7 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── GITHUB: stats + heatmap fill the row; stats stretch if no graph ── */}
             {showGithub && (
               <div
+                className="pf-span-12 pf-gh-row"
                 style={{
                   gridColumn: "span 12",
                   display: "grid",
@@ -990,7 +1035,7 @@ export default async function PersonPage({ params }: PageProps) {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: hasContributions ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 8, marginBottom: 12 }}>
+                    <div className="pf-gh-stats" style={{ display: "grid", gridTemplateColumns: hasContributions ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 8, marginBottom: 12 }}>
                       {v.github.repos != null && (
                         <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 10px", textAlign: "center" }}>
                           <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}><CountUp value={v.github.repos} /></div>
@@ -1056,7 +1101,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── POSTS & WRITING ── */}
             {v.writing.length > 0 && (
-              <div style={{ gridColumn: "span 12", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: "20px 24px" }}>
+              <div className="pf-span-12 pf-posts" style={{ gridColumn: "span 12", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: "20px 24px" }}>
                 <div className="pf-mono flex justify-between items-center mb-4" style={{ fontSize: "0.65rem" }}>
                   <span style={{ color: "#6b63ff", fontWeight: 700 }}>┌ POSTS &amp; WRITING</span>
                   <span style={{ background: "#e0e7ff", color: "#4f46e5", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
@@ -1096,7 +1141,7 @@ export default async function PersonPage({ params }: PageProps) {
 
             {/* ── PROJECTS + SKILLS ── */}
             {(v.projects.length > 0 || skills.length > 0) && (
-              <div style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16, alignItems: "start" }}>
+              <div className="pf-span-12 pf-proj-row" style={{ gridColumn: "span 12", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16, alignItems: "start" }}>
 
                   {v.projects.length > 0 && (
                     <ProjectsCard
@@ -1121,7 +1166,7 @@ export default async function PersonPage({ params }: PageProps) {
             )}
 
             {/* ── EXPLORE FOOTER ── */}
-            <div style={{ gridColumn: "span 12", position: "relative", overflow: "hidden", background: "linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #4f46e5 100%)", borderRadius: 20, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+            <div className="pf-span-12 pf-cta" style={{ gridColumn: "span 12", position: "relative", overflow: "hidden", background: "linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #4f46e5 100%)", borderRadius: 20, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
               <div style={{ position: "absolute", right: -40, top: -50, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)", pointerEvents: "none" }} />
               <div style={{ position: "relative", display: "flex", gap: 16, alignItems: "center", minWidth: 0 }}>
                 <div style={{ width: 48, height: 48, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
@@ -1159,7 +1204,7 @@ export default async function PersonPage({ params }: PageProps) {
           </div>{/* end grid */}
 
           {/* ── FOOTER ── */}
-          <footer className="mt-10 pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4 pf-mono" style={{ fontSize: "0.65rem", color: "#94a3b8" }}>
+          <footer className="pf-footer mt-10 pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4 pf-mono" style={{ fontSize: "0.65rem", color: "#94a3b8" }}>
             <div className="flex items-center gap-2">
               <span style={{ fontWeight: 700, color: "#0f172a" }}>ZYND.AI</span>
               <span>•</span>

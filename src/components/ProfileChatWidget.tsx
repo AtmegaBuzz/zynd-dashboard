@@ -130,7 +130,9 @@ export function ProfileChatWidget({ handle, personName }: ProfileChatWidgetProps
 
   if (!open) {
     return (
+      <>
       <button
+        className="pf-chat-fab"
         type="button"
         aria-label={`Ask about ${personName}`}
         onClick={() => setOpen(true)}
@@ -147,11 +149,13 @@ export function ProfileChatWidget({ handle, personName }: ProfileChatWidgetProps
       >
         <MessageCircle size={20} />
       </button>
+      <style>{`@media (max-width: 820px) { .pf-chat-fab { bottom: 16px !important; right: 16px !important; } }`}</style>
+      </>
     );
   }
 
   return (
-    <div style={{
+    <div className="pf-chat-panel" style={{
       position: "fixed", bottom: "24px", right: "24px", zIndex: 50,
       width: "360px", maxWidth: "calc(100vw - 32px)",
       height: "520px", display: "flex", flexDirection: "column",
@@ -271,6 +275,22 @@ export function ProfileChatWidget({ handle, personName }: ProfileChatWidgetProps
           <ArrowUp size={16} />
         </button>
       </div>
+      <style>{`
+        @media (max-width: 820px) {
+          .pf-chat-panel {
+            left: 12px !important;
+            right: 12px !important;
+            bottom: 12px !important;
+            width: auto !important;
+            height: min(520px, calc(100dvh - 24px)) !important;
+            max-width: none !important;
+          }
+          .pf-chat-fab {
+            bottom: 16px !important;
+            right: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

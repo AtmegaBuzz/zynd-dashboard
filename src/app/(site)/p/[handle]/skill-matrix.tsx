@@ -19,7 +19,7 @@ export function SkillMatrix({ skills, embedded = false }: { skills: { name: stri
           <span className="font-mono text-[10px] text-[#7B72E9] font-bold">{skills.length} TRACKED</span>
         </div>
       )}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 pf-skill-grid">
         {skills.map((skill) => {
           const meta = levelMeta(skill.level);
           return (
