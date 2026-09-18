@@ -553,16 +553,21 @@ export default async function PersonPage({ params }: PageProps) {
             grid-template-columns: 1fr;
             gap: 12px;
           }
-          /* 2-col bento: obsessions + social cards */
-          .pf-obs-row    { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
-          .pf-social-row { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
-          /* Social children: equal-height with content spread top-to-bottom */
-          .pf-social-row > * { justify-content: space-between; }
-          /* Solo or odd-trailing card → full width */
+          /* Obsessions: 2-col bento, equal height */
+          .pf-obs-row { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+          /* Solo or odd-trailing obs card → full width */
           .pf-obs-row > *:only-child,
-          .pf-social-row > *:only-child { grid-column: 1 / -1; }
-          .pf-obs-row > *:last-child:nth-child(odd),
-          .pf-social-row > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+          .pf-obs-row > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+          /* Cards: stack from top; chips fill remaining space and scroll invisibly if overflow */
+          .pf-obs-card { justify-content: flex-start !important; gap: 10px; }
+          .pf-obs-chips { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+          .pf-obs-chips::-webkit-scrollbar { display: none; }
+          /* Social cards: 1-col by default */
+          .pf-social-row { grid-template-columns: 1fr; gap: 12px; }
+          /* 3+ cards: LinkedIn+X side-by-side equal height, Calendly full-width below */
+          .pf-social-row:has(> *:nth-child(3)) { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .pf-social-row:has(> *:nth-child(3)) > *:not(.pf-book-card) { align-self: stretch; justify-content: space-between; }
+          .pf-social-row:has(> *:nth-child(3)) > .pf-book-card { grid-column: 1 / -1; }
           /* Projects + Skills: too cramped at 2-col on mobile — stack full-width */
           .pf-proj-row { grid-template-columns: 1fr; gap: 12px; }
           /* Skill grid gets full card width — use 3-col */
@@ -604,11 +609,8 @@ export default async function PersonPage({ params }: PageProps) {
           /* nowrap + ellipsis so long handles like "in/very-long-username" truncate cleanly */
           .pf-social-head a { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 55% !important; }
           .pf-social-head span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-          .pf-obs-card { min-height: 0 !important; }
           /* project description: 2-line wrap beats single-line truncation on wide mobile */
           .pf-proj-desc { white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; text-overflow: clip !important; }
-          /* obsession chips: row-wrap fills card width (esp. when card is full-width) */
-          .pf-obs-chips { flex-direction: row !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; }
         }
       `}</style>
 
