@@ -8,6 +8,7 @@ const CARDS_API = process.env.NEXT_PUBLIC_API_URL ?? "https://api.zynd.ai";
 
 import { HeroCardStack } from "./hero-card-stack";
 import { Typewriter } from "./typewriter";
+import { AgentCardAuthBar } from "./auth-bar";
 
 /**
  * `/agent-card` — the standalone Zynd landing page.
@@ -79,11 +80,8 @@ export default function AgentCardPage() {
 </nav>
 {/* Quick Action CTA */}
 <div className="flex items-center gap-3">
-<a className="text-xs font-mono font-medium text-white/80 hover:text-white px-3 py-2 transition-colors hidden sm:block" href="https://www.zynd.ai">Explore Network</a>
-<Link className="text-xs font-mono font-bold bg-[#7b72e9] hover:bg-[#a78bfa] text-black px-4 sm:px-5 py-2 sm:py-2.5 rounded-full transition-all hover:shadow-[0_0_20px_rgba(123,114,233,0.35)] active:scale-95 flex items-center gap-1.5" href="/create">
-<span className="">Claim Handle</span>
-<span className="text-sm font-bold leading-none">→</span>
-</Link>
+<a className="text-xs font-mono font-medium text-white/80 hover:text-white px-3 py-2 transition-colors hidden lg:block" href="https://www.zynd.ai">Explore Network</a>
+<AgentCardAuthBar />
 </div>
 </div>
 </header>

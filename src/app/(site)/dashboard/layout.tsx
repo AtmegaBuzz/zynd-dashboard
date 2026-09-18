@@ -7,13 +7,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, needsOnboarding } = await getServerAuth();
+  const { user } = await getServerAuth();
 
   if (!user) {
     redirect("/auth");
-  }
-  if (needsOnboarding) {
-    redirect("/onboard/setup");
   }
 
   return <DashboardChrome>{children}</DashboardChrome>;

@@ -77,7 +77,12 @@ export default function OnboardSetupPage() {
         setSubmitting(false);
         return;
       }
-      router.push("/dashboard");
+      const raw = new URLSearchParams(window.location.search).get("next");
+      const dest =
+        raw && raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\")
+          ? raw
+          : "/dashboard";
+      router.push(dest);
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -98,10 +103,10 @@ export default function OnboardSetupPage() {
       <div style={{ maxWidth: "500px", margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <h1 style={{ fontSize: "28px", fontWeight: 700, margin: "0 0 12px 0", lineHeight: 1.2 }}>
-            Set Up Your <span style={{ color: "#8B5CF6" }}>Identity</span>
+            Set up <span style={{ color: "#8B5CF6" }}>developer keys</span>
           </h1>
           <p style={{ fontSize: "14px", color: "#999", margin: "8px 0 0 0" }}>
-            Your username becomes your permanent developer identity
+            Optional if you only have a living profile. Required for API keys, entities, wallet, and CLI.
           </p>
         </div>
 

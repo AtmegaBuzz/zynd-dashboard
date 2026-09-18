@@ -17,7 +17,7 @@ import { pageMetadata } from "@/lib/seo";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
 import { EditCardButton } from "./edit-card-button";
-import { UnclaimedCardActions } from "./unclaimed-card-actions";
+import { ProfileSignIn, ClaimIfCreator } from "./profile-auth-actions";
 import { CountUp } from "./count-up";
 import { AutoScroll } from "./auto-scroll";
 import { ContributionHeatmap } from "./contribution-heatmap";
@@ -444,10 +444,12 @@ export default async function PersonPage({ params }: PageProps) {
   const helpWith = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
 
   let isOwner = false;
+  let isSignedIn = false;
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
+      isSignedIn = true;
       const myCard = await getMyCard(session.access_token);
       isOwner = !!(myCard && myCard.handle === handle);
     }
@@ -546,6 +548,8 @@ export default async function PersonPage({ params }: PageProps) {
               </span>
               <ShareQrGroup url={canonical} />
               {isOwner && <EditCardButton handle={card.handle ?? card.id} />}
+              {!isSignedIn && <ProfileSignIn handle={card.handle ?? handle} />}
+              {isSignedIn && !isOwner && <ClaimIfCreator handle={card.handle ?? handle} card={card} />}
             </div>
           </header>
 

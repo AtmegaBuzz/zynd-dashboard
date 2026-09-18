@@ -1,9 +1,69 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCard } from "@/hooks/useMyCard";
 
 export default function DashboardPage() {
-  const { user, developer } = useAuth();
+  const { ready, user, developer, needsOnboarding } = useAuth();
+  const { ready: cardReady, handle } = useMyCard();
+
+  if (!ready || !cardReady) {
+    return (
+      <div className="dashboard-page" style={{ padding: "48px 24px", color: "rgba(246,246,246,0.6)" }}>
+        Loading…
+      </div>
+    );
+  }
+
+  if (needsOnboarding) {
+    return (
+      <div className="dashboard-page">
+        <div className="dashboard-header">
+          <div>
+            <h1>Welcome to Zynd</h1>
+            <p>Your account is signed in. Pick up your living profile, or set up developer API keys when you need them.</p>
+          </div>
+        </div>
+        <div className="dashboard-grid-2col">
+          <div className="dashboard-card">
+            <h2>Living profile</h2>
+            <p style={{ color: "rgba(246,246,246,0.7)", fontSize: "14px", lineHeight: 1.6 }}>
+              {handle
+                ? "Your profile card is live. Open it to view or edit."
+                : "Create a living profile from GitHub, LinkedIn, X, and your site."}
+            </p>
+            <Link
+              href={handle ? `/p/${encodeURIComponent(handle)}` : "/create"}
+              style={{
+                display: "inline-block", marginTop: "16px", padding: "10px 16px",
+                background: "#8B5CF6", color: "#fff", borderRadius: "8px",
+                fontWeight: 600, fontSize: "14px", textDecoration: "none",
+              }}
+            >
+              {handle ? "Open my profile →" : "Create a profile →"}
+            </Link>
+          </div>
+          <div className="dashboard-card">
+            <h2>Developer API</h2>
+            <p style={{ color: "rgba(246,246,246,0.7)", fontSize: "14px", lineHeight: 1.6 }}>
+              Need keys, entities, wallet, or the CLI? Set a developer username first. This is optional if you only want a profile card.
+            </p>
+            <Link
+              href="/onboard/setup?next=/dashboard"
+              style={{
+                display: "inline-block", marginTop: "16px", padding: "10px 16px",
+                border: "1px solid rgba(139,92,246,0.4)", color: "#c4b5fd",
+                borderRadius: "8px", fontWeight: 600, fontSize: "14px", textDecoration: "none",
+              }}
+            >
+              Set up API keys →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page">

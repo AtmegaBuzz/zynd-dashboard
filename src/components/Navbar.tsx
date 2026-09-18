@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCard } from "@/hooks/useMyCard";
 
 export function Navbar(): React.ReactElement {
-  const { authenticated, login, logout } = useAuth();
+  const { authenticated, logout } = useAuth();
+  const { handle: cardHandle } = useMyCard();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Lock body scroll while the mobile menu is open
@@ -174,6 +176,15 @@ export function Navbar(): React.ReactElement {
                           >
                             Team
                           </Link>
+                          {authenticated && cardHandle && (
+                            <Link
+                              href={`/p/${encodeURIComponent(cardHandle)}`}
+                              className="navbar-link w-nav-link"
+                              style={{ color: "#6366F1", fontWeight: 600 }}
+                            >
+                              My profile
+                            </Link>
+                          )}
                           {authenticated && (
                             <Link
                               href="/dashboard"
@@ -251,6 +262,11 @@ export function Navbar(): React.ReactElement {
             <a href="https://docs.zynd.ai" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>Docs</a>
             <Link href="/blogs" onClick={() => setMobileOpen(false)}>Blogs</Link>
             <Link href="/team" onClick={() => setMobileOpen(false)}>Team</Link>
+            {authenticated && cardHandle && (
+              <Link href={`/p/${encodeURIComponent(cardHandle)}`} onClick={() => setMobileOpen(false)} style={{ color: "#6366F1" }}>
+                My profile
+              </Link>
+            )}
             {authenticated && (
               <Link href="/dashboard" onClick={() => setMobileOpen(false)} style={{ color: "#6366F1" }}>
                 Dashboard

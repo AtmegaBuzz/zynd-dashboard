@@ -8,6 +8,7 @@ import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import { CARDS_API } from "@/lib/cards";
+import { setAuthNext, setClaimHandle } from "@/lib/auth/next-cookie";
 import type { AgentProfileCard, OnboardStatus, Project, ScrapeWarning, WritingSample } from "@/lib/cards";
 
 // Memory layer (api.zynd.ai) — same host the /connect and /findable pages use.
@@ -330,6 +331,7 @@ function CreateProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editHandle = searchParams.get("edit");
+  const notice = searchParams.get("notice");
   const { ready, authenticated, user } = useAuth();
 
   // Carry the post-OAuth destination in a cookie, not a query string. Some
@@ -339,11 +341,15 @@ function CreateProfilePageContent() {
   // Keep the query string (e.g. the `?url=` seeded by /agent-card) so the
   // pasted link survives the OAuth round trip.
   const setNextCookie = () => {
+    if (published) {
+      setClaimHandle(published);
+      return;
+    }
     const next =
       typeof window !== "undefined"
         ? `${window.location.pathname}${window.location.search}`
         : "/create";
-    document.cookie = `zynd_next=${encodeURIComponent(next)}; path=/; samesite=lax`;
+    setAuthNext(next, "card");
   };
   const login = () => {
     setNextCookie();
@@ -354,7 +360,8 @@ function CreateProfilePageContent() {
     createClient().auth.signInWithOAuth({ provider: "github", options: { redirectTo: loginRedirect } });
   };
   const loginWithLinkedin = () => {
-    document.cookie = "zynd_next=/create; path=/; samesite=lax";
+    if (published) setClaimHandle(published);
+    else setAuthNext("/create", "card");
     createClient().auth.signInWithOAuth({ provider: "linkedin_oidc", options: { redirectTo: loginRedirect } });
   };
 
@@ -692,6 +699,7 @@ function CreateProfilePageContent() {
         if (!stored.includes(publishedHandle)) stored.push(publishedHandle);
         localStorage.setItem("zynd_my_handles", JSON.stringify(stored));
       } catch { /* non-fatal */ }
+      setClaimHandle(publishedHandle);
       // Stay on the page — show the "you're live" claim screen instead of
       // redirecting away. Sign-in is offered there, not required before.
       setPublished(publishedHandle);
@@ -1162,6 +1170,23 @@ function CreateProfilePageContent() {
               {/* ── STEP 0 — paste links (only when authenticated + no existing card blocking) ── */}
               {(!existingHandle || editHandle) && phase === "form" && (
                 <form onSubmit={startOnboard} style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1, minHeight: 0 }}>
+
+                  {notice === "no-profile" && (
+                    <div className="zc-card" style={{ padding: "16px 20px", borderLeft: `3px solid ${T.accent}` }}>
+                      <div style={{ font: `600 14px/1.4 ${DISPLAY}`, color: T.ink }}>No profile card on this account</div>
+                      <p style={{ font: `400 13px/1.5 ${SANS}`, color: T.soft, margin: "6px 0 0" }}>
+                        We signed you in, but there&apos;s no living profile linked to this email yet. Create one below — it takes about a minute.
+                      </p>
+                    </div>
+                  )}
+                  {notice === "lookup-failed" && (
+                    <div className="zc-card" style={{ padding: "16px 20px", borderLeft: "3px solid #C2401F" }}>
+                      <div style={{ font: `600 14px/1.4 ${DISPLAY}`, color: T.ink }}>Couldn&apos;t check for an existing profile</div>
+                      <p style={{ font: `400 13px/1.5 ${SANS}`, color: T.soft, margin: "6px 0 0" }}>
+                        Sign-in worked, but we couldn&apos;t reach the cards service. You can create a profile below or try signing in again in a moment.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="zc-card" style={{ padding: "28px 28px 26px", display: "flex", flexDirection: "column", gap: "18px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>

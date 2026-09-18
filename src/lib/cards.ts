@@ -223,15 +223,28 @@ export async function searchAgents(
 export async function getMyCard(
   token: string,
 ): Promise<{ card: AgentProfileCard; handle: string } | null> {
+  const lookup = await lookupMyCardHandle(token);
+  if (lookup.failed || !lookup.handle || !lookup.card) return null;
+  return { card: lookup.card, handle: lookup.handle };
+}
+
+export async function lookupMyCardHandle(
+  token: string,
+): Promise<{ handle: string | null; card: AgentProfileCard | null; failed: boolean }> {
   try {
     const res = await fetch(`${API_BASE}/cards/mine`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    return (await res.json()) as { card: AgentProfileCard; handle: string };
+    if (res.status === 401 || res.status >= 500) {
+      return { handle: null, card: null, failed: true };
+    }
+    if (!res.ok) return { handle: null, card: null, failed: false };
+    const data = (await res.json()) as { card?: AgentProfileCard; handle?: string } | null;
+    const handle = data?.handle ?? null;
+    return { handle, card: data?.card ?? null, failed: false };
   } catch {
-    return null;
+    return { handle: null, card: null, failed: true };
   }
 }
 

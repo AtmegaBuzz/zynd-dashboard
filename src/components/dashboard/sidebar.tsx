@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCard } from "@/hooks/useMyCard";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/dashboard" },
@@ -17,6 +18,9 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { handle } = useMyCard();
+  const cardHref = handle ? `/p/${encodeURIComponent(handle)}` : "/create";
+  const cardLabel = handle ? "Profile Card" : "Create Profile";
 
   const isActive = (href: string) =>
     href === "/dashboard"
@@ -38,6 +42,12 @@ export function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
+        <Link
+          href={cardHref}
+          className={`sidebar-link ${pathname.startsWith("/p/") || pathname === "/create" ? "active" : ""}`}
+        >
+          {cardLabel}
+        </Link>
         {NAV_ITEMS.map((item) => (
           <Link
             key={item.name}

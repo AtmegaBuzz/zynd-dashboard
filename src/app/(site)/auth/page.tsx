@@ -3,16 +3,21 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyCard } from "@/hooks/useMyCard";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { authenticated, login, loginWithGithub } = useAuth();
+  const { ready, authenticated, needsOnboarding, login, loginWithGithub } = useAuth();
+  const { ready: cardReady, handle: cardHandle } = useMyCard();
 
   useEffect(() => {
-    if (authenticated) {
-      router.push("/dashboard");
+    if (!ready || !cardReady || !authenticated) return;
+    if (cardHandle && needsOnboarding) {
+      router.push(`/p/${encodeURIComponent(cardHandle)}`);
+      return;
     }
-  }, [authenticated, router]);
+    router.push("/dashboard");
+  }, [ready, cardReady, authenticated, needsOnboarding, cardHandle, router]);
 
   return (
     <div style={{
