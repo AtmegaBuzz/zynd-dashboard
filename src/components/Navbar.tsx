@@ -8,8 +8,15 @@ import { useMyCard } from "@/hooks/useMyCard";
 
 export function Navbar(): React.ReactElement {
   const { authenticated, logout } = useAuth();
-  const { handle: cardHandle } = useMyCard();
+  const { ready: cardReady, handle: cardHandle } = useMyCard();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Signed in with a card -> their profile; signed in without one -> the Agent
+  // Card page. `cardReady` keeps "Agent Card" from flashing for users who do
+  // have a profile, since the handle only arrives after an async lookup.
+  const hasCard = cardReady && Boolean(cardHandle);
+  const profileLabel = hasCard ? "My profile" : "Agent Card";
+  const profileHref = hasCard ? `/p/${encodeURIComponent(cardHandle as string)}` : "/agent-card";
 
   // Lock body scroll while the mobile menu is open
   useEffect(() => {
@@ -180,13 +187,13 @@ export function Navbar(): React.ReactElement {
                         <div className="navbar-button-w">
                           <div className="navbar-button-c">
                             <div className="navbar-button-b" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                              {authenticated && cardHandle && (
+                              {authenticated && cardReady && (
                                 <Link
-                                  href={`/p/${encodeURIComponent(cardHandle)}`}
+                                  href={profileHref}
                                   className="navbar-link w-nav-link"
                                   style={{ padding: 0, fontSize: "16px", fontWeight: 600, color: "#a5b4fc", whiteSpace: "nowrap" }}
                                 >
-                                  My profile
+                                  {profileLabel}
                                 </Link>
                               )}
                               {authenticated && (
@@ -262,9 +269,9 @@ export function Navbar(): React.ReactElement {
             <a href="https://docs.zynd.ai" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>Docs</a>
             <Link href="/blogs" onClick={() => setMobileOpen(false)}>Blogs</Link>
             <Link href="/team" onClick={() => setMobileOpen(false)}>Team</Link>
-            {authenticated && cardHandle && (
-              <Link href={`/p/${encodeURIComponent(cardHandle)}`} onClick={() => setMobileOpen(false)} style={{ color: "#6366F1" }}>
-                My profile
+            {authenticated && cardReady && (
+              <Link href={profileHref} onClick={() => setMobileOpen(false)} style={{ color: "#6366F1" }}>
+                {profileLabel}
               </Link>
             )}
             {authenticated && (
