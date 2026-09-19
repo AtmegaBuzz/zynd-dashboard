@@ -1,6 +1,6 @@
 import { listCards, cardCanonicalUrl } from "@/lib/cards";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const cards = await listCards();

@@ -2,7 +2,7 @@ import { listCards, cardCanonicalUrl, CARDS_API } from "@/lib/cards";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.zynd.ai";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const cards = await listCards();

@@ -191,6 +191,7 @@ export async function listCards(): Promise<AgentProfileCard[]> {
   try {
     const res = await fetch(`${API_BASE}/cards`, {
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) return [];
     const data = await res.json();
