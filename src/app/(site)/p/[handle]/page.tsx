@@ -631,7 +631,7 @@ export default async function PersonPage({ params }: PageProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 SYNTHESIS_ACTIVE
               </span>
-              <ShareQrGroup url={canonical} />
+              <ShareQrGroup url={canonical} name={identity.name || "Profile"} handle={card.handle ?? card.id} avatarUrl={avatarUrl} />
               {isOwner && <EditCardButton handle={card.handle ?? card.id} />}
               {!isSignedIn && <ProfileSignIn handle={card.handle ?? handle} />}
               {isSignedIn && !isOwner && <ClaimIfCreator handle={card.handle ?? handle} card={card} />}
