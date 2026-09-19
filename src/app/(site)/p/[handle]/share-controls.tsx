@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Check, Copy, Download, Link2, QrCode } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, FileText, Link2, QrCode, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+
+import { ResumePicker } from "./resume-picker";
+import type { ResumeData } from "./resume-pdf";
 
 // ── Canvas primitives ────────────────────────────────────────────────────────
 
@@ -407,23 +410,33 @@ export function ShareQrGroup({
   name,
   handle,
   avatarUrl,
+  resume,
 }: {
   url: string;
   name: string;
   handle: string;
   avatarUrl?: string | null;
+  resume?: ResumeData | null;
 }) {
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const onShare = useCallback(async () => {
+  const onCopyLink = useCallback(async () => {
     await writeClipboard(url);
     setCopied(true);
-    setQrOpen(false);
+    setMenuOpen(false);
     setTimeout(() => setCopied(false), 2000);
   }, [url]);
+
+  const onDownloadResume = useCallback(() => {
+    if (!resume) return;
+    setMenuOpen(false);
+    setPickerOpen(true);
+  }, [resume]);
 
   const onDownload = useCallback(async () => {
     const svg = svgRef.current;
@@ -443,19 +456,37 @@ export function ShareQrGroup({
     }
   }, [name, handle, avatarUrl, downloading]);
 
+  // Inline color, not a utility class: globals.css is unlayered and outranks
+  // `@layer utilities`, which is why every button on this page sets it this way.
+  const menuItem =
+    "flex w-full items-center gap-2.5 px-3 py-2 text-left font-mono text-[11px]! font-medium hover:bg-[#F5F5F0] transition-colors disabled:opacity-50 disabled:hover:bg-transparent";
+  const menuItemStyle = { color: "#0B0B0B" } as const;
+
   return (
     <div className="relative flex items-stretch">
       <div className="inline-flex items-stretch rounded-full border border-[#DCDCD7] bg-white shadow-sm overflow-hidden">
-        {/* Share half */}
+        {/* Export / Share half */}
         <button
           type="button"
-          onClick={onShare}
-          style={{ color: copied ? undefined : "#0B0B0B" }}
+          onClick={() => { setMenuOpen((v) => !v); setQrOpen(false); }}
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          style={{ color: copied || menuOpen ? undefined : "#0B0B0B" }}
           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px]! font-mono font-medium transition-all group
-            ${copied ? "bg-emerald-500 text-white" : "hover:bg-black hover:text-white"}`}
+            ${copied ? "bg-emerald-500 text-white" : menuOpen ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}
         >
-          {copied ? <Check size={14} /> : <Link2 size={14} className="text-[#8E8E88] group-hover:text-white transition-colors" />}
-          <span>{copied ? "Copied!" : "Share"}</span>
+          {copied ? (
+            <Check size={14} />
+          ) : (
+            <Share2 size={14} className={`transition-colors ${menuOpen ? "text-white" : "text-[#8E8E88] group-hover:text-white"}`} />
+          )}
+          <span>{copied ? "Copied!" : "Export / Share"}</span>
+          {!copied && (
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${menuOpen ? "text-white rotate-180" : "text-[#8E8E88] group-hover:text-white"}`}
+            />
+          )}
         </button>
 
         <span className="w-px bg-[#DCDCD7] self-stretch" />
@@ -463,7 +494,7 @@ export function ShareQrGroup({
         {/* QR half */}
         <button
           type="button"
-          onClick={() => { setQrOpen((v) => !v); setCopied(false); }}
+          onClick={() => { setQrOpen((v) => !v); setMenuOpen(false); setCopied(false); }}
           aria-expanded={qrOpen}
           aria-label="Show QR code"
           style={{ color: qrOpen ? undefined : "#0B0B0B" }}
@@ -474,6 +505,26 @@ export function ShareQrGroup({
           <span>QR</span>
         </button>
       </div>
+
+      {/* Export / Share menu */}
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} aria-hidden />
+          <div
+            role="menu"
+            className="absolute left-0 top-full mt-2 z-50 min-w-[196px] bg-white border border-[#E5E5DE] rounded-2xl shadow-xl py-1.5 overflow-hidden"
+          >
+            <button type="button" role="menuitem" onClick={onDownloadResume} disabled={!resume} className={menuItem} style={menuItemStyle}>
+              <FileText size={14} style={{ color: "#8E8E88" }} />
+              <span>Download Resume</span>
+            </button>
+            <button type="button" role="menuitem" onClick={onCopyLink} className={menuItem} style={menuItemStyle}>
+              <Link2 size={14} style={{ color: "#8E8E88" }} />
+              <span>Copy Link</span>
+            </button>
+          </div>
+        </>
+      )}
 
       {/* QR popover */}
       {qrOpen && (
@@ -500,6 +551,10 @@ export function ShareQrGroup({
             </button>
           </div>
         </>
+      )}
+
+      {pickerOpen && resume && (
+        <ResumePicker resume={resume} handle={handle} onClose={() => setPickerOpen(false)} />
       )}
     </div>
   );

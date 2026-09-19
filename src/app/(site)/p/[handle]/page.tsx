@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { pageMetadata } from "@/lib/seo";
 import { SkillMatrix } from "./skill-matrix";
 import { ShareQrGroup, CopyPermalinkIcon } from "./share-controls";
+import type { ResumeData } from "./resume-pdf";
 import { EditCardButton } from "./edit-card-button";
 import { ProfileSignIn, ClaimIfCreator } from "./profile-auth-actions";
 import { CountUp } from "./count-up";
@@ -357,6 +358,26 @@ export default async function PersonPage({ params }: PageProps) {
   const verified = card.review?.status === "human_approved";
   const skills = card.skills.slice().sort((a, b) => b.evidence_count - a.evidence_count);
 
+  /* Résumé-relevant slice of the card, handed to the Export / Share menu. */
+  const resumeData: ResumeData = {
+    name: identity.name || card.handle || card.id,
+    headline: isBlank(identity.headline) ? null : identity.headline,
+    location: isBlank(identity.location) ? null : identity.location,
+    summary: isBlank(card.summary) ? null : card.summary,
+    experienceYears: card.experience_years,
+    profileUrl: canonical,
+    links: v.links.map(([platform, url]) => ({ platform, url })),
+    skills: skills.map((s) => ({ name: s.name, level: s.level })),
+    work: (card.work_experience ?? []).filter((j) => !!(j.title || j.company)),
+    projects: v.projects.map((p) => ({
+      name: p.name,
+      description: p.description,
+      url: p.url,
+      tech: p.tech,
+      stars: p.stars,
+    })),
+  };
+
   const syncedAt = (() => {
     const d = new Date(card.updated_at);
     return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase();
@@ -631,7 +652,7 @@ export default async function PersonPage({ params }: PageProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 SYNTHESIS_ACTIVE
               </span>
-              <ShareQrGroup url={canonical} name={identity.name || "Profile"} handle={card.handle ?? card.id} avatarUrl={avatarUrl} />
+              <ShareQrGroup url={canonical} name={identity.name || "Profile"} handle={card.handle ?? card.id} avatarUrl={avatarUrl} resume={resumeData} />
               {isOwner && <EditCardButton handle={card.handle ?? card.id} />}
               {!isSignedIn && <ProfileSignIn handle={card.handle ?? handle} />}
               {isSignedIn && !isOwner && <ClaimIfCreator handle={card.handle ?? handle} card={card} />}
