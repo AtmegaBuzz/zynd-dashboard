@@ -274,6 +274,77 @@ export async function updateCard(
   }
 }
 
+async function readApiError(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { detail?: unknown };
+    if (typeof data.detail === "string" && data.detail.trim()) return data.detail;
+    if (Array.isArray(data.detail) && data.detail.length > 0) {
+      return data.detail.map(String).join("; ");
+    }
+  } catch {
+    // body was not JSON
+  }
+  return res.statusText || `Request failed (${res.status})`;
+}
+
+export function githubLoginFromUrl(url: string): string | null {
+  try {
+    const { hostname, pathname } = new URL(url);
+    if (!/(^|\.)github\.com$/i.test(hostname)) return null;
+    const [user] = pathname.split("/").filter(Boolean);
+    if (!user || ["orgs", "settings", "login", "signup"].includes(user.toLowerCase())) return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+export async function refreshCardLinkedIn(
+  handle: string,
+  token: string,
+  linkedinUrl: string,
+): Promise<{ work_experience: AgentProfileCard["work_experience"] }> {
+  const res = await fetch(
+    `${API_BASE}/cards/by-handle/${encodeURIComponent(handle)}/refresh-linkedin`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ linkedin_url: linkedinUrl }),
+    },
+  );
+  if (!res.ok) throw new Error(await readApiError(res));
+  return (await res.json()) as { work_experience: AgentProfileCard["work_experience"] };
+}
+
+export async function refreshCardGithub(
+  handle: string,
+  token: string,
+  githubHandle: string,
+): Promise<{
+  github_stats: AgentProfileCard["github_stats"];
+  contribution_stats: AgentProfileCard["contribution_stats"];
+}> {
+  const res = await fetch(
+    `${API_BASE}/cards/by-handle/${encodeURIComponent(handle)}/refresh-github`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ github_handle: githubHandle }),
+    },
+  );
+  if (!res.ok) throw new Error(await readApiError(res));
+  return (await res.json()) as {
+    github_stats: AgentProfileCard["github_stats"];
+    contribution_stats: AgentProfileCard["contribution_stats"];
+  };
+}
+
 export { API_BASE as CARDS_API };
 
 export interface GithubExtras {

@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CARDS_API } from "@/lib/cards";
 import { setAuthNext, setClaimHandle } from "@/lib/auth/next-cookie";
 import type { AgentProfileCard, OnboardStatus, Project, ScrapeWarning, WritingSample } from "@/lib/cards";
+import { MemoryProviderOnboard } from "@/components/memory/MemoryProviderOnboard";
 
 // Memory layer (api.zynd.ai) — same host the /connect and /findable pages use.
 const ZYND_API = process.env.NEXT_PUBLIC_ZYND_API_URL || "https://api.zynd.ai";
@@ -397,6 +398,7 @@ function CreateProfilePageContent() {
   // Set once publishing succeeds — flips the review column into the
   // post-publish "claim your card" screen.
   const [published, setPublished] = useState<string | null>(null);
+  const [memoryStep, setMemoryStep] = useState<"ask" | "done">("ask");
   const [copied, setCopied] = useState(false);
   const [urlWarnings, setUrlWarnings] = useState<ScrapeWarning[]>([]);
   const [fixingUrl, setFixingUrl] = useState<string | null>(null);
@@ -882,9 +884,18 @@ function CreateProfilePageContent() {
     }
   }
 
+  const liveHandle = published || (existingHandle && !editHandle ? existingHandle : null);
+  const askingMemory = memoryStep === "ask" && !!liveHandle;
+
   // ── panel copy shifts with the phase; the panel itself never moves ──
   const panel =
-    published
+    askingMemory
+      ? {
+          badge: "Optional · Memory",
+          title: <>Add your<br />memory</>,
+          body: "Paste a mem0, Zep, Letta, or supermemory key. We preview how the tile looks. Nothing goes on your public profile until you approve.",
+        }
+      : published
       ? {
           badge: "Your profile is live",
           title: <>You&apos;re<br />live</>,
@@ -1054,12 +1065,14 @@ function CreateProfilePageContent() {
               <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ height: "1px", background: "rgba(255,255,255,.28)" }} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-                  <span style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel }}>Publishes at</span>
+                  <span style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel }}>{liveHandle ? "Live at" : "Publishes at"}</span>
                   <span style={{ font: `500 12px/1 ${MONO}`, color: "#fff", background: "rgba(255,255,255,.16)", borderRadius: "8px", padding: "7px 10px" }}>
-                    zynd.ai/p/{customHandle.length >= 2 ? customHandle : "you"}
+                    zynd.ai/p/{liveHandle || (customHandle.length >= 2 ? customHandle : "you")}
                   </span>
                 </div>
-                <div style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel2 }}>after your review</div>
+                <div style={{ font: `400 12px/1.5 ${SANS}`, color: T.onPanel2 }}>
+                  {liveHandle ? "already discoverable" : "after your review"}
+                </div>
               </div>
             </div>
 
@@ -1068,7 +1081,18 @@ function CreateProfilePageContent() {
 
               {/* ── POST-PUBLISH: you're live — claim it / view it ── */}
               {published && phase === "review" && (
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                  {memoryStep === "ask" ? (
+                  <div className="zc-card zc-step-card" style={{ padding: "30px 32px 28px", display: "flex", flexDirection: "column", minHeight: 0 }}>
+                    <MemoryProviderOnboard
+                      firstName={(card?.identity?.name || "You").split(" ")[0]}
+                      handle={published}
+                      tone="light"
+                      onSkip={() => setMemoryStep("done")}
+                      onImported={() => setMemoryStep("done")}
+                    />
+                  </div>
+                  ) : (
                   <div className="zc-card" style={{ width: "100%", maxWidth: "480px", padding: "44px 40px 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: "22px", textAlign: "center" }}>
 
                     <div style={{ width: "58px", height: "58px", borderRadius: "50%", background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1122,8 +1146,7 @@ function CreateProfilePageContent() {
                             Sign in with GitHub
                           </button>
                           <p style={{ font: `400 12px/1.5 ${SANS}`, color: T.faint, margin: 0, textAlign: "center" }}>
-                            Claim with LinkedIn to also sync your memory key points — they show on your profile card.
-                            Any sign-in returns you here and links the card to your account.
+                            Sign in, then paste any memory API key (mem0, Zep, Letta, supermemory). We detect the provider and preview key facts. Nothing is public until you approve.
                           </p>
                         </>
                       )}
@@ -1135,35 +1158,47 @@ function CreateProfilePageContent() {
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
               )}
 
               {/* ── AUTH: user already has a card ── */}
               {ready && authenticated && existingHandle && !editHandle && phase === "form" && (
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "24px", padding: "0 4px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", textTransform: "uppercase", color: T.muted }}>Your profile</span>
-                    <p style={{ font: `700 26px/1.15 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0 }}>
-                      Live at<br />zynd.ai/p/{existingHandle}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                  {memoryStep === "ask" ? (
+                    <div className="zc-card zc-step-card" style={{ padding: "30px 32px 28px", display: "flex", flexDirection: "column", minHeight: 0 }}>
+                      <MemoryProviderOnboard
+                        firstName={(user?.user_metadata?.full_name || user?.email || "You").toString().split(" ")[0]}
+                        handle={existingHandle}
+                        tone="light"
+                        onSkip={() => setMemoryStep("done")}
+                        onImported={() => setMemoryStep("done")}
+                      />
+                    </div>
+                  ) : (
+                  <div className="zc-card zc-step-card" style={{ padding: "30px 32px", display: "flex", flexDirection: "column", justifyContent: "center", gap: "16px" }}>
+                    <div className="zc-question">Your card is live.</div>
+                    <p style={{ font: `400 15px/1.6 ${SANS}`, color: T.soft, margin: 0, maxWidth: "420px" }}>
+                      Edit it anytime, share the link, or start a new one.
                     </p>
-                    <p style={{ font: `400 14px/1.6 ${SANS}`, color: T.soft, margin: 0 }}>
-                      Your card is discoverable by AI agents. Edit it or create a new one.
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "360px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px", marginTop: "8px" }}>
                     <a href={`/p/${existingHandle}/edit`}
-                      style={{ background: T.accent, color: "#fff", borderRadius: "14px", padding: "16px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em" }}>
+                      className="zc-cta"
+                      style={{ background: T.accent, color: "#fff", borderRadius: "18px", padding: "18px 22px", font: `600 15px/1 ${DISPLAY}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", letterSpacing: "-.01em" }}>
                       Edit my card <span style={{ font: `400 16px/1 ${SANS}` }}>→</span>
                     </a>
                     <a href={`/p/${existingHandle}`}
-                      style={{ background: T.card, color: T.soft, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "16px 22px", font: `500 15px/1 ${SANS}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}>
+                      className="zc-ghost"
+                      style={{ background: T.surface, color: T.ink, border: `1px solid ${T.border}`, borderRadius: "18px", padding: "16px 22px", font: `500 15px/1 ${SANS}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}>
                       View profile <span>↗</span>
                     </a>
                     <button type="button" onClick={() => setExistingHandle(null)}
                       style={{ background: "none", border: "none", padding: "8px 0", font: `400 13px/1 ${SANS}`, color: T.faint, cursor: "pointer", textAlign: "left" }}>
                       Create a new profile instead →
                     </button>
+                    </div>
                   </div>
+                  )}
                 </div>
               )}
 
