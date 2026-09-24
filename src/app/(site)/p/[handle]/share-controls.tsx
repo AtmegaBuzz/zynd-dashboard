@@ -471,20 +471,22 @@ export function ShareQrGroup({
           onClick={() => { setMenuOpen((v) => !v); setQrOpen(false); }}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
-          style={{ color: copied || menuOpen ? undefined : "#0B0B0B" }}
+          style={{ color: copied || menuOpen ? "#fff" : "#0B0B0B" }}
           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px]! font-mono font-medium transition-all group
-            ${copied ? "bg-emerald-500 text-white" : menuOpen ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}
+            ${copied ? "bg-emerald-500 hover:!text-white" : menuOpen ? "bg-black hover:!text-white" : "hover:bg-black hover:!text-white"}`}
+          onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = "#fff"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = copied || menuOpen ? "#fff" : "#0B0B0B"; }}
         >
           {copied ? (
             <Check size={14} />
           ) : (
-            <Share2 size={14} className={`transition-colors ${menuOpen ? "text-white" : "text-[#8E8E88] group-hover:text-white"}`} />
+            <Share2 size={14} className={`transition-colors ${menuOpen ? "text-white" : "text-[#8E8E88] group-hover:!text-white"}`} />
           )}
           <span>{copied ? "Copied!" : "Export / Share"}</span>
           {!copied && (
             <ChevronDown
               size={12}
-              className={`transition-transform ${menuOpen ? "text-white rotate-180" : "text-[#8E8E88] group-hover:text-white"}`}
+              className={`transition-transform ${menuOpen ? "text-white rotate-180" : "text-[#8E8E88] group-hover:!text-white"}`}
             />
           )}
         </button>
@@ -497,11 +499,13 @@ export function ShareQrGroup({
           onClick={() => { setQrOpen((v) => !v); setMenuOpen(false); setCopied(false); }}
           aria-expanded={qrOpen}
           aria-label="Show QR code"
-          style={{ color: qrOpen ? undefined : "#0B0B0B" }}
+          style={{ color: qrOpen ? "#fff" : "#0B0B0B" }}
           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px]! font-mono font-medium transition-all group
-            ${qrOpen ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}
+            ${qrOpen ? "bg-black hover:!text-white" : "hover:bg-black hover:!text-white"}`}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = qrOpen ? "#fff" : "#0B0B0B"; }}
         >
-          <QrCode size={14} className={`transition-colors ${qrOpen ? "text-white" : "text-[#8E8E88] group-hover:text-white"}`} />
+          <QrCode size={14} className={`transition-colors ${qrOpen ? "text-white" : "text-[#8E8E88] group-hover:!text-white"}`} />
           <span>QR</span>
         </button>
       </div>

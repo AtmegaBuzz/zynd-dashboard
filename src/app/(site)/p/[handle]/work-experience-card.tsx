@@ -157,12 +157,12 @@ export function WorkExperienceCard({
       : jobs.length > 0 ? `${jobs.length} ROLES` : "EXP";
 
   return (
-    <div className={`${cardClass} tc pf-work`} style={{ justifyContent: "flex-start", alignSelf: "start", height: "auto" }}>
-      <div>
-        <div className={`${labelClass} pf-mono`}>
-          <span>┌ WORK EXPERIENCE</span>
-          <span className={`${pillClass} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
-        </div>
+    <div className={`${cardClass} tc pf-work`} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div className={`${labelClass} pf-mono`} style={{ flexShrink: 0 }}>
+        <span>┌ WORK EXPERIENCE</span>
+        <span className={`${pillClass} text-indigo-600 bg-indigo-50 border-indigo-200`}>{expLabel} ┐</span>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {shown.length > 0 ? (
           shown.map((job, i) => (
             <JobRow key={`${job.company}-${job.title}-${i}`} job={job} first={i === 0} />
@@ -175,19 +175,19 @@ export function WorkExperienceCard({
           </div>
         )}
       </div>
-      <div>
+      <div style={{ flexShrink: 0, paddingTop: 8 }}>
         {extra.length > 0 && (
           <button
             type="button"
             onClick={() => setShowPast((v) => !v)}
             className="pf-mono"
-            style={{ marginTop: 4, fontSize: "0.68rem", fontWeight: 700, color: "#4f46e5", background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left" }}
+            style={{ fontSize: "0.68rem", fontWeight: 700, color: "#4f46e5", background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left" }}
           >
             {showPast ? "Hide previous experience" : `See previous experience (${extra.length})`}
           </button>
         )}
         {linkedinHandle && (
-          <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 4 }}>
+          <div className="pf-mono" style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: extra.length > 0 ? 2 : 0 }}>
             {linkedinUrl ? <a href={linkedinUrl} target="_blank" rel="noreferrer">in/{linkedinHandle} ↗</a> : `in/${linkedinHandle}`}
           </div>
         )}

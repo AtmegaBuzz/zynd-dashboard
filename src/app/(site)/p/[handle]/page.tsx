@@ -459,9 +459,15 @@ export default async function PersonPage({ params }: PageProps) {
   })();
   const memoryTotal = memoryGroups.reduce((n, g) => n + g.items.length, 0);
   const firstName = identity.name?.split(" ")[0] || "They";
-  const nowJob = (card.work_experience ?? []).find((j) =>
+  const liJobs = (card.work_experience ?? []).filter((j) => !!(j.title || j.company));
+  const nowJob = liJobs.find((j) =>
     /^(present|current|now)$/i.test((j.end_date || "").trim()) && (j.title || j.company),
   );
+  const liWriting = (card.writing_samples ?? []).filter((s) => s.platform.toLowerCase() === "linkedin" && !isBlank(s.excerpt));
+  const liMetrics: { val: number; label: string }[] = [];
+  if (card.experience_years != null) liMetrics.push({ val: card.experience_years, label: "YEARS" });
+  if (liJobs.length > 0) liMetrics.push({ val: liJobs.length, label: "ROLES" });
+  if (liWriting.length > 0) liMetrics.push({ val: liWriting.length, label: "POSTS" });
   const helpWith = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
 
   let isOwner = false;
@@ -478,7 +484,7 @@ export default async function PersonPage({ params }: PageProps) {
     // Auth check is best-effort
   }
 
-  const showLinkedin = !!(linkedinHandle || v.linkedin.connections != null);
+  const showLinkedin = !!(linkedinHandle || linkedinUrl || liJobs.length > 0);
   const showX = !!(v.x.handle || v.x.followers != null);
   const showGithub = !!(identity.links?.github || card.github_stats || card.contribution_stats || ghExtras?.contributions);
   const contributions = (v.contributions && Array.isArray(v.contributions.levels) && v.contributions.levels.length > 0)
@@ -552,11 +558,15 @@ export default async function PersonPage({ params }: PageProps) {
         .pf-main-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; align-items: stretch; }
         .pf-hero { grid-column: span 4; padding: 18px; height: 100%; }
         .pf-right-stack { grid-column: span 8; display: flex; flex-direction: column; gap: 16px; height: 100%; }
-        .pf-ai-work { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; align-items: start; }
-        .pf-ai-fact { grid-column: span 5; padding: 20px 24px; }
-        .pf-work { grid-column: span 7; }
+        .pf-ai-work { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; align-items: stretch; }
+        .pf-ai-fact { grid-column: span 5; padding: 20px 24px; height: 100%; min-height: 0; }
+        .pf-work { grid-column: span 7; height: 100%; min-height: 0; }
         .pf-span-12 { grid-column: span 12; }
-        .pf-social-row { display: grid; grid-template-columns: var(--social-cols, repeat(2, minmax(0, 1fr))); gap: 16px; align-items: start; }
+        .pf-social-row { display: grid; grid-template-columns: var(--social-cols, repeat(2, minmax(0, 1fr))); gap: 16px; align-items: stretch; }
+        .pf-social-card { height: 100%; display: flex; flex-direction: column; min-width: 0; }
+        .pf-social-id { display: flex; align-items: center; gap: 10px; margin-top: 12px; min-height: 48px; }
+        .pf-social-mid { margin-top: 12px; padding-top: 12px; flex: 1; min-height: 0; }
+        .pf-social-cta { margin-top: auto; display: flex; align-items: center; justify-content: center; min-height: 36px; padding: 9px 14px; border-radius: 10px; font-size: 0.68rem; font-weight: 700; text-decoration: none; }
         .pf-obs-row { display: grid; grid-template-columns: var(--obs-cols, 1fr); gap: 16px; }
         .pf-gh-row { display: grid; grid-template-columns: var(--gh-cols, 1fr 1fr); gap: 16px; }
         .pf-proj-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -805,13 +815,13 @@ export default async function PersonPage({ params }: PageProps) {
               const industries = (card.industries ?? []).filter((x) => !isBlank(x)).slice(0, 4);
               const help = (card.can_help_with ?? []).filter((x) => !isBlank(x)).slice(0, 3);
               return (
-            <div className="pf-ai-fact" style={{ background: "#0f172a", borderRadius: 20, color: "#fff", display: "flex", flexDirection: "column", alignSelf: "start" }}>
+            <div className="pf-ai-fact" style={{ background: "#0f172a", borderRadius: 20, color: "#fff", display: "flex", flexDirection: "column" }}>
               <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 <span>AI DISCOVERABILITY FACT</span>
                 <span style={{ background: "rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "3px 10px", borderRadius: 99 }}>Zynd Index</span>
               </div>
-              <div className="pf-mono pf-code" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", fontSize: "0.72rem", lineHeight: 1.75, margin: "14px 0 0" }}>
-                <div style={{ color: "#64748b", marginBottom: 8 }}>{"// structured discovery profile"}</div>
+              <div className="pf-mono pf-code" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "16px 18px", fontSize: "0.72rem", lineHeight: 1.45, margin: "14px 0 0", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div style={{ color: "#64748b" }}>{"// structured discovery profile"}</div>
                 <div><span style={{ color: "#38bdf8" }}>entity</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.name)}</span></div>
                 {!isBlank(identity.headline) && (
                   <div><span style={{ color: "#38bdf8" }}>role</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{q(identity.headline)}</span></div>
@@ -838,7 +848,7 @@ export default async function PersonPage({ params }: PageProps) {
                   <div><span style={{ color: "#38bdf8" }}>can_help_with</span><span style={{ color: "#94a3b8" }}>:</span> <span style={{ color: "#fde047" }}>{arr(help)}</span></div>
                 )}
               </div>
-              <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 12, lineHeight: 1.5 }}>
+              <div className="pf-mono" style={{ fontSize: "0.65rem", color: "#64748b", paddingTop: 12, lineHeight: 1.5, flexShrink: 0 }}>
                 Indexed for AI agents (ChatGPT, Claude, Perplexity) to discover and recommend {firstName}.
               </div>
             </div>
@@ -863,9 +873,10 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: LINKEDIN ── */}
             {showLinkedin && (
               <div
-                style={{ background: "#0A66C2", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
+                className="pf-social-card"
+                style={{ background: "#0A66C2", borderRadius: 20, padding: 16, color: "#fff", overflow: "hidden" }}
               >
-                <div className="pf-mono pf-social-head flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono pf-social-head flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, minHeight: 18 }}>
                   <span className="flex items-center gap-1"><LinkedinGlyph size={12} /> LINKEDIN</span>
                   {linkedinUrl ? (
                     <a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -875,7 +886,7 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>in/{linkedinHandle}</span>
                   ) : null}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
+                <div className="pf-social-id">
                   {linkedinAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={linkedinAvatar} alt="" referrerPolicy="no-referrer" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.35)", flexShrink: 0 }} />
@@ -885,29 +896,33 @@ export default async function PersonPage({ params }: PageProps) {
                   )}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
-                    {!isBlank(identity.headline) && (
-                      <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 3, fontWeight: 600 }}>{identity.headline}</div>
-                    )}
+                    <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 3, fontWeight: 600, minHeight: "2.1em" }}>{!isBlank(identity.headline) ? identity.headline : "\u00a0"}</div>
                   </div>
                 </div>
-                <div className="pf-mono pf-li-stats" style={{ display: "grid", gridTemplateColumns: v.linkedin.connections != null && v.linkedin.posts != null ? "1fr 1fr" : "1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
-                  {v.linkedin.connections != null && (
-                    <div>
-                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.connections} /></strong>
-                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>CONNECTIONS</span>
+                <div className="pf-mono pf-li-stats pf-social-mid" style={{ display: "grid", gridTemplateColumns: liMetrics.length > 1 ? `repeat(${Math.min(liMetrics.length, 3)}, 1fr)` : "1fr", gap: 8, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
+                  {liMetrics.length > 0 ? liMetrics.slice(0, 3).map((m) => (
+                    <div key={m.label}>
+                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={m.val} /></strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>{m.label}</span>
                     </div>
-                  )}
-                  {v.linkedin.posts != null && Number(v.linkedin.posts) > 0 && (
+                  )) : nowJob ? (
                     <div>
-                      <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}><CountUp value={v.linkedin.posts} /></strong>
-                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>POSTS</span>
+                      <strong style={{ fontSize: "0.85rem", display: "block", color: "#fff", fontWeight: 700 }}>{nowJob.title || nowJob.company}</strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>{nowJob.title && nowJob.company ? nowJob.company : "CURRENT ROLE"}</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <strong style={{ fontSize: "0.85rem", display: "block", color: "#fff", fontWeight: 700 }}>LinkedIn</strong>
+                      <span style={{ fontSize: "0.58rem", opacity: 0.75 }}>PROFILE</span>
                     </div>
                   )}
                 </div>
-                {linkedinUrl && (
-                  <a href={linkedinUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.14)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                {linkedinUrl ? (
+                  <a href={linkedinUrl} target="_blank" rel="noreferrer" className="pf-mono pf-social-cta" style={{ background: "rgba(255,255,255,0.14)" }}>
                     View LinkedIn profile →
                   </a>
+                ) : (
+                  <div className="pf-social-cta" />
                 )}
               </div>
             )}
@@ -915,9 +930,10 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: X / TWITTER ── */}
             {showX && (
               <div
-                style={{ background: "#090a0f", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
+                className="pf-social-card"
+                style={{ background: "#090a0f", borderRadius: 20, padding: 16, color: "#fff", overflow: "hidden" }}
               >
-                <div className="pf-mono pf-social-head flex justify-between items-start" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
+                <div className="pf-mono pf-social-head flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, minHeight: 18 }}>
                   <span className="flex items-center gap-1"><XGlyph size={11} /> X / TWITTER</span>
                   {xUrl ? (
                     <a href={xUrl} target="_blank" rel="noreferrer" style={{ opacity: 0.7 }}>
@@ -927,7 +943,7 @@ export default async function PersonPage({ params }: PageProps) {
                     <span style={{ opacity: 0.7 }}>{v.x.handle}</span>
                   ) : null}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
+                <div className="pf-social-id">
                   {xAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={xAvatar} alt="" referrerPolicy="no-referrer" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", flexShrink: 0 }} />
@@ -937,12 +953,10 @@ export default async function PersonPage({ params }: PageProps) {
                   )}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>{identity.name}</div>
-                    {v.x.handle && (
-                      <div className="pf-mono" style={{ fontSize: "0.7rem", opacity: 0.65, marginTop: 3 }}>{v.x.handle}</div>
-                    )}
+                    <div className="pf-mono pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.65, marginTop: 3, minHeight: "2.1em" }}>{v.x.handle || "\u00a0"}</div>
                   </div>
                 </div>
-                <div className={`pf-mono pf-x-stats${xImpressions != null ? " pf-x-stats-3" : ""}`} style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className={`pf-mono pf-social-mid pf-x-stats${xImpressions != null ? " pf-x-stats-3" : ""}`} style={{ display: "grid", gridTemplateColumns: xImpressions != null ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   <div>
                     <strong style={{ fontSize: "1.15rem", display: "block", color: "#fff" }}>{v.x.followers != null ? <CountUp value={v.x.followers} /> : "—"}</strong>
                     <span style={{ fontSize: "0.58rem", opacity: 0.6 }}>FOLLOWERS</span>
@@ -958,10 +972,12 @@ export default async function PersonPage({ params }: PageProps) {
                     </div>
                   )}
                 </div>
-                {xUrl && (
-                  <a href={xUrl} target="_blank" rel="noreferrer" className="pf-mono" style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.08)", fontSize: "0.68rem", fontWeight: 700, textDecoration: "none" }}>
+                {xUrl ? (
+                  <a href={xUrl} target="_blank" rel="noreferrer" className="pf-mono pf-social-cta" style={{ background: "rgba(255,255,255,0.08)" }}>
                     View X profile →
                   </a>
+                ) : (
+                  <div className="pf-social-cta" />
                 )}
               </div>
             )}
@@ -969,7 +985,8 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── SOCIAL: ZYND MEMORY ── */}
             {showMemory && (
               <div
-                style={{ background: "#0f172a", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
+                className="pf-social-card"
+                style={{ background: "#0f172a", borderRadius: 20, padding: 16, color: "#fff", overflow: "hidden" }}
               >
                 <div className="pf-mono flex justify-between items-start mb-3" style={{ fontSize: "0.65rem", fontWeight: 700 }}>
                   <span>● ZYND MEMORY</span>
@@ -1002,25 +1019,26 @@ export default async function PersonPage({ params }: PageProps) {
             {/* ── BOOK A CALL (only when calendlyUrl exists) ── */}
             {calendlyUrl && (
               <div
-                className="pf-book-card"
-                style={{ background: "linear-gradient(160deg, #2563eb 0%, #1d4ed8 48%, #1e3a8a 100%)", borderRadius: 20, padding: 16, color: "#fff", display: "flex", flexDirection: "column", minWidth: 0 }}
+                className="pf-book-card pf-social-card"
+                style={{ background: "linear-gradient(160deg, #2563eb 0%, #1d4ed8 48%, #1e3a8a 100%)", borderRadius: 20, padding: 16, color: "#fff" }}
               >
-                <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", position: "relative" }}>
+                <div className="pf-mono flex justify-between items-center" style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", position: "relative", minHeight: 18 }}>
                   <span className="flex items-center gap-1.5"><Calendar size={12} /> BOOK A CALL</span>
                   <span style={{ background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, padding: "3px 8px", fontSize: "0.58rem" }}>OPEN</span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, position: "relative" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div className="pf-social-id" style={{ position: "relative" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <Calendar size={18} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: "1.05rem", fontWeight: 800, lineHeight: 1.2 }}>Meet {firstName}</div>
-                    <div style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 2 }}>20-min intro · collab, projects, ideas</div>
+                    <div className="pf-clamp-2" style={{ fontSize: "0.7rem", opacity: 0.8, marginTop: 3, minHeight: "2.1em" }}>20-min intro · collab, projects, ideas</div>
                   </div>
                 </div>
 
-                <div className="pf-book-badges" style={{ display: "flex", gap: 6, marginTop: 10, position: "relative" }}>
+                <div className="pf-social-mid" style={{ position: "relative" }}>
+                <div className="pf-book-badges" style={{ display: "flex", gap: 6 }}>
                   <span className="pf-mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>
                     <Clock size={10} /> 20 MIN
                   </span>
@@ -1030,7 +1048,7 @@ export default async function PersonPage({ params }: PageProps) {
                   <span className="pf-mono" style={{ background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontSize: "0.6rem", fontWeight: 700 }}>1:1</span>
                 </div>
 
-                <div className="pf-mono pf-book-week" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 10, position: "relative" }}>
+                <div className="pf-mono pf-book-week" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 10 }}>
                   {weekLabels.map((d, i) => (
                     <div
                       key={`${d}-${i}`}
@@ -1048,13 +1066,14 @@ export default async function PersonPage({ params }: PageProps) {
                     </div>
                   ))}
                 </div>
+                </div>
 
                 <a
                   href={calendlyUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="pf-book-cta pf-mono"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, padding: "9px 14px", borderRadius: 10, background: "#fff", fontSize: "0.7rem", fontWeight: 800, color: "#1e3a8a", cursor: "pointer", textDecoration: "none", letterSpacing: "0.04em" }}
+                  className="pf-book-cta pf-mono pf-social-cta"
+                  style={{ gap: 8, background: "#fff", color: "#1e3a8a", cursor: "pointer", letterSpacing: "0.04em" }}
                 >
                   Book intro call
                   <span aria-hidden>→</span>
