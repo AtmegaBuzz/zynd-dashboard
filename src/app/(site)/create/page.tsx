@@ -1023,6 +1023,22 @@ function CreateProfilePageContent() {
           .zc-inputbox { padding: 16px; }
           .zc-inputbox input { font-size: 13px !important; }
           .zc-cta { padding: 20px 22px !important; }
+
+          /* tagline footer: stack vertically — the 3 steps get crushed to
+             ~40px columns beside the nowrap tagline and overflow the shell */
+          .zc-foot { flex-direction: column !important; align-items: stretch !important; gap: 16px !important; }
+          .zc-foot-tag {
+            flex: none !important; padding-right: 0 !important; margin-right: 0 !important;
+            border-right: none !important; padding-bottom: 16px !important;
+            border-bottom: 1px solid ${T.border};
+          }
+          .zc-foot-tag p { white-space: normal !important; }
+          .zc-foot-steps { flex: none !important; flex-direction: column !important; min-width: 0 !important; width: 100%; gap: 0 !important; }
+          .zc-foot-step {
+            padding: 14px 0 0 !important; margin: 14px 0 0 !important;
+            border-left: none !important; border-top: 1px solid ${T.border};
+          }
+          .zc-foot-step:first-child { padding-top: 0 !important; margin-top: 0 !important; border-top: none; }
         }
         @media (prefers-reduced-motion: reduce) {
           .zc-chip-enter { animation: none; }
@@ -1557,7 +1573,7 @@ function CreateProfilePageContent() {
                               aria-label="Dismiss warning">×</button>
                           </div>
                           {fixingUrl === w.url ? (
-                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                               <input
                                 type="text"
                                 value={fixUrlInput}
@@ -1569,7 +1585,7 @@ function CreateProfilePageContent() {
                                 }}
                                 placeholder="Correct URL, e.g. github.com/yourhandle"
                                 className="zc-field"
-                                style={{ flex: 1, padding: "10px 14px", fontSize: "13px", border: `1px solid ${T.accent}`, borderRadius: "10px", background: T.surface, color: T.ink, outline: "none", fontFamily: MONO }}
+                                style={{ flex: 1, minWidth: "160px", padding: "10px 14px", fontSize: "13px", border: `1px solid ${T.accent}`, borderRadius: "10px", background: T.surface, color: T.ink, outline: "none", fontFamily: MONO }}
                               />
                               <button type="button" disabled={!fixUrlInput.trim()}
                                 onClick={() => { if (fixUrlInput.trim()) fixAndReExtract(w.url, fixUrlInput.trim()); }}
@@ -1782,7 +1798,7 @@ function CreateProfilePageContent() {
                             const off = excluded.has(key);
                             return (
                               <div key={key} className={`zc-row${off ? " off" : ""}`}>
-                                <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".1em", textTransform: "uppercase", color: T.muted, paddingTop: "4px", flexShrink: 0, width: "26px" }}>
+                                <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".1em", textTransform: "uppercase", color: T.muted, paddingTop: "4px", flexShrink: 0, whiteSpace: "nowrap" }}>
                                   {w.platform}
                                 </span>
                                 <span className="zc-row-main zc-clamp2" style={{ flex: 1, minWidth: 0, font: `400 14px/1.5 ${SANS}`, color: T.ink }}>
@@ -1820,8 +1836,8 @@ function CreateProfilePageContent() {
                         </div>
                       )}
 
-                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "10px 14px" }}>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: "180px", display: "flex", alignItems: "center", gap: "8px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "10px 14px" }}>
                           <input
                             ref={addMoreInputRef}
                             type="text"
@@ -1887,19 +1903,21 @@ function CreateProfilePageContent() {
           </div>
 
           {/* ── tagline footer row — inside shell, always visible ── */}
-          <div style={{ marginTop: "auto", borderTop: `1px solid ${T.border}`, paddingTop: "20px", display: "flex", alignItems: "center", gap: "0", flexWrap: "wrap" }}>
-            <div style={{ flex: "0 0 auto", paddingRight: "32px", marginRight: "32px", borderRight: `1px solid ${T.border}` }}>
-              <p style={{ font: `700 22px/1.1 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0, whiteSpace: "nowrap" }}>
+          <div className="zc-foot" style={{ marginTop: "auto", borderTop: `1px solid ${T.border}`, paddingTop: "20px", display: "flex", alignItems: "center", gap: "0", flexWrap: "wrap" }}>
+            <div className="zc-foot-tag" style={{ flex: "0 0 auto", paddingRight: "32px", marginRight: "32px", borderRight: `1px solid ${T.border}` }}>
+              <p className="zc-foot-tagline" style={{ font: `700 22px/1.1 ${DISPLAY}`, color: T.ink, letterSpacing: "-.03em", margin: 0, whiteSpace: "nowrap" }}>
                 Your work,<br />discoverable by AI.
               </p>
             </div>
-            <div style={{ display: "flex", gap: "0", flex: 1, minWidth: 0 }}>
+            {/* min-width so flexWrap pushes the steps under the tagline on
+                narrow mid-size screens instead of crushing them to ~40px */}
+            <div className="zc-foot-steps" style={{ display: "flex", gap: "0", flex: 1, minWidth: "260px" }}>
               {[
                 { num: "01", label: "Add your profiles", desc: "GitHub · LinkedIn · X · any URL" },
                 { num: "02", label: "We scrape the public web", desc: "No passwords, no permissions" },
                 { num: "03", label: "You review and approve", desc: "Edit every line before it goes live" },
               ].map(({ num, label, desc }, i) => (
-                <div key={num} style={{ flex: 1, minWidth: 0, paddingLeft: i > 0 ? "24px" : "0", borderLeft: i > 0 ? `1px solid ${T.border}` : "none", marginLeft: i > 0 ? "24px" : "0", display: "flex", flexDirection: "column", gap: "5px" }}>
+                <div key={num} className="zc-foot-step" style={{ flex: 1, minWidth: 0, paddingLeft: i > 0 ? "24px" : "0", borderLeft: i > 0 ? `1px solid ${T.border}` : "none", marginLeft: i > 0 ? "24px" : "0", display: "flex", flexDirection: "column", gap: "5px" }}>
                   <span style={{ font: `500 10px/1 ${MONO}`, letterSpacing: ".14em", color: T.faint }}>{num}</span>
                   <span style={{ font: `600 13px/1.3 ${DISPLAY}`, color: T.ink, letterSpacing: "-.01em" }}>{label}</span>
                   <span style={{ font: `400 12px/1.4 ${SANS}`, color: T.soft }}>{desc}</span>
