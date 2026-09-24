@@ -1013,8 +1013,13 @@ function CreateProfilePageContent() {
           .zc-step-card { flex: none; }
         }
         @media (max-width: 640px) {
-          .zc-root { padding: 16px 12px 56px; }
-          .zc-shell { border-radius: 26px; padding: 20px 16px 24px; gap: 16px; }
+          /* Drop the fixed-height nested scroll shell — let the page scroll
+             normally so form content (profiles, links, submit) isn't trapped
+             in an internal scroll area on mobile. Desktop keeps app-shell. */
+          .zc-root { height: auto; min-height: 100dvh; overflow: visible; overflow-x: hidden; padding: 16px 12px 40px; }
+          .zc-shell { height: auto; overflow: visible; border-radius: 26px; padding: 20px 16px 24px; gap: 16px; }
+          .zc-grid { flex: none; min-height: 0; }
+          .zc-col { overflow: visible; }
           .zc-panel { border-radius: 22px; }
           .zc-root h1.zc-panel-title { font-size: 34px; }
           .zc-question { font-size: 26px; }
@@ -1026,7 +1031,7 @@ function CreateProfilePageContent() {
 
           /* tagline footer: stack vertically — the 3 steps get crushed to
              ~40px columns beside the nowrap tagline and overflow the shell */
-          .zc-foot { flex-direction: column !important; align-items: stretch !important; gap: 16px !important; }
+          .zc-foot { flex-direction: column !important; align-items: stretch !important; gap: 16px !important; margin-top: 24px !important; }
           .zc-foot-tag {
             flex: none !important; padding-right: 0 !important; margin-right: 0 !important;
             border-right: none !important; padding-bottom: 16px !important;
